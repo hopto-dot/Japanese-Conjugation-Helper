@@ -12,3 +12,11 @@ For the main functionality of bringing up conjugations of a word, simple type th
 2. Then click "properties at the bottom"
 3. Lastly, make sure you are on the "Font" tab and select the "MS Mincho" font, there are a few other fonts that work too.
 ![Japanese Characters](https://i.imgur.com/x7gDhB9.png)
+
+***
+
+## Current issues
+
+* The "/p" command is broken, this will be fixed in a later release.
+* The wiki doesn't contain information on all the commands.
+* Sometimes when entering a second lot of data with the "/r" using the "2" parameter, it fails to reading the data you inputted second.
