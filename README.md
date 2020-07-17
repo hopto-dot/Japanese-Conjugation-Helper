@@ -21,6 +21,6 @@ For the main functionality of bringing up conjugations of a word, simple type th
 
 ## Current issues
 
-* The "/p" command is broken, this will be fixed in a later release.
 * The wiki doesn't contain information on all the commands.
 * Sometimes when entering a second lot of data with the "/r" with the "2" parameter, it fails to read the data you inputted second.
+* Sometimes (but rarely) you may see a random hex value in the definition of a word.
