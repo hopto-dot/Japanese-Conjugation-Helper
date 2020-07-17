@@ -208,105 +208,25 @@ Module Program
         Dim HTML As String = ""
         HTML = Client.DownloadString(New Uri(WordURL))
 
-
         Dim HTMLTemp As String = HTML
 
         Dim ActualSearchWord As String = ""
         Dim ActualSearch1stAppearance As Integer = 0
-        Dim FoundWords(0) As String
-        Dim FoundDefinitions(0) As String
+        Dim Definition As String
         Dim Max As Integer = 3
 
-        For LoopIndex = 0 To Max
-            Array.Resize(FoundWords, FoundWords.Length + 1)
-            Array.Resize(FoundDefinitions, FoundDefinitions.Length + 1)
-            Try
-                ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & " text" & QUOTE & ">", "</div>", "Actual word search")
-                ActualSearchWord = Mid(ActualSearchWord, 30)
-                ActualSearchWord = ActualSearchWord.Replace("<span>", "")
-                ActualSearchWord = ActualSearchWord.Replace("</span>", "")
-                If ActualSearchWord.Length = 0 Then
-                    Continue For
-                End If
-                If ActualSearchWord.Length > 0 Then
-                    ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
-                End If
-                FoundWords(LoopIndex) = ActualSearchWord
-                FoundDefinitions(LoopIndex) = DefinitionScraper(ActualSearchWord)
 
-                'Console.WriteLine("FoundWords(" & LoopIndex & "): " & ActualSearchWord)
-
-                ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & " text" & QUOTE & ">")
-                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
-                ActualSearch1stAppearance = HTMLTemp.IndexOf("concept_light clearfix")
-                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
-
-
-            Catch 'If there are no more search results then:
-                LoopIndex = 9
-                If ActualSearchWord = "" Then
-                    Console.WriteLine("Word couldn't be found")
-                    Console.ReadLine()
-                    Main()
-                End If
-            End Try
-
-        Next
-        Array.Resize(FoundWords, FoundWords.Length - 1)
-        Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
-
-        Dim WordChoice As Integer
-        Dim IntTest As String = ""
-
-        Dim FirstBlank As Boolean = True
-        Do Until WordChoice <= Max And WordChoice >= 1
-            If IsNumeric(IntTest) = True Then
-                WordChoice = CInt(IntTest)
-                If WordChoice <= Max And WordChoice >= 1 Then
-                    Continue Do
-                Else
-                    WordChoice = Max + 10 'To restart the loop, "+" could be any number above 2
-                    IntTest = ""
-                End If
-            Else
-                Console.Clear()
-                Console.WriteLine("Which definition would you like details for? Type a number, 0 to cancel.")
-                Console.WriteLine()
-                For looper = 1 To FoundWords.Length
-                    If IsNothing(FoundWords(looper - 1)) = False Then
-                        Console.WriteLine(looper & ": " & FoundWords(looper - 1) & " - " & FoundDefinitions(looper - 1))
-                    Else
-                        If FirstBlank = True Then
-                            Max = looper - 1
-                            FirstBlank = False
-                        End If
-                    End If
-                Next
-
-                IntTest = Console.ReadLine
-                If IntTest = "0" Or IntTest.ToLower = "cancel" Or IntTest.ToLower = "stop" Or IntTest.ToLower = "main" Or IntTest.ToLower = "menu" Then
-                    Main()
-                End If
-            End If
-        Loop
-
-        If WordChoice > Max Then
-            WordChoice = Max
-        End If
-
-
-        ActualSearchWord = FoundWords(WordChoice - 1)
-        ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & " text" & QUOTE & ">", "</div>", "Actual word search")
-        If ActualSearchWord.Length <2 Then
-            Console.WriteLine("Word couldn't be found")
+        ActualSearchWord = RetrieveClassRange(HTMLTemp, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
+        ActualSearchWord = RetrieveClassRange(ActualSearchWord, "text", "</span", "Actual word search")
+        ActualSearchWord = Mid(ActualSearchWord, 17)
+        ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+        ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+        If ActualSearchWord.Length = 0 Then
+            Console.WriteLine("Word wasn't found.")
             Console.ReadLine()
             Main()
         End If
-        ActualSearchWord = Mid(ActualSearchWord, 30)
-        ActualSearchWord = ActualSearchWord.Replace("<span>", "")
-        ActualSearchWord = ActualSearchWord.Replace("</span>", "")
-
-        ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
+        Definition = DefinitionScraper(ActualSearchWord)
 
 
 
@@ -335,9 +255,7 @@ Module Program
             Furigana = ""
         End If
 
-        Dim Definition As String = FoundDefinitions(WordChoice - 1)
         Definition = Left(Definition, 1).ToUpper & Right(Definition, Definition.Length - 1) 'This is capitalising the first letter and then having the rest as normal
-
 
         Dim Bracket1, Bracket2 As Integer
         Bracket1 = Definition.IndexOf("(")
@@ -355,6 +273,8 @@ Module Program
         Console.Clear()
         Console.WriteLine("Conjugation practice for " & ActualSearchWord & "(" & Furigana & "): " & Definition)
         Console.WriteLine(TypeSnip)
+        Console.WriteLine()
+        Console.WriteLine("Press enter to start.")
         Console.ReadLine()
         Console.Clear()
 
@@ -723,7 +643,7 @@ Module Program
                 End If
                 Console.WriteLine(ActualSearchWord & " - " & Completed & "/10")
                 Console.WriteLine(Forms(Random, 2) & " (attempt " & Attempts + 1 & " - score:" & Score & "):")
-                Console.WriteLine("Cheat: " & Forms(Random, 3))
+                'Console.WriteLine("Cheat: " & Forms(Random, 3)) 'Use this to see the answer
                 Read = Console.ReadLine
                 If Attempts = 0 Then
                     Input1 = Read
