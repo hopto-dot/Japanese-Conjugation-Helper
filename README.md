@@ -14,6 +14,10 @@ For the main functionality of bringing up conjugations of a word, simple type th
 ![Japanese Characters](https://i.imgur.com/x7gDhB9.png)
 
 ***
+## Features coming soon
+* Listening practice - the program will play Japanese audio and you have to type in what is said.
+* Kanji details - when you search for a word using Word Lookup it will bring up information on all the kanji in that word.
+***
 
 ## Current issues
 
