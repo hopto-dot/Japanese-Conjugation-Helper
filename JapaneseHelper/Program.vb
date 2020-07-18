@@ -1,11 +1,14 @@
 ﻿Imports System
 Imports System.Net
 Imports System.Text.RegularExpressions
-
+Imports Microsoft.VisualBasic
 Module Program
     Sub Main()
         Randomize()
         Const QUOTE = """"
+
+        'My.Computer.Audio.Play("C:\Users\PC-IVCHSPD\Downloads\pronunciation_ja_年.wav", AudioPlayMode.Background)
+
         'For the input of Japanese Characters
         Console.InputEncoding = System.Text.Encoding.Unicode
         Console.OutputEncoding = System.Text.Encoding.Unicode
@@ -203,6 +206,7 @@ Module Program
     Sub ConjugationPractice(ByVal Word)
         Console.Clear()
         Const QUOTE = """"
+
         Dim WordURL As String = ("https://jisho.org/search/" & Word)
         Dim Client As New WebClient
         Dim HTML As String = ""
@@ -698,9 +702,60 @@ Module Program
     End Sub
     Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer)
         Const QUOTE = """"
+        Dim SEquals As String = ""
+
+        'Code for the "-a" parameter; only shows the more advanced forms:
+        SEquals = Word.IndexOf(" s=")
+        Dim AdvancedParam As Integer = 1
+        Dim Read As String = ""
+        If SEquals <> -1 Then
+            If IsNumeric(Mid(Word, SEquals + 4, 1)) = False Then 'If the user tried to enter a letter for a S parameter
+                Console.WriteLine("The 's' parameter can only be a number")
+                Console.ReadLine()
+                Main()
+            End If
+            AdvancedParam = Mid(Word, SEquals + 4, 1)
+
+            If AdvancedParam < 1 Or AdvancedParam > 3 Then 'Making sure the S parameter is 1-3
+                Console.WriteLine()
+
+                Do Until IsNumeric(Read) = True
+                    Console.WriteLine("The 's' parameter must be in the range 1-3")
+                    Console.WriteLine("Please type a number in the range 1-3")
+                    Read = Console.ReadLine
+                Loop
+                Do Until Read > 0 And Read < 4
+                    If Read < 1 Or Read > 3 Then
+                        Console.WriteLine("The 's' parameter must be in the range 1-3")
+                        Console.WriteLine("Please type a number in the range 1-3")
+                    End If
+                    Read = Console.ReadLine
+                Loop
+                Word = Word.Replace(Mid(Word, SEquals + 4, 1), Read)
+                AdvancedParam = Read
+            End If
+
+            If IsNumeric(Mid(Word, SEquals + 5, 1)) = True Then 'If the user didn't enter a number S parameter
+                Console.WriteLine()
+                Console.WriteLine("The 's' parameter can only be one digit")
+                Console.WriteLine("Did you mean to type 's=" & Mid(Word, SEquals + 4, 1) & "'?")
+                Console.WriteLine()
+                Console.WriteLine("Type " & QUOTE & "Y" & QUOTE & " if that is was you meant.")
+                If Console.ReadLine().ToLower = "y" Then
+                    Word = Word.Replace(Mid(Word, SEquals + 5, 1), "")
+                Else
+                    Main()
+                End If
+            End If
+
+            If SEquals <> -1 Then 'If ' =s" is found
+                Word = Word.Replace(" s=" & AdvancedParam, "")
+            End If
+        End If
+
+
         Dim SentenceExample As String = ""
         Dim Example As String = ""
-
         Dim WordURL As String = ("https://jisho.org/search/" & Word)
         Dim Client As New WebClient
         Dim HTML As String
@@ -882,6 +937,7 @@ Module Program
         Else
             Console.WriteLine(ActualSearchWord & "(" & Furigana & "): " & ScrapFull) 'Japanese word (furigana): Meaning
         End If
+
         Console.WriteLine()
 
         Dim Scrap As String = ""
@@ -923,6 +979,9 @@ Module Program
             Console.WriteLine("Want to do: したい")
         End If
 
+        Dim JustKanjiReading As String = Furigana
+        Dim FirstKana As Integer
+
         'Preparing some variables for the word being searched
         Dim Iadjective, NaAdjective, NoAdjective, Noun, Suru, Verb As Boolean 'Word Types Checker varibles
         If TypeSnipEnd <> -1 Then 'Meaning: If the word has more than one type. The way I implemented the word type checker is kind of weird with the Else block. I could change this at a later date to make it more efficient.
@@ -945,32 +1004,51 @@ Module Program
             End If
 
             'Because "Adverbial" contains verb we need to make sure the program doesn't think that it is a verb
+
             If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
                 Verb = True
+
+                For KStep = 1 To ActualSearchWord.Length
+                    For FStep = 1 To Furigana.Length
+                        If Mid(Furigana, FStep, 1) = Mid(ActualSearchWord, KStep, 1) Then
+                            FirstKana = FStep
+
+                            KStep = ActualSearchWord.Length
+                            FStep = Furigana.Length
+                            Continue For
+                        End If
+                    Next
+                Next
+                If FirstKana <> 0 Then 'This means that if the word is kanji only then there won't be an "mid starting at 0" error
+                    FirstKana -= 1
+                    JustKanjiReading = Left(JustKanjiReading, FirstKana)
+                    Console.WriteLine("Kanji-only Reading: " & JustKanjiReading)
+                    Console.WriteLine()
+                End If
+            End If
+        End If
+
+        If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
+            Dim ComparativeType As String = ""
+            If FullWordType.IndexOf("Transitive") <> -1 Then
+                ComparativeType = "t"
+            End If
+            If FullWordType.IndexOf("intransitive") <> -1 Then
+                ComparativeType = "i"
             End If
 
-            If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
-                Dim ComparativeType As String = ""
-                If FullWordType.IndexOf("Transitive") <> -1 Then
-                    ComparativeType = "t"
-                End If
-                If FullWordType.IndexOf("intransitive") <> -1 Then
-                    ComparativeType = "i"
-                End If
-
-                If FullWordType.IndexOf("Godan verb") <> -1 Then
-                    ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType) '(Verb/Word, Very Type, Meaning, "ComparativeType")
-                End If
-
-                If FullWordType.IndexOf("Ichidan verb") <> -1 Then
-                    ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType) '(Verb/Word, Very Type, Meaning, "ComparativeType")
-                End If
-                Console.WriteLine("Something went wrong when identifying the verb")
-                Console.Read()
-                Main()
+            If FullWordType.IndexOf("Godan verb") <> -1 Then
+                ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
             End If
 
-        Else 'If there is only one word type then the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
+            If FullWordType.IndexOf("Ichidan verb") <> -1 Then
+                ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+            End If
+            Console.WriteLine("Something went wrong when identifying the verb")
+            Console.Read()
+            Main()
+
+        Else 'If there is only one word type, the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
             If TypeSnip = "I-adjective" Then
                 Iadjective = True
             ElseIf TypeSnip = "Na-adjective" Then
@@ -994,11 +1072,11 @@ Module Program
                 End If
 
                 If FullWordType.IndexOf("Godan verb") <> -1 Then
-                    ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                    ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
                 End If
 
                 If FullWordType.IndexOf("Ichidan verb") <> -1 Then
-                    ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                    ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
                 End If
                 Console.WriteLine("Something went wrong when identifying the verb")
                 Console.Read()
@@ -1012,6 +1090,20 @@ Module Program
             Vowel = True
         End If
 
+        For KStep = 1 To ActualSearchWord.Length
+            For FStep = 1 To Furigana.Length
+                If Mid(Furigana, FStep, 1) = Mid(ActualSearchWord, KStep, 1) Then
+                    FirstKana = FStep
+
+                End If
+            Next
+        Next
+        If FirstKana <> 0 Then 'This means that if the word is kanji only then there won't be an "mid starting at 0" error
+            FirstKana -= 1
+            JustKanjiReading = Left(JustKanjiReading, FirstKana)
+            Console.WriteLine("Kanji-only Reading: " & JustKanjiReading)
+            Console.WriteLine()
+        End If
 
         If Iadjective = True Then
             ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
@@ -1266,11 +1358,12 @@ Module Program
         Console.ReadLine()
         Main()
     End Sub
-    Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType)
+    Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType, ByVal S)
         Const QUOTE = """"
         Dim Last As String = Right(PlainVerb, 1) 'This is the last Japanese character of the verb, this is used for changing forms
 
         Dim LastAdd As String = ""
+        Dim LastAdd2 As String = ""
         Dim LastAddPot As String = ""
         Dim masuStem As String = ""
         Dim NegativeStem As String = ""
@@ -1278,6 +1371,7 @@ Module Program
         Dim Causative As String = ""
         Dim Conditional As String = ""
         Dim teStem As String
+        Dim Volitional As String
 
         'This is the word with the "to" (in for example "to play") and without the bracketed context
 
@@ -1295,38 +1389,49 @@ Module Program
             Bracket1 = PlainMeaning.IndexOf("(")
         Loop
 
-        'Creating masu stems
+        'Creating masu stems and volitional forms
         If Type = "Godan" Then
             If Last = "む" Then
                 LastAdd = "み"
+                LastAdd2 = "もう"
             End If
             If Last = "ぶ" Then
                 LastAdd = "び"
+                LastAdd2 = "ぼう"
             End If
             If Last = "ぬ" Then
                 LastAdd = "に"
+                LastAdd2 = "のう"
             End If
             If Last = "す" Then
                 LastAdd = "し"
+                LastAdd2 = "そう"
             End If
             If Last = "ぐ" Then
                 LastAdd = "ぎ"
+                LastAdd2 = "ごう"
             End If
             If Last = "く" Then
                 LastAdd = "き"
+                LastAdd2 = "こう"
             End If
             If Last = "る" Then
                 LastAdd = "り"
+                LastAdd2 = "ろう"
             End If
             If Last = "つ" Then
                 LastAdd = "ち"
+                LastAdd2 = "とう"
             End If
             If Last = "う" Then
                 LastAdd = "い"
+                LastAdd2 = "おう"
             End If
             masuStem = Left(PlainVerb, PlainVerb.length - 1) & LastAdd
+            Volitional = Left(PlainVerb, PlainVerb.length - 1) & LastAdd2
         Else
-            masuStem = Left(PlainVerb, PlainVerb.length - 1) & LastAdd
+            masuStem = Left(PlainVerb, PlainVerb.length - 1)
+            Volitional = Left(PlainVerb, PlainVerb.length - 1) & "よう"
         End If
 
         'Creating negative stems (Last add) and Potential forms
@@ -1421,6 +1526,7 @@ Module Program
         End If
         VowelCheck1 = Right(PlainMeaning, 1) 'Last letter
         VowelCheck2 = Mid(PlainMeaning, PlainMeaning.Length - 1, 1)
+        VowelCheck3 = ""
         If PlainMeaning.Length > 2 Then
             VowelCheck3 = Mid(PlainMeaning, PlainMeaning.Length - 2, 1) 'second to last letter
         End If
@@ -1482,45 +1588,61 @@ Module Program
         End If
 
 
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Formal:")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("I " & PlainMeaning & ": " & masuStem & "ます")
-        Console.WriteLine("I do not " & PlainMeaning & ":   " & masuStem & "ません")
-        Console.WriteLine("I " & PastMeaning & ": " & masuStem & "ました")
-        Console.WriteLine("I did not " & PlainMeaning & ":  " & masuStem & "ませんでした")
-        Console.WriteLine()
 
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Informal")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & ": " & PlainVerb)
-        Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ない")
-        Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
-        Console.WriteLine("Didn't " & PlainMeaning & ": " & NegativeStem & "なかった")
-        Console.WriteLine()
+        If S < 2 Then 'Only show if "-s" isn't in use (all results want to be shown)
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Formal:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("I " & PlainMeaning & ": " & masuStem & "ます")
+            Console.WriteLine("I do not " & PlainMeaning & ":   " & masuStem & "ません")
+            Console.WriteLine("I " & PastMeaning & ": " & masuStem & "ました")
+            Console.WriteLine("I did not " & PlainMeaning & ":  " & masuStem & "ませんでした")
+            Console.WriteLine()
 
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Informal")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & ": " & PlainVerb)
+            Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ない")
+            Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
+            Console.WriteLine("Didn't " & PlainMeaning & ": " & NegativeStem & "なかった")
+            Console.WriteLine()
+        End If
+        If S < 3 Then
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Te-forms:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Te-stem: " & teStem)
+        End If
+        If S < 2 Then
+            Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "いる")
+            Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "います")
+            Console.WriteLine("Was " & PresentMeaning & ": " & teStem & "いた")
+            Console.WriteLine("Was " & PresentMeaning & ": " & teStem & "いました")
+            Console.WriteLine("Te-form of negative:")
+            Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "なくて")
+            Console.WriteLine("Negative te-form:")
+            Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ないで")
+        End If
+
+        Console.WriteLine()
         Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Te-forms:")
+        Console.WriteLine("Volitional:")
         Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("Te-stem: " & teStem)
-        Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "いる")
-        Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "います")
-        Console.WriteLine("Was " & PresentMeaning & ": " & teStem & "いた")
-        Console.WriteLine("Was " & PresentMeaning & ": " & teStem & "いました")
-        Console.WriteLine("Te-form of negative:")
-        Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "なくて")
-        Console.WriteLine("Negative te-form:")
-        Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ないで")
+        Console.WriteLine("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう")
+        Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+        Console.WriteLine("I've decided to " & PlainMeaning & ": " & Volitional & "と思っています")
 
         Console.WriteLine()
         Console.BackgroundColor = ConsoleColor.DarkGray
         Console.WriteLine("Potential (Ability):")
         Console.BackgroundColor = ConsoleColor.Black
         Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
-        Console.WriteLine("Aren't able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "ない")
+        If S < 3 Then
+            Console.WriteLine("Aren't able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "ない")
+        End If
         Console.WriteLine("Have the ability to " & PlainMeaning & " (formal): " & PlainVerb & "ことができる")
-        Console.WriteLine("Can you " & PlainMeaning & "?: " & Left(Potential, Potential.Length - 1) & "ますか？")
+        'Console.WriteLine("Can you " & PlainMeaning & "?: " & Left(Potential, Potential.Length - 1) & "ますか？")
 
         Console.WriteLine()
         Console.BackgroundColor = ConsoleColor.DarkGray
@@ -1529,8 +1651,8 @@ Module Program
         Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
         Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
         Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
-        Console.WriteLine("Will you let me " & PlainMeaning & "?: " & Left(Causative, Causative.Length - 1) & "てくれませんか？")
-        Console.WriteLine("I'll let you " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "てあげます")
+        'Console.WriteLine("Will you let me " & PlainMeaning & "?: " & Left(Causative, Causative.Length - 1) & "てくれませんか？")
+        'Console.WriteLine("I'll let you " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "てあげます")
 
         Console.WriteLine()
         Console.BackgroundColor = ConsoleColor.DarkGray
@@ -1539,32 +1661,59 @@ Module Program
         Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
         Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Want:")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("Want to " & PlainMeaning & ": " & masuStem & "たい")
-        Console.WriteLine("Wanted to " & PlainMeaning & ": " & masuStem & "たかった")
-        Console.WriteLine("Don't want to " & PlainMeaning & ": " & masuStem & "たくない")
-        Console.WriteLine("Didn't want to " & PlainMeaning & ": " & masuStem & "たくなかった")
+        If S < 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Having a try at something (see what is it like):")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("To try " & PresentMeaning & ": " & teStem & "みる")
+        End If
+        If S < 2 Then
+            Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
+            Console.WriteLine("Wanted to try " & PlainMeaning & ": " & teStem & "みたかった")
+            Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
+            Console.WriteLine("Wanted to try " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たかった")
+        End If
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Having a try at something (see what is it like):")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("To try " & PresentMeaning & ": " & teStem & "みる")
-        Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
-        Console.WriteLine("Wanted to try " & PlainMeaning & ": " & teStem & "みたかった")
-        Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
-        Console.WriteLine("Wanted to try " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たかった")
+        If S < 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Too much:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " too much: " & masuStem & "すぎる")
+            Console.WriteLine("I " & PlainMeaning & " too much: " & masuStem & "すぎます")
+            Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
+        End If
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Too much:")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " too much: " & masuStem & "すぎる")
-        Console.WriteLine("I " & PlainMeaning & " too much: " & masuStem & "すぎます")
-        Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
+        If S < 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Want:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Want to " & PlainMeaning & ": " & masuStem & "たい")
+        End If
+        If S < 2 Then
+            Console.WriteLine("Wanted to " & PlainMeaning & ": " & masuStem & "たかった")
+            Console.WriteLine("Don't want to " & PlainMeaning & ": " & masuStem & "たくない")
+            Console.WriteLine("Didn't want to " & PlainMeaning & ": " & masuStem & "たくなかった")
+        End If
+
+        If S < 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Extra:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("I intend to " & PlainMeaning & ": " & PlainVerb & "です/だ")
+        End If
+
+        If S = 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Important")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ない")
+            Console.WriteLine("Te-stem: " & teStem)
+        End If
 
         Dim Client As New WebClient
         Dim WordURL As String = ("https://jisho.org/search/" & PlainVerb & "%20%23sentences")
@@ -1900,13 +2049,12 @@ Module Program
     End Function
 
     'TO DO:
-    ''''Fix the BLOODY conjugator practice because it isn't working at all (just the word scraper... At least I hope it is just that which isn't working.)!
     '''Fix bug where word that appear to be the same (but have different readings) bring up the same definition even though they have different definitions
-    ''To show kun and on readings of kanji in a word and show the corresponding kanji
-    ''Bring up more definitions than just "1."
+    ''Add a new to parameter to searches "-a" which only shows the more advanced forms
+    ''Bring up more definitions than just 1
     ''Make verb english conjugation better, for example change "to put on weight" -> is put on weight, -> is weight. or "to result in" -> "has result in"
     'Allow input of romanised characters for the answers conjugation practice, this should be done in a new function
     'A minor bug exists where something like "#1a23f2' is seen in some scraped data (not sure which exact data, I have a feeling that it is definitions
-
+    'To show kun and on readings of kanji in a word and show the corresponding kanji
 
 End Module
