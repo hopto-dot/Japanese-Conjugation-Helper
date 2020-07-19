@@ -90,24 +90,6 @@ Module Program
             Main()
         End If
 
-        If Word = "/omae wa mou shinderu" Or Word = "/omae wa mou shindeiru" Or Word = "/omae ha mou shinderu" Or Word = "/お前はもう死んでる" Or Word = "/お前はもう死んでいる" Then
-            Console.WriteLine("                                       .-''''-..     ")
-            Console.WriteLine("                                     .' .'''.   `.   ")
-            Console.WriteLine("   _..._                _..._   .--./    \   \    `. ")
-            Console.WriteLine(" .'     '.            .'     '. |__|\    '   |     | ")
-            Console.WriteLine(".   .-.   .          .   .-.   ..--. `--'   /     /  ")
-            Console.WriteLine("|  '   '  |    __    |  '   '  ||  |      .'  ,-''   ")
-            Console.WriteLine("|  |   |  | .:--.'.  |  |   |  ||  |      |  /       ")
-            Console.WriteLine("|  |   |  |/ |   \ | |  |   |  ||  |      | '        ")
-            Console.WriteLine("|  |   |  |`" & QUOTE & "__  | | |  |   |  ||  |      '-'")
-            Console.WriteLine("|  |   |  | .'.''| | |  |   |  ||__|     .--.        ")
-            Console.WriteLine("|  |   |  |/ /   | |_|  |   |  |        /    \       ")
-            Console.WriteLine("|  |   |  |\ \._,\ '/|  |   |  |        \    /       ")
-            Console.WriteLine("'--'   '--' `--'  `' '--'   '--'         `--'        ")
-            Threading.Thread.Sleep(1500)
-            Main()
-        End If
-
         If Left(Word, 1) = "/" Then
             Console.WriteLine("This is not a command")
             Console.ReadLine()
@@ -773,12 +755,14 @@ Module Program
 
         Dim ActualSearchWord As String = ""
         Dim ActualSearch1stAppearance As Integer = 0
+        Dim WordLink As String
         Dim FoundWords(0) As String
         Dim FoundDefinitions(0) As String
         Dim ScrapFull As String
         Dim Max As Integer = WordIndex
         Dim WordChoice As Integer = 30
-        If WordIndex <> 1 Then
+        Dim ActualSearch2ndAppearance As String
+        If WordIndex <> 1 Then              'scraping of words and definitions -------------------------------------------------------------------------------------------
             For LoopIndex = 0 To Max - 1
                 Array.Resize(FoundWords, FoundWords.Length + 1)
                 Array.Resize(FoundDefinitions, FoundDefinitions.Length + 1)
@@ -795,17 +779,24 @@ Module Program
                     End If
                     FoundWords(LoopIndex) = ActualSearchWord
 
-                    FoundDefinitions(LoopIndex) = DefinitionScraper(ActualSearchWord).replace("&#39;", "")
+                    'FoundDefinitions(LoopIndex) = DefinitionScraper(ActualSearchWord).replace("&#39;", "")
 
-                    Console.WriteLine(LoopIndex + 1 & ": " & ActualSearchWord & " - " & FoundDefinitions(LoopIndex))
+
 
                     'Console.WriteLine("FoundWords(" & LoopIndex & "): " & ActualSearchWord)
 
                     ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
                     HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
-                    ActualSearch1stAppearance = HTMLTemp.IndexOf("concept_light clearfix")
+                    ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
                     HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
 
+                    ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+                    ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+                    WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+
+                    FoundDefinitions(LoopIndex) = WordLinkScraper(WordLink)
+
+                    Console.WriteLine(LoopIndex + 1 & ": " & ActualSearchWord & " - " & FoundDefinitions(LoopIndex))
 
                 Catch 'If there are no more search results then:
                     LoopIndex = WordIndex
@@ -816,7 +807,7 @@ Module Program
                     End If
                 End Try
 
-            Next
+            Next                                                          'end of scrapping ___________________________________________________________________________
             Array.Resize(FoundWords, FoundWords.Length - 1)
             Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
 
@@ -858,10 +849,10 @@ Module Program
                     End If
 
                     IntTest = Console.ReadLine
-                        If IntTest = "0" Or IntTest.ToLower = "cancel" Or IntTest.ToLower = "stop" Or IntTest.ToLower = "main" Or IntTest.ToLower = "menu" Then
-                            Main()
-                        End If
+                    If IntTest = "0" Or IntTest.ToLower = "cancel" Or IntTest.ToLower = "stop" Or IntTest.ToLower = "main" Or IntTest.ToLower = "menu" Then
+                        Main()
                     End If
+                End If
             Loop
             Try
                 ActualSearchWord = FoundWords(WordChoice - 1)
@@ -891,7 +882,6 @@ Module Program
         Dim StartingHTML As Integer
         StartingHTML = HTML.IndexOf(ActualSearchWord)
         HTMLTemp = Mid(HTML, StartingHTML)
-
 
         'RetrieveClass(ByVal HTML, ByRef ClassToRetrieve, ByVal ErrorMessage)
 
@@ -1950,7 +1940,7 @@ Module Program
             SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span><span>&#")
             'Console.WriteLine(SnipEnd)
             If SnipEnd = -1 Then
-                FirstFail = True
+                FirstFail = True 'For debugging
                 SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
             End If
             'Console.WriteLine(SnipEnd)
@@ -2048,9 +2038,38 @@ Module Program
 
     End Function
 
+    Function WordLinkScraper(ByVal URL) 'This is for getting the definition of a word from the page of the word instead of the search results, this is much more reliable for definitions
+        Const QUOTE = """"
+
+        Dim Client As New WebClient
+        Dim HTML As String = ""
+        HTML = Client.DownloadString(New Uri("https://" & URL))
+
+        HTML = RetrieveClassRange(HTML, "concept_light-meanings medium-9 columns", "</span></div></div>", "WordLinkScraper")
+
+        Dim SnipStart, SnipEnd, Snip As String
+
+        SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
+        SnipStart += 18
+        'Console.WriteLine("SnipStart: " & SnipStart)
+
+        'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
+        SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span><span>&#")
+        'Console.WriteLine(SnipEnd)
+        If SnipEnd = -1 Then
+            SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
+        End If
+        'Console.WriteLine(SnipEnd)
+        'Console.ReadLine()
+        'Console.WriteLine("SnipEnd: " & SnipEnd)
+
+        Snip = Mid(HTML, SnipStart, SnipEnd)
+
+        Return (Snip)
+    End Function
+
+
     'TO DO:
-    '''Fix bug where word that appear to be the same (but have different readings) bring up the same definition even though they have different definitions
-    ''Add a new to parameter to searches "-a" which only shows the more advanced forms
     ''Bring up more definitions than just 1
     ''Make verb english conjugation better, for example change "to put on weight" -> is put on weight, -> is weight. or "to result in" -> "has result in"
     'Allow input of romanised characters for the answers conjugation practice, this should be done in a new function
