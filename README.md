@@ -18,10 +18,3 @@ For the main functionality of bringing up conjugations of a word, simple type th
 * Listening practice - the program will play Japanese audio and you have to type in what is said.
 * Kanji details - when you search for a word using Word Lookup it will bring up information on all the kanji in that word.
 ***
-
-## Main bugs
-
-* Sometimes when entering a second lot of data with the "/r" with the "2" parameter, it fails to read the data you inputted second.
-* Sometimes (but very rarely) the "Kanji-only Reading" will mess up. This should be fixed soon.
-* When the list of definitions to pick from is shown (when searching for more than one word) sometimes definitions get mixed up with which one is which. This should be fixed soon.
-* The English translation of word forms get messed up, for example "get thinned" when it should be "got thin". This is really hard to 100% fix :(
