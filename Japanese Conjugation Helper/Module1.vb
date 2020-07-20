@@ -8,7 +8,8 @@ Module Module1
         Randomize()
         Const QUOTE = """"
 
-        My.Computer.Audio.Play("C:\Users\PC-IVCHSPD\Downloads\pronunciation_ja_一日中.wav", AudioPlayMode.Background)
+        'Template for sound
+        'My.Computer.Audio.Play("", AudioPlayMode.Background)
 
         'For the input of Japanese Chaaracters
         Console.InputEncoding = System.Text.Encoding.Unicode
