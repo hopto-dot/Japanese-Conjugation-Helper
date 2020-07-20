@@ -21,6 +21,7 @@ For the main functionality of bringing up conjugations of a word, simple type th
 
 ***
 ## Features planned to be coming soon
+* Listening practice - Listen to words and type in what you heard
 * Kanji details - when you search for a word using Word Lookup it will bring up information on all the kanji in that word.
 * Important Anki decks and generate reverse cards.
 * New parameters
