@@ -1,0 +1,11 @@
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\obj\Debug\Japanese Conjugation Helper.vbprojAssemblyReference.cache
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\obj\Debug\Japanese_Conjugation_Helper.Resources.resources
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\obj\Debug\Japanese Conjugation Helper.vbproj.GenerateResource.cache
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\obj\Debug\Japanese Conjugation Helper.vbproj.CoreCompileInputs.cache
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\bin\Debug\Japanese Conjugation Helper.exe.config
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\bin\Debug\Japanese Conjugation Helper.exe
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\bin\Debug\Japanese Conjugation Helper.pdb
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\bin\Debug\Japanese Conjugation Helper.xml
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\obj\Debug\Japanese Conjugation Helper.exe
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\obj\Debug\Japanese Conjugation Helper.xml
+C:\Users\PC-IVCHSPD\source\repos\Japanese Conjugation Helper\Japanese Conjugation Helper\obj\Debug\Japanese Conjugation Helper.pdb
