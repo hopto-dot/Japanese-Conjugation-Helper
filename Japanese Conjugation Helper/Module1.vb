@@ -2,18 +2,18 @@
 Imports System.Net
 Imports System.Text.RegularExpressions
 Imports Microsoft.VisualBasic
-'Imports Microsoft.VisualBasic.Devices
 Module Module1
     Sub Main()
+        'For the input of Japanese Chaaracters
+        Console.InputEncoding = System.Text.Encoding.Unicode
+        Console.OutputEncoding = System.Text.Encoding.Unicode
         Randomize()
         Const QUOTE = """"
 
         'Template for sound
         'My.Computer.Audio.Play("", AudioPlayMode.Background)
 
-        'For the input of Japanese Chaaracters
-        Console.InputEncoding = System.Text.Encoding.Unicode
-        Console.OutputEncoding = System.Text.Encoding.Unicode
+
         Console.Clear()
         Console.WriteLine("Enter command, type " & QUOTE & "/h" & QUOTE & " for help")
 
@@ -202,6 +202,7 @@ Module Module1
 
         Dim WordURL As String = ("https://jisho.org/search/" & Word)
         Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
         Dim HTML As String = ""
         HTML = Client.DownloadString(New Uri(WordURL))
 
@@ -751,6 +752,7 @@ Module Module1
         Dim Example As String = ""
         Dim WordURL As String = ("https://jisho.org/search/" & Word)
         Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
         Dim HTML As String
 
         HTML = Client.DownloadString(New Uri(WordURL))
@@ -1253,7 +1255,8 @@ Module Module1
 
 
         'Proper Example Sentence extraction:
-        WordURL = ("https://jisho.org/search/" & ActualSearchWord & "%20%23sentences")
+        'WordURL = ("https://jisho.org/search/" & ActualSearchWord & "%20%23sentences")
+
         HTMLTemp = Client.DownloadString(New Uri(WordURL))
 
         SentenceExample = RetrieveClassRange(HTMLTemp, "<li class=" & QUOTE & "clearfix" & QUOTE & "><span class=" & QUOTE & "furigana" & QUOTE & ">", "inline_copyright", "Example Sentence") 'Firstly extracting the whole group
@@ -1263,12 +1266,12 @@ Module Module1
         Console.WriteLine()
         Console.WriteLine(Example)
 
-        Console.ReadLine()
-        Main()
 
         Dim WordWordURL As String = ("https://jisho.org/word/" & ActualSearchWord)
         Dim WordHTML As String
         WordHTML = Client.DownloadString(New Uri(WordWordURL))
+
+
 
 
         'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
@@ -1292,7 +1295,7 @@ Module Module1
                 Continue Do
             End If
 
-            KanjiGroup(I) = Mid(KanjiInfo, 1, KanjiGroupEnd)
+            KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
             KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
         Loop
         Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
@@ -1304,55 +1307,107 @@ Module Module1
         '2 = kun readings (concatentated if needed, usually so)
         '3 = on readings (concatentated if needed, usually so)
         Dim FirstFinder As Integer
+        Dim SecondFinder As Integer
+
         Dim AllEng, AllKun, AllOn As Boolean
         AllEng = False
         AllKun = False
         AllOn = False
+        Dim LastReadingFound As Boolean = False 'This is used to find the last reading of a kanji, it knows that it is a last because it ends in "</a>、" and not "</a>"
+        Dim JustEng As String
+        KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
 
         For Looper = 0 To KanjiGroup.Length - 1
             FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
             'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
             ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
-            Console.WriteLine("ActualInfo(" & Looper & ", 0):" & ActualInfo(Looper, 0) & "|")
 
             FirstFinder = KanjiGroup(Looper).IndexOf("sense")
             KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
 
             FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
-            Dim JustEng As String
+
 
             JustEng = Left(KanjiGroup(Looper), FirstFinder)
 
+            JustEng = Mid(JustEng, 18)
+            JustEng = Left(JustEng, JustEng.Length - 14)
             KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
 
-            FirstFinder = KanjiGroup(Looper).IndexOf("<span>") + 1
-            JustEng = Mid(JustEng, FirstFinder)
-            JustEng = Left(JustEng, JustEng.Length - 7)
             JustEng = JustEng.Replace("           ", "")
+            FirstFinder = JustEng.IndexOf("</span>")
+            SecondFinder = JustEng.IndexOf("<span>")
+            Try
+                JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
+            Catch
+            End Try
 
-            LastDetailsIndex = JustEng.LastIndexOf("</span>") 'Getting rid of the last span so the next loop words
-            JustEng = Left(JustEng, LastDetailsIndex)
+            JustEng = JustEng.Replace(",", ", ")
+            JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
 
+            ActualInfo(Looper, 1) = JustEng
 
+            'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
+            Dim KunReading, OnReading, ReadingSnip As String
 
-            Dim SecondFinder As Integer
-            Do Until AllEng = True
-                SecondFinder = JustEng.IndexOf("</span>")
-                If SecondFinder = -1 Then
-                    ActualInfo(Looper, 1) = ActualInfo(Looper, 1) & Mid(JustEng, 7)
-                    AllEng = True
-                    Continue Do
+            FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
+            KunReading = Left(KanjiGroup(Looper), FirstFinder)
+            OnReading = Mid(KanjiGroup(Looper), FirstFinder)
+
+            ActualInfo(Looper, 2) &= "Kun Readings: "
+            ActualInfo(Looper, 3) &= "On Readings: "
+
+            LastReadingFound = False
+            Do Until LastReadingFound = True
+                If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                    SecondFinder = KunReading.IndexOf("</a>、")
+                    FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                    ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                    ActualInfo(Looper, 2) &= ReadingSnip & ", " 'Adding the reading to the Actual info array
+
+                    KunReading = Mid(KunReading, SecondFinder + 10)
+
+                ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                    SecondFinder = KunReading.IndexOf("</a>")
+                    FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                    ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                    ActualInfo(Looper, 2) &= ReadingSnip 'Adding the reading to the Actual info array
+
+                    LastReadingFound = True
+                Else
+                    LastReadingFound = True
                 End If
-
-                ActualInfo(Looper, 1) = ActualInfo(Looper, 1) & Mid(JustEng, 7, SecondFinder - 6)
-                JustEng = Mid(JustEng, SecondFinder + 10)
             Loop
-            Console.WriteLine("ActualInfo(" & Looper & ", 1):" & ActualInfo(Looper, 1) & "|")
+            LastReadingFound = False
+            Do Until LastReadingFound = True
+                If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                    SecondFinder = OnReading.IndexOf("</a>、")
+                    FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                    ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
+                    ActualInfo(Looper, 3) &= ReadingSnip & ", " 'Adding the reading to the Actual info array
 
+                    OnReading = Mid(OnReading, SecondFinder + 10)
 
+                ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                    SecondFinder = OnReading.IndexOf("</a>")
+                    FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                    ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-            Console.ReadLine()
+                    ActualInfo(Looper, 3) &= ReadingSnip 'Adding the reading to the Actual info array
+
+                    LastReadingFound = True
+                Else
+                    LastReadingFound = True
+                End If
+            Loop
+
+            Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
+            Console.WriteLine(ActualInfo(Looper, 2))
+            Console.WriteLine(ActualInfo(Looper, 3))
+            Console.WriteLine()
         Next
 
 
@@ -1717,6 +1772,7 @@ Module Module1
         End If
 
         Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
         Dim WordURL As String = ("https://jisho.org/search/" & PlainVerb & "%20%23sentences")
         Dim HTML As String = Client.DownloadString(New Uri(WordURL))
         Dim Example As String = ""
@@ -1935,6 +1991,7 @@ Module Module1
         Try
             'Loading the website's HTML code and storing it in a HTML as a string:
             Dim Client As New WebClient
+            Client.Encoding = System.Text.Encoding.UTF8
             URL = "https://jisho.org/search/" & URL
             HTML = Client.DownloadString(New Uri(URL))
 
@@ -1989,7 +2046,9 @@ Module Module1
                 Console.ReadLine()
                 Main()
             End Try
+
         End Try
+
         Return (Snip)
     End Function
     Function ExampleSentence(ByRef SentenceExample) 'This function gets rid of fillers not extracts from the website
@@ -2052,6 +2111,7 @@ Module Module1
         Const QUOTE = """"
 
         Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
         Dim HTML As String = ""
         HTML = Client.DownloadString(New Uri("https://" & URL))
 
