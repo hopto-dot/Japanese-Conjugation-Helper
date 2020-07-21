@@ -1,5 +1,5 @@
 # Japanese Conjugation Helper
-**A console application that will conjugate Japanese verbs, adjectives and nouns. The program can create example sentences for pretty much any word you throw at it. It has a few other handy features for learning Japanese. [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)**
+**A console application that will conjugate Japanese verbs, adjectives and nouns. The program can create example sentences for pretty much any word you throw at it. It has a few other handy features for learning Japanese**. [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)
 
 **Download the program [here](https://github.com/hopto-dot/Japanese-Conjugation-Helper/releases).** The interval that I release a new version varies from a day to up to a week depending on changes made to the program and how long I've been working on the program.
 
@@ -8,7 +8,7 @@ For the main functionality of bringing up conjugations of a word, simple type th
 **If you want to give feedback or request features, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).**
 
 ## **List of commands:**
-* Word Lookup - looks up any word or phrase
+* Word Lookup - looks up any word or phrase (main feature)
 * /p - conjugation practice (practice conjugating a word of your choice into different forms)
 * /r - reading practice (essentially a flash card creator)
 * /h or /help (brings up more information about a command, not as detailed as the Wiki)
