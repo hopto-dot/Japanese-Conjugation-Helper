@@ -906,7 +906,12 @@ Module Module1
         Dim FullWordType As String = TypeSnip
         Dim TypeSnipEnd As Integer = TypeSnip.IndexOf(",") 'This is to check if there is more than one word type
         Console.Clear()
+        Console.BackgroundColor = ConsoleColor.White
+        Console.ForegroundColor = ConsoleColor.Black
         Console.WriteLine(FullWordType)
+        Console.BackgroundColor = ConsoleColor.Black
+        Console.ForegroundColor = ConsoleColor.White
+
 
         'Extracting furigana and then snipping from the start up to the furigana
         Dim Furigana As String = ""
@@ -933,12 +938,24 @@ Module Module1
         ScrapFull = Left(ScrapFull, 1).ToUpper & Right(ScrapFull, ScrapFull.Length - 1) 'This is capitalising the first letter and then having the rest as normal
         If WordIndex <> 1 Then
             Try
+                Console.BackgroundColor = ConsoleColor.White
+                Console.ForegroundColor = ConsoleColor.Black
                 Console.WriteLine(ActualSearchWord & "(" & Furigana & "): " & FoundDefinitions(WordChoice - 1)) 'Japanese word (furigana): Meaning
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.ForegroundColor = ConsoleColor.White
             Catch
+                Console.BackgroundColor = ConsoleColor.White
+                Console.ForegroundColor = ConsoleColor.Black
                 Console.WriteLine(ActualSearchWord & "(" & Furigana & "): " & FoundDefinitions(FoundDefinitions.Length - 1))
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.ForegroundColor = ConsoleColor.White
             End Try
         Else
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Black
             Console.WriteLine(ActualSearchWord & "(" & Furigana & "): " & ScrapFull) 'Japanese word (furigana): Meaning
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
         End If
 
         Console.WriteLine()
