@@ -9,7 +9,7 @@ Imports System.Runtime.InteropServices
 ' Review the values of the assembly attributes
 
 <Assembly: AssemblyTitle("Japanese Conjugation Helper")>
-<Assembly: AssemblyDescription("")>
+<Assembly: AssemblyDescription("Mostly used to conjugate verbs, however has other handy features for learning Japanese.")>
 <Assembly: AssemblyCompany("")>
 <Assembly: AssemblyProduct("Japanese Conjugation Helper")>
 <Assembly: AssemblyCopyright("Copyright ©  2020")>
