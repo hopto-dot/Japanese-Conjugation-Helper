@@ -1602,7 +1602,7 @@ Module Module1
             My.Computer.Clipboard.SetText(AnkiCopy)
         End If
 
-
+        '
         Main()
     End Sub
     Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType, ByVal S)
