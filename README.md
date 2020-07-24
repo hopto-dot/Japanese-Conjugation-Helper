@@ -5,7 +5,7 @@
 
 For the main functionality of bringing up conjugations of a word, simple type the word on it's own (in Japanese, Romaji or the English word). Find out more about how this and other commands work in [the Wiki](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use).
 
-**If you want to give feedback or request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).**
+**If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).**
 
 ## **List of commands:**
 * Word Lookup - looks up any word or phrase (main feature)
