@@ -104,20 +104,20 @@ Module Module1
         If Word.Length > 2 Then
             If Mid(Word, Word.Length - 2, 1) = " " And IsNumeric(Right(Word, 2)) = True Then
                 Console.WriteLine("Searching for " & Right(Word, 2) & " definitions of '" & Left(Word, Word.Length - 3) & "'...")
-                WordConjugate(Left(Word, Word.Length - 2), Right(Word, 2))
+                WordConjugate(Left(Word, Word.Length - 2), Right(Word, 2), False)
             ElseIf Mid(Word, Word.Length - 1, 1) = " " And IsNumeric(Right(Word, 1)) = True And Right(Word, 1) <> "1" Then
                 Console.WriteLine("Searching for " & Right(Word, 1) & " definitions of '" & Left(Word, Word.Length - 2) & "'...")
-                WordConjugate(Left(Word, Word.Length - 2), Right(Word, 1))
+                WordConjugate(Left(Word, Word.Length - 2), Right(Word, 1), False)
             ElseIf Mid(Word, Word.Length - 1, 1) = " " And IsNumeric(Right(Word, 1)) = True And Right(Word, 1) = "1" Then
                 Console.WriteLine("Searching for '" & Word & "'...")
-                WordConjugate(Left(Word, Word.Length - 2), Right(Word, 1))
+                WordConjugate(Left(Word, Word.Length - 2), Right(Word, 1), False)
             Else
                 Console.WriteLine("Searching for '" & Word & "'...")
-                WordConjugate(Word, 1)
+                WordConjugate(Word, 1, False)
             End If
         Else
             Console.WriteLine("Searching for " & Word & "...")
-            WordConjugate(Word, 1)
+            WordConjugate(Word, 1, False)
         End If
 
 
@@ -697,7 +697,7 @@ Module Module1
         Console.ReadLine()
         Main()
     End Sub
-    Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer)
+    Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer, ByVal Anki As Boolean)
         Const QUOTE = """"
         Dim SEquals As String = ""
 
@@ -713,18 +713,18 @@ Module Module1
             End If
             AdvancedParam = Mid(Word, SEquals + 4, 1)
 
-            If AdvancedParam < 0 Or AdvancedParam > 3 Then 'Making sure the S parameter is 1-3
+            If AdvancedParam < 1 Or AdvancedParam > 4 Then 'Making sure the S parameter is 1-3
                 Console.WriteLine()
 
                 Do Until IsNumeric(Read) = True
-                    Console.WriteLine("The 's' parameter must be in the range 1-3")
-                    Console.WriteLine("Please type a number in the range 1-3")
+                    Console.WriteLine("The 's' parameter must be in the range 1-4")
+                    Console.WriteLine("Please type a number in the range 1-4")
                     Read = Console.ReadLine
                 Loop
-                Do Until Read > -1 And Read < 4
-                    If Read < 1 Or Read > 3 Then
-                        Console.WriteLine("The 's' parameter must be in the range 1-3")
-                        Console.WriteLine("Please type a number in the range 1-3")
+                Do Until Read > 0 And Read < 5
+                    If Read < 1 Or Read > 4 Then
+                        Console.WriteLine("The 's' parameter must be in the range 1-4")
+                        Console.WriteLine("Please type a number in the range 1-4")
                     End If
                     Read = Console.ReadLine
                 Loop
@@ -774,7 +774,8 @@ Module Module1
         Dim WordLink As String = ""
         Dim FoundWords(0) As String
         Dim FoundDefinitions(0) As String
-        Dim FoundTypes(0) As String
+        Dim FoundWordLinks(0) As String
+        Dim FoundTypes As String
         'Dim ScrapFull As String
         Dim Max As Integer = WordIndex
         Dim WordChoice As Integer = 30
@@ -784,7 +785,7 @@ Module Module1
             For LoopIndex = 0 To Max - 1
                 Array.Resize(FoundWords, FoundWords.Length + 1)
                 Array.Resize(FoundDefinitions, FoundDefinitions.Length + 1)
-                Array.Resize(FoundTypes, FoundTypes.Length + 1)
+                Array.Resize(FoundWordLinks, FoundWordLinks.Length + 1)
                 Try
                     'Getting the Japanese word from the search results:
                     ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
@@ -799,7 +800,7 @@ Module Module1
                     End If
                     FoundWords(LoopIndex) = ActualSearchWord
 
-                    'FoundDefinitions(LoopIndex) = DefinitionScraper(ActualSearchWord).replace("&#39;", "")
+                    '
                     'Console.WriteLine("FoundWords(" & LoopIndex & "): " & ActualSearchWord)
 
                     'Getting the link of the actual word:
@@ -821,8 +822,10 @@ Module Module1
                     End If
                 End Try
 
-                FoundDefinitions(LoopIndex) = WordLinkScraper(WordLink).replace("&#39;", "")
-                FoundTypes(LoopIndex) = TypeScraper(WordLink).replace("&#39;", "")
+                FoundDefinitions(LoopIndex) = DefinitionScraper(WordLink).replace("&#39;", "")
+                FoundWordLinks(LoopIndex) = WordLink
+                'FoundDefinitions(LoopIndex) = WordLinkScraper(WordLink).replace("&#39;", "")
+                'FoundTypes(LoopIndex) = TypeScraper(WordLink).replace("&#39;", "")
 
                 If FoundDefinitions(LoopIndex).IndexOf("|") <> -1 Then
                     ActualSearch1stAppearance = FoundDefinitions(LoopIndex).IndexOf("|")
@@ -837,7 +840,7 @@ Module Module1
             Next                                                          'end of multiple word scrapping ___________________________________________________________________________
             Array.Resize(FoundWords, FoundWords.Length - 1)
             Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
-
+            Array.Resize(FoundWordLinks, FoundWordLinks.Length - 1)
 
             Dim IntTest As String = ""
 
@@ -897,6 +900,14 @@ Module Module1
             If WordChoice > Max Then
                 WordChoice = FoundWords.Length - 1
             End If
+
+            If IsNothing(ActualSearchWord) = True Then
+                WordConjugate(Word, 20, False)
+            End If
+
+            FoundTypes = TypeScraper(FoundWordLinks(WordChoice - 1)).replace("&#39;", "")
+            FoundDefinitions(0) = WordLinkScraper(FoundWordLinks(WordChoice - 1)).replace("&#39;", "")
+            Console.WriteLine()
         Else                                                              'One word scrapping ---------------------------------------------------------------------------------------------
             Try
                 ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
@@ -906,15 +917,16 @@ Module Module1
                 ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
                 ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
                 WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+                FoundWordLinks(0) = WordLink
             Catch
-                Console.WriteLine("Error: Word")
+                Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
                 Console.ReadLine()
                 Main()
             End Try
 
 
             FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "")
-            FoundTypes(0) = TypeScraper(WordLink).replace("&#39;", "")
+            FoundTypes = TypeScraper(WordLink).replace("&#39;", "")
 
 
             ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
@@ -938,7 +950,7 @@ Module Module1
 
         'Building of the chosen Definition and Type arrays:
         Dim SelectedDefinition() As String = FoundDefinitions(WordChoice - 1).Split("|")
-        Dim SelectedType() As String = FoundTypes(WordChoice - 1).Split("|")
+        Dim SelectedType() As String = FoundTypes.Split("|")
         For Add = 1 To SelectedDefinition.Length
             SelectedDefinition(Add - 1) = SelectedDefinition(Add - 1) & Add
         Next
@@ -968,14 +980,28 @@ Module Module1
         Try
             Furigana = RetrieveClassRange(HTMLTemp, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
             If Furigana.Length < 600 And Furigana.Length <> 0 Then
-                FuriganaStart = Furigana.IndexOf("for")
-                Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 4)
+                FuriganaStart = Furigana.IndexOf("search for")
+                Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
                 FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
                 If FuriganaStart <> -1 Then 'if </a></li><li> Is found Then it will be removed as well as everything after it
                     Furigana = Left(Furigana, FuriganaStart)
                 End If
             Else
                 Furigana = ""
+            End If
+
+            If Furigana = ActualSearchWord Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
+                Furigana = RetrieveClassRange(HTMLTemp, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
+                If Furigana.Length < 600 And Furigana.Length <> 0 Then
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Mid(Furigana, FuriganaStart + 5)
+
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                    FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                Else
+                    Furigana = ""
+                End If
             End If
 
             If Furigana.Length < 1 Or IsNothing(Furigana) Then
@@ -1065,7 +1091,7 @@ Module Module1
 
 
         If WordChoice = 1 Then
-            FoundDefinitions(0) = DefinitionScraper(ActualSearchWord)
+            FoundDefinitions(0) = DefinitionScraper(FoundWordLinks(WordChoice - 1))
         End If
 
         'Dim DefinitionString As String = (FoundDefinitions(WordChoice - 1))
@@ -1153,6 +1179,9 @@ Module Module1
 
             If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
                 Verb = True
+                If Anki = True Then
+                    Verb = False
+                End If
             End If
         End If
 
@@ -1188,6 +1217,9 @@ Module Module1
             'For verbs:
             If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
                 Verb = True
+                If Anki = True Then
+                    Verb = False
+                End If
             End If
 
             If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
@@ -1222,7 +1254,7 @@ Module Module1
 
         If Iadjective = True Then
             ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
-            If AdvancedParam <> 0 Then
+            If AdvancedParam <> 4 Then
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.Write("- i-adjective conjugation -")
                 Console.BackgroundColor = ConsoleColor.Black
@@ -1263,7 +1295,7 @@ Module Module1
             If Right(ActualSearchWord, 1) = "な" Then
                 ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
             End If
-            If AdvancedParam <> 0 Then
+            If AdvancedParam <> 4 Then
                 If NaAdjective = True And Noun = False Then
                     Console.BackgroundColor = ConsoleColor.DarkGray
                     Console.Write("- na-adjective couplas -")
@@ -1292,14 +1324,12 @@ Module Module1
                 Console.WriteLine("wasn't: " & ActualSearchWord & "じゃなかった")
                 Console.WriteLine()
                 Console.WriteLine("te-form: " & ActualSearchWord & "で")
-
-                Console.WriteLine()
             End If
         End If
 
 
         If NoAdjective = True Then
-            If AdvancedParam <> 0 Then
+            If AdvancedParam <> 4 Then
                 'Important "titles" are highlighted to make reading the information easier
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.Write("No-adjective usage:")
@@ -1327,7 +1357,7 @@ Module Module1
         If SentenceExample.Length > 10 Then
             Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
         End If
-        If Example.Length < 100 Then
+        If Example.Length < 100 And Example.Length > 5 Then
             Console.WriteLine()
             Console.WriteLine(Example)
         End If
@@ -1357,11 +1387,19 @@ Module Module1
         Try
             KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
         Catch
-
+            Console.WriteLine("No kanji information.")
+            Console.ReadLine()
+            Main()
         End Try
 
+        If KanjiInfo = "" Then
+            Console.WriteLine("No kanji information.")
+            Console.ReadLine()
+            Main()
+        End If
+
         Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
-            Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
+        Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
         Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
         Dim LastDetailsIndex As Integer = KanjiInfo.LastIndexOf("Details")
 
@@ -1523,11 +1561,11 @@ Module Module1
         Next
 
 
-
-
-
-
-        Dim LastRequest As String = Console.ReadLine().ToLower
+        'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        Dim LastRequest As String = ""
+        If Anki = False Then
+            LastRequest = Console.ReadLine().ToLower()
+        End If
 
         Dim Types As String = FoundTypes(0)
         If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
@@ -1537,12 +1575,12 @@ Module Module1
             Console.ReadLine()
 
 
-        ElseIf LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Then
-            If FoundTypes(0).IndexOf("!") = FoundTypes(0).Length Then
-                FoundTypes(0) = Left(FoundTypes(0), FoundTypes(0).Length - 1)
+        ElseIf LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Or Anki = True Then
+            If FoundTypes.IndexOf("!") = FoundTypes.Length Then
+                FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
             End If
 
-            Dim AnkiString() As String = Types.Split("|")
+            Dim AnkiString() As String = FoundTypes.Split("|")
             Dim AnkiCopy As String = ""
             NumberCheckD = ""
             NumberCheckT = ""
@@ -1561,6 +1599,11 @@ Module Module1
                     Console.WriteLine("Error: Conjugate; Definition no; D")
                 End If
 
+                If NumberCheckT = NumberCheckD Then
+                    AnkiCopy = AnkiCopy & vbCrLf
+                End If
+                MatchT = False
+                Type = 0
                 Do Until Type = AnkiString.Length Or MatchT = True
                     MatchT = False
                     If AnkiString(Type) = "!" Then
@@ -1568,22 +1611,20 @@ Module Module1
                         Continue Do
                     End If
 
-
                     NumberCheckT = Right(AnkiString(Type), 2)
                     If IsNumeric(NumberCheckT) = False Then
                         NumberCheckT = Right(AnkiString(Type), 1)
                     End If
 
-
                     If NumberCheckT = NumberCheckD Then
                         If Definition <> 0 Or AnkiString(Type).IndexOf("aux") <> -1 Or Definition <> 0 And AnkiString(Type).IndexOf("irr") Then
-                            AnkiCopy = AnkiCopy & "\n"
+                            AnkiCopy = vbCrLf & vbCrLf & AnkiCopy
                         End If
                         If Definition < 10 Then
-                            Console.WriteLine(Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
+                            AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & vbCrLf
                         ElseIf Definition > 9 And AnkiString(Type).IndexOf("aux") <> -1 Or Definition > 9 And AnkiString(Type).IndexOf("irr") Then
-                            AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & "\n"
-                            AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & "\n"
+                            AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
+                            AnkiCopy = AnkiCopy & vbCrLf & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
                         End If
                         MatchT = True
                         AnkiString(Type) = "!"
@@ -1593,16 +1634,30 @@ Module Module1
                 Loop
 
                 If Definition < 10 Then
-                    AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & "\n"
+                    AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & vbCrLf
                 End If
 
 
                 Definition += 1
             Loop
+
+            AnkiCopy = Mid(AnkiCopy, 5)
+            AnkiCopy = AnkiCopy & vbCrLf & KanjisLine
+
+            For I = 1 To 3
+                If Not Char.IsLetter(AnkiCopy(1)) Then
+                    AnkiCopy = Mid(AnkiCopy, 3)
+                End If
+            Next
+
             My.Computer.Clipboard.SetText(AnkiCopy)
+
+            Console.Clear()
+            Console.WriteLine("Copied " & QUOTE & AnkiCopy & QUOTE & " to clipboard")
+            Console.ReadLine()
         End If
 
-        '
+
         Main()
     End Sub
     Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType, ByVal S)
@@ -1972,15 +2027,12 @@ Module Module1
         If SentenceExample.Length > 10 Then
             Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
         End If
-        Console.WriteLine()
-        If Example.Length < 100 Then
+        If Example.Length < 100 And Example.Length > 5 Then
             Console.WriteLine()
             Console.WriteLine(Example)
         End If
 
         Console.WriteLine()
-
-
         Console.BackgroundColor = ConsoleColor.White
         Console.ForegroundColor = ConsoleColor.Black
         Console.WriteLine("Kanji:")
@@ -2153,15 +2205,16 @@ Module Module1
 
         Dim LastRequest As String = Console.ReadLine().ToLower
 
-        If LastRequest = "kanji" Or LastRequest = "copy kanji" Then
+        If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
             My.Computer.Clipboard.SetText(KanjisLine)
             Console.Clear()
             Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
             Console.ReadLine()
             Main()
+        ElseIf LastRequest.ToLower = "anki" Then
+            WordConjugate(PlainVerb & " " & PlainMeaning, 1, True)
         End If
 
-        Console.ReadLine()
         Main()
     End Sub
     Sub ReadingPractice(ByRef Sentences)
@@ -2366,101 +2419,76 @@ Module Module1
         Dim FinishedAll As Boolean = False
         Dim FoundMeanings(0) As String
         Dim FoundTypes(0) As String
-        Try
-            'Loading the website's HTML code and storing it in a HTML as a string:
-            Dim Client As New WebClient
+        'Try
+        'Loading the website's HTML code and storing it in a HTML as a string:
+        Dim Client As New WebClient
             Client.Encoding = System.Text.Encoding.UTF8
-            URL = "https://jisho.org/search/" & URL
-            HTML = Client.DownloadString(New Uri(URL))
+            URL = "https://" & URL
+        HTML = Client.DownloadString(New Uri(URL))
+        Try
             ExtraIndex = HTML.IndexOf("Details ▸")
             HTML = Left(HTML, ExtraIndex)
-            ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
-            HTML = Mid(HTML, ExtraIndex)
-            'Used to debug:
-            'Console.WriteLine(HTML)
-            'Console.WriteLine("URL: " & URL)
-
-
-
-            FinishedAll = False
-            Do Until FinishedAll = True
-                'Cutting text out of the HTML code:
-                SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
-                SnipStart += 18
-
-                SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
-
-                Try
-                    If SnipEnd = 0 Or SnipStart - 18 = -1 Or Mid(HTML, SnipEnd, 40).IndexOf("meaning-tags") <> -1 Or SnipEnd < SnipStart Then
-                        FinishedAll = True
-                        Continue Do
-                    End If
-                Catch
-                    FinishedAll = True
-                    Continue Do
-                End Try
-
-                'Console.WriteLine(SnipEnd)
-
-                If SnipEnd = -1 Then
-                    FirstFail = True 'For debugging
-                    SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
-                End If
-
-                Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
-                HTML = Mid(HTML, SnipStart + 100)
-                FoundMeanings(FoundMeanings.Length - 1) = Snip
-                Array.Resize(FoundMeanings, FoundMeanings.Length + 1)
-            Loop
-
         Catch
-            Try
-                Console.Clear()
-                Console.WriteLine("Oh noes, something bad happened :O")
-                Console.WriteLine()
-                Console.WriteLine("Error: DefinitionScraper")
-                Console.WriteLine("{Snip Beginning}: |meaning-meaning|")
-                Console.WriteLine("{Snip Ending}: |</span><span>&#|")
-                Console.WriteLine("Catch: 1")
-                Console.WriteLine("URL: " & URL)
-                Console.WriteLine("Read: |" & Read & "|")
-                Console.WriteLine("SnipStart: " & SnipStart)
-                Console.WriteLine("[SnipStart - 18]: " & SnipStart - 18)
-                Console.WriteLine("SnipEnd: " & SnipEnd)
-                Console.WriteLine("[HTML.length]: " & HTML.Length)
-                Console.WriteLine("Snip: " & Snip)
-                Console.WriteLine("First fail: " & FirstFail)
-                Console.WriteLine("FoundMeanings.Length:" & FoundMeanings.Length)
-                Console.ReadLine()
-                Main()
-            Catch
-                Console.WriteLine()
-                Console.WriteLine("Error: DefinitionScraper; FirstError.NotCaught")
-                Console.WriteLine("Catch: 2")
-                Console.WriteLine("Read: " & Read)
-                Console.WriteLine("URL: " & URL)
-                Console.WriteLine("This was caused by another error")
-                Console.ReadLine()
-                Main()
-            End Try
-
         End Try
+        ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
+        HTML = Mid(HTML, ExtraIndex)
+        'Used to debug:
+        'Console.WriteLine(HTML)
+        'Console.WriteLine("URL: " & URL)
 
-        'Making one string out of an array so it can all be returned out of the function
-        Array.Resize(FoundMeanings, FoundMeanings.Length - 1)
-        Snip = ""
 
-        For Concat = 1 To FoundMeanings.Length
+        'Cutting text out of the HTML code:
+        SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
+            SnipStart += 18
 
-            Snip &= FoundMeanings(Concat - 1) & Concat & "|"
+            SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
 
-        Next
 
-        Try
-            Snip = Left(Snip, Snip.Length - 1)
-        Catch
-            Console.WriteLine("Error: Definition; Snip")
-        End Try
+
+            'Console.WriteLine(SnipEnd)
+
+            If SnipEnd = -1 Then
+                FirstFail = True 'For debugging
+                SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
+            End If
+
+            Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+
+
+
+        'Catch
+        '   Try
+        '  Console.Clear()
+        ' Console.WriteLine("Oh noes, something bad happened :O")
+        'Console.WriteLine()
+        'Console.WriteLine("Error: DefinitionScraper")
+        'Console.WriteLine("{Snip Beginning}: |meaning-meaning|")
+        'Console.WriteLine("{Snip Ending}: |</span><span>&#|")
+        'Console.WriteLine("Catch: 1")
+        'Console.WriteLine("URL: " & URL)
+        'Console.WriteLine("Read: |" & Read & "|")
+        'Console.WriteLine("SnipStart: " & SnipStart)
+        'Console.WriteLine("[SnipStart - 18]: " & SnipStart - 18)
+        'Console.WriteLine("SnipEnd: " & SnipEnd)
+        'Console.WriteLine("[HTML.length]: " & HTML.Length)
+        'Console.WriteLine("Snip: " & Snip)
+        ''Console.WriteLine("First fail: " & FirstFail)
+        'Console.WriteLine("FoundMeanings.Length:" & FoundMeanings.Length)
+        'Console.ReadLine()
+        'Main()
+        'Catch
+        '   Console.WriteLine()
+        '  Console.WriteLine("Error: DefinitionScraper; FirstError.NotCaught")
+        ' Console.WriteLine("Catch: 2")
+        'Console.WriteLine("Read: " & Read)
+        'Console.WriteLine("URL: " & URL)
+        'Console.WriteLine("This was caused by another error")
+        'Console.ReadLine()
+        'Main()
+        'End Try
+
+        'End Try
+
 
         Return (Snip)
     End Function
@@ -2481,8 +2509,11 @@ Module Module1
         Client.Encoding = System.Text.Encoding.UTF8
         URL = "https://" & URL
         HTML = Client.DownloadString(New Uri(URL))
-        ExtraIndex = HTML.IndexOf("Details ▸")
-        HTML = Left(HTML, ExtraIndex)
+        Try
+            ExtraIndex = HTML.IndexOf("Details ▸")
+            HTML = Left(HTML, ExtraIndex)
+        Catch
+        End Try
         ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
         HTML = Mid(HTML, ExtraIndex)
 
