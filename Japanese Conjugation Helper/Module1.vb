@@ -1057,7 +1057,7 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine(ActualInfo(Looper, 2))
                 Console.WriteLine(ActualInfo(Looper, 3))
-                Console.WriteLine("Found in :" & JustResultsScraper(ActualInfo(Looper, 0), 2))
+                Console.WriteLine("Found in :" & JustResultsScraper(ActualInfo(Looper, 0), 2, ActualSearchWord))
                 Console.WriteLine()
 
             Next
@@ -1703,6 +1703,7 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine(ActualInfo(Looper, 2))
                 Console.WriteLine(ActualInfo(Looper, 3))
+                Console.WriteLine("Found in :" & JustResultsScraper(ActualInfo(Looper, 0), 2, PlainVerb))
                 Console.WriteLine()
             Next
         Catch
@@ -2721,7 +2722,7 @@ Module Module1
 
         Return (Snip)
     End Function
-    Function JustResultsScraper(ByVal Word, ByVal Number)
+    Function JustResultsScraper(ByVal Word, ByVal Number, ByVal ActualWord)
         Const QUOTE = """"
         Dim ActualSearchWord As String = ""
         Dim HTML As String = ""
@@ -2752,37 +2753,39 @@ Module Module1
         ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
 
         If Number > 1 And ActualSearchWord.Length = 1 Then
-            JustResultsScraper(Word, Number + 1)
+            JustResultsScraper(Word, Number + 1, ActualWord)
         End If
 
-
+        If ActualSearchWord = ActualWord And Number > 1 Then
+            JustResultsScraper(Word, Number + 1, ActualWord)
+        End If
 
         'Getting the definition -------------------------------------
         HTML = Client.DownloadString(New Uri("https://jisho.org/search/" & ActualSearchWord))
-        Dim SnipStart, SnipEnd, ExtraIndex As Integer
-        Dim Snip As String
-        Try
-            ExtraIndex = HTML.IndexOf("Details ▸")
-            HTML = Left(HTML, ExtraIndex)
-        Catch
-        End Try
-        ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
-        HTML = Mid(HTML, ExtraIndex)
+            Dim SnipStart, SnipEnd, ExtraIndex As Integer
+            Dim Snip As String
+            Try
+                ExtraIndex = HTML.IndexOf("Details ▸")
+                HTML = Left(HTML, ExtraIndex)
+            Catch
+            End Try
+            ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
+            HTML = Mid(HTML, ExtraIndex)
 
-        'Cutting text out of the HTML code:
-        SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
-        SnipStart += 18
+            'Cutting text out of the HTML code:
+            SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
+            SnipStart += 18
 
-        SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
+            SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
 
-        If SnipEnd = -1 Then
-            SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
-        End If
+            If SnipEnd = -1 Then
+                SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
+            End If
 
-        Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+            Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
 
 
-        Return (ActualSearchWord & " (" & Snip & ")")
+            Return (ActualSearchWord & " (" & Snip & ")")
     End Function
 
     'TO DO:
