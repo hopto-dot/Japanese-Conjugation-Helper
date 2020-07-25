@@ -255,20 +255,28 @@ Module Module1
 
         Dim SentenceExample As String = ""
         Dim Example As String = ""
-        Dim WordURL As String = ("https://jisho.org/search/" & Word)
+        Dim WordURL As String = "https://jisho.org/search/" & Word
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
 
         Dim HTML As String
         HTML = Client.DownloadString(New Uri(WordURL))
+        Dim AddingTemp As String
+
+        If WordIndex > 20 Then
+            WordURL = ("https://jisho.org/search/" & Word & "%20%23words?page=2")
+            AddingTemp = Client.DownloadString(New Uri(WordURL))
+            HTML = HTML & AddingTemp
+        End If
+
         Dim HTMLTemp As String = HTML
 
         If WordIndex < 1 Then
             WordIndex = 1
         End If
 
-        If WordIndex > 20 Then
-            WordIndex = 20
+        If WordIndex > 40 Then
+            WordIndex = 40
         End If
 
         Dim ActualSearchWord As String = ""
@@ -280,7 +288,7 @@ Module Module1
         Dim FoundTypes As String
         'Dim ScrapFull As String
         Dim Max As Integer = WordIndex
-        Dim WordChoice As Integer = 30
+        Dim WordChoice As Integer = 10000
         Dim ActualSearch2ndAppearance As String
         Dim Definition1 As String = ""
         If WordIndex <> 1 Then              'scraping of words and definitions -------------------------------------------------------------------------------------------
@@ -295,6 +303,7 @@ Module Module1
                     ActualSearchWord = ActualSearchWord.Replace("<span>", "")
                     ActualSearchWord = ActualSearchWord.Replace("</span>", "")
                     If ActualSearchWord.Length = 0 Then
+                        Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
                         Continue For
                     End If
                     If ActualSearchWord.Length > 0 Then
@@ -302,7 +311,6 @@ Module Module1
                     End If
                     FoundWords(LoopIndex) = ActualSearchWord
 
-                    '
                     'Console.WriteLine("FoundWords(" & LoopIndex & "): " & ActualSearchWord)
 
                     'Getting the link of the actual word:
@@ -315,7 +323,7 @@ Module Module1
                     WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
 
                 Catch 'If there are no more search results then:
-                    LoopIndex = WordIndex
+                        LoopIndex = WordIndex
                     Console.WriteLine(LoopIndex + 1 & ": " & ActualSearchWord & " - " & FoundDefinitions(LoopIndex))
                     If ActualSearchWord = "" Then
                         Console.WriteLine("Word couldn't be found")
@@ -326,8 +334,12 @@ Module Module1
 
                 FoundDefinitions(LoopIndex) = DefinitionScraper(WordLink).replace("&#39;", "")
                 FoundWordLinks(LoopIndex) = WordLink
-                'FoundDefinitions(LoopIndex) = WordLinkScraper(WordLink).replace("&#39;", "")
-                'FoundTypes(LoopIndex) = TypeScraper(WordLink).replace("&#39;", "")
+                If ActualSearchWord = Nothing Then
+                    Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
+                End If
+                If FoundWordLinks(LoopIndex) = Nothing Then
+                    Array.Resize(FoundWordLinks, FoundWordLinks.Length - 1)
+                End If
 
                 If FoundDefinitions(LoopIndex).IndexOf("|") <> -1 Then
                     ActualSearch1stAppearance = FoundDefinitions(LoopIndex).IndexOf("|")
@@ -340,17 +352,17 @@ Module Module1
 
 
             Next                                                          'end of multiple word scrapping ___________________________________________________________________________
-            Array.Resize(FoundWords, FoundWords.Length - 1)
             Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
-            Array.Resize(FoundWordLinks, FoundWordLinks.Length - 1)
+            Array.Resize(FoundWords, FoundDefinitions.Length)
+            Array.Resize(FoundWordLinks, FoundDefinitions.Length)
 
             Dim IntTest As String = ""
 
             Dim FirstBlank As Boolean = True
-            Do Until WordChoice <= WordIndex And WordChoice >= 1
+            Do Until WordChoice <= FoundDefinitions.Length And WordChoice >= 1
                 If IsNumeric(IntTest) = True Then
                     WordChoice = CInt(IntTest)
-                    If WordChoice <= WordIndex And WordChoice >= 1 Then
+                    If WordChoice <= FoundDefinitions.Length And WordChoice >= 1 Then
                         Continue Do
                     Else
                         WordChoice = WordIndex + 10
@@ -756,7 +768,7 @@ Module Module1
 
         If Iadjective = True Then
             ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
-            If AdvancedParam <> 4 Then
+            If AdvancedParam < 3 Then
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.Write("- i-adjective conjugation -")
                 Console.BackgroundColor = ConsoleColor.Black
@@ -797,7 +809,7 @@ Module Module1
             If Right(ActualSearchWord, 1) = "な" Then
                 ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
             End If
-            If AdvancedParam <> 4 Then
+            If AdvancedParam < 3 Then
                 If NaAdjective = True And Noun = False Then
                     Console.BackgroundColor = ConsoleColor.DarkGray
                     Console.Write("- na-adjective couplas -")
@@ -831,7 +843,7 @@ Module Module1
 
 
         If NoAdjective = True Then
-            If AdvancedParam <> 4 Then
+            If AdvancedParam < 3 Then
                 'Important "titles" are highlighted to make reading the information easier
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.Write("No-adjective usage:")
@@ -2742,6 +2754,8 @@ Module Module1
         If Number > 1 And ActualSearchWord.Length = 1 Then
             JustResultsScraper(Word, Number + 1)
         End If
+
+
 
         'Getting the definition -------------------------------------
         HTML = Client.DownloadString(New Uri("https://jisho.org/search/" & ActualSearchWord))
