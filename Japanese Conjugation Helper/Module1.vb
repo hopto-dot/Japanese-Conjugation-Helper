@@ -420,6 +420,7 @@ Module Module1
             End If
 
             FoundTypes = TypeScraper(FoundWordLinks(WordChoice - 1)).replace("&#39;", "")
+            FoundTypes = FoundTypes.Replace("!", "")
             FoundDefinitions(0) = WordLinkScraper(FoundWordLinks(WordChoice - 1)).replace("&#39;", "")
             Console.WriteLine()
         Else                                                              'One word scrapping ---------------------------------------------------------------------------------------------
@@ -463,7 +464,7 @@ Module Module1
         End If
 
         'Building of the chosen Definition and Type arrays:
-        Dim SelectedDefinition() As String = FoundDefinitions(WordChoice - 1).Split("|")
+        Dim SelectedDefinition() As String = FoundDefinitions(0).Split("|")
         Dim SelectedType() As String = FoundTypes.Split("|")
         For Add = 1 To SelectedDefinition.Length
             SelectedDefinition(Add - 1) = SelectedDefinition(Add - 1) & Add
@@ -992,7 +993,7 @@ Module Module1
                 End Try
 
                 JustEng = JustEng.Replace(",", ", ")
-                JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
+                'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
 
                 ActualInfo(Looper, 1) = JustEng
 
@@ -1011,7 +1012,7 @@ Module Module1
                         FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 2) &= ReadingSnip & ", " 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
 
                         KunReading = Mid(KunReading, SecondFinder + 10)
 
@@ -1020,7 +1021,7 @@ Module Module1
                         FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 2) &= ReadingSnip 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
 
                         LastReadingFound = True
                     Else
@@ -1034,7 +1035,7 @@ Module Module1
                         FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 3) &= ReadingSnip & ", " 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
 
                         OnReading = Mid(OnReading, SecondFinder + 10)
 
@@ -1043,7 +1044,7 @@ Module Module1
                         FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 3) &= ReadingSnip 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
 
                         LastReadingFound = True
                     Else
@@ -1057,7 +1058,7 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine(ActualInfo(Looper, 2))
                 Console.WriteLine(ActualInfo(Looper, 3))
-                Console.WriteLine("Found in :" & JustResultsScraper(ActualInfo(Looper, 0), 2, ActualSearchWord))
+                Console.WriteLine("Found in: " & JustResultsScraper(ActualInfo(Looper, 0), 2, ActualSearchWord))
                 Console.WriteLine()
 
             Next
@@ -1192,8 +1193,20 @@ Module Module1
         Dim teStem As String
         Dim Volitional As String
 
-        'This is the word with the "to" (in for example "to play") and without the bracketed context
 
+        Dim NumberRemover As String = Right(Meaning, 2)
+        If NumberRemover.IndexOf(".") <> -1 Then
+            NumberRemover = Right(Meaning, 1)
+        End If
+        If IsNumeric(NumberRemover) = False Then
+            NumberRemover = Right(Meaning, 1)
+        End If
+
+        If IsNumeric(NumberRemover) = True Then
+            Meaning = Left(Meaning, Meaning.length - NumberRemover.Length)
+        End If
+
+        'This is the word with the "to" (in for example "to play") and without the bracketed context
         Dim PlainMeaning As String = Meaning.replace("to ", "")
         Dim Bracket1, Bracket2 As Integer
         Bracket1 = PlainMeaning.IndexOf("(")
@@ -1407,8 +1420,7 @@ Module Module1
         End If
 
 
-
-        If S < 2 Then 'Only show if "-s" isn't in use (all results want to be shown)
+        If S = 1 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Formal:")
             Console.BackgroundColor = ConsoleColor.Black
@@ -1426,14 +1438,10 @@ Module Module1
             Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
             Console.WriteLine("Didn't " & PlainMeaning & ": " & NegativeStem & "なかった")
             Console.WriteLine()
-        End If
-        If S < 3 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Te-forms:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Te-stem: " & teStem)
-        End If
-        If S < 2 Then
             Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "いる")
             Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "います")
             Console.WriteLine("Was " & PresentMeaning & ": " & teStem & "いた")
@@ -1442,59 +1450,61 @@ Module Module1
             Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "なくて")
             Console.WriteLine("Negative te-form:")
             Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ないで")
-        End If
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Volitional:")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう")
-        Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
-        Console.WriteLine("I've decided to " & PlainMeaning & ": " & Volitional & "と思っています")
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Volitional:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう")
+            Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+            Console.WriteLine("I've decided to " & PlainMeaning & ": " & Volitional & "と思っています")
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Potential (Ability):")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
-        If S < 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Potential (Ability):")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
             Console.WriteLine("Aren't able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "ない")
-        End If
-        Console.WriteLine("Have the ability to " & PlainMeaning & " (formal): " & PlainVerb & "ことができる")
-        'Console.WriteLine("Can you " & PlainMeaning & "?: " & Left(Potential, Potential.Length - 1) & "ますか？")
+            Console.WriteLine("Have the ability to " & PlainMeaning & " (formal): " & PlainVerb & "ことができる")
+            Console.WriteLine("Can you " & PlainMeaning & "?: " & Left(Potential, Potential.Length - 1) & "ますか？")
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Causative (Being made to do something or letting it be done):")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
-        Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
-        Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
-        'Console.WriteLine("Will you let me " & PlainMeaning & "?: " & Left(Causative, Causative.Length - 1) & "てくれませんか？")
-        'Console.WriteLine("I'll let you " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "てあげます")
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Causative (Being made to do something or letting it be done):")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
+            Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
+            Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Conditional:")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
-        Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Conditional:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
+            Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
+            Console.WriteLine()
+            Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
+            Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら")
 
-        If S < 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Want:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Want to " & PlainMeaning & ": " & masuStem & "たい")
+            Console.WriteLine("Wanted to " & PlainMeaning & ": " & masuStem & "たかった")
+            Console.WriteLine("Don't want to " & PlainMeaning & ": " & masuStem & "たくない")
+            Console.WriteLine("Didn't want to " & PlainMeaning & ": " & masuStem & "たくなかった")
+
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Having a try at something (see what is it like):")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("To try " & PresentMeaning & ": " & teStem & "みる")
-        End If
-        If S < 2 Then
             Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
             Console.WriteLine("Wanted to try " & PlainMeaning & ": " & teStem & "みたかった")
             Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
             Console.WriteLine("Wanted to try " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たかった")
-        End If
 
-        If S < 3 Then
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Too much:")
@@ -1502,51 +1512,150 @@ Module Module1
             Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " too much: " & masuStem & "すぎる")
             Console.WriteLine("I " & PlainMeaning & " too much: " & masuStem & "すぎます")
             Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
-        End If
 
-        If S < 3 Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Do and don't need to:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Need to/should " & PlainMeaning & "　(very informal): " & NegativeStem & "なきゃ")
+            Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なくちゃいけない")
+            Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なければいけません")
+            Console.WriteLine("Don't need to " & PlainMeaning & ": " & NegativeStem & "なくてもいい")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Extra:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("I intend to " & PlainMeaning & ": " & PlainVerb & "つもりです")
+            Console.WriteLine("May " & PlainMeaning & ": " & PlainVerb & "かもしれない")
+            Console.WriteLine("Why don't you " & PlainMeaning & " (informal): " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "らどうですか")
+            Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " to prepare for something:" & teStem & "おく")
+            Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
+
+        ElseIf S = 2 Then
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Te-forms:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Te-stem: " & teStem)
+            Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "いる")
+            Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "なくて")
+            Console.WriteLine("Negative te-form:")
+            Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ないで")
+            Console.WriteLine()
+            Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Volitional:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう")
+            Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Potential (Ability):")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
+            Console.WriteLine("Aren't able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "ない")
+            Console.WriteLine("Have the ability to " & PlainMeaning & " (formal): " & PlainVerb & "ことができる")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Causative (Being made to do something or letting it be done):")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
+            Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
+            Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Conditional:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
+            Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
+            Console.WriteLine()
+            Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
+            Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら")
+
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Want:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Want to " & PlainMeaning & ": " & masuStem & "たい")
-        End If
-        If S < 2 Then
-            Console.WriteLine("Wanted to " & PlainMeaning & ": " & masuStem & "たかった")
-            Console.WriteLine("Don't want to " & PlainMeaning & ": " & masuStem & "たくない")
-            Console.WriteLine("Didn't want to " & PlainMeaning & ": " & masuStem & "たくなかった")
-        End If
 
-        If S < 3 Then
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Extra:")
+            Console.WriteLine("Auxiliaries:")
             Console.BackgroundColor = ConsoleColor.Black
-            Console.WriteLine("I intend to " & PlainMeaning & ": " & PlainVerb & "です/だ")
-        End If
+            Console.WriteLine("To try " & PresentMeaning & ": " & teStem & "みる")
+            Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
+            Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
+            Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " too much: " & masuStem & "すぎる")
+            Console.WriteLine("I " & PlainMeaning & " too much: " & masuStem & "すぎます")
+            Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
+            Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " to prepare for something: " & teStem & "おく")
+            Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
+        ElseIf S = 3 Then
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Volitional:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
 
-        If S = 3 Then
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Important")
+            Console.WriteLine("Potential (Ability):")
             Console.BackgroundColor = ConsoleColor.Black
-            Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ない")
+            Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
+            Console.WriteLine("Have the ability to " & PlainMeaning & " (formal): " & PlainVerb & "ことができる")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Causative (Being made to do something or letting it be done):")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
+            Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
+            Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Conditional:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
+            Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
+            Console.WriteLine()
+            Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
+            Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Important:")
+            Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Te-stem: " & teStem)
+            Console.WriteLine("Negative: " & NegativeStem & "ない")
+        ElseIf S = 4 Then
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Important:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Te-stem: " & teStem)
+            Console.WriteLine("Negative: " & NegativeStem & "ない")
         End If
 
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
         Dim WordURL As String = ("https://jisho.org/search/" & PlainVerb & "%20%23sentences")
         Dim HTML As String = Client.DownloadString(New Uri(WordURL))
-        Dim Example As String = ""
-        Dim SentenceExample As String
-        SentenceExample = RetrieveClassRange(HTML, "<li class=" & QUOTE & "clearfix" & QUOTE & ">", "inline_copyright", "Sentence Example") 'Firstly extracting the whole group
-        If SentenceExample.Length > 10 Then
-            Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
-        End If
-        If Example.Length < 100 And Example.Length > 5 Then
-            Console.WriteLine()
-            Console.WriteLine(Example)
+
+        If S < 3 Then
+            Dim Example As String = ""
+            Dim SentenceExample As String
+            SentenceExample = RetrieveClassRange(HTML, "<li class=" & QUOTE & "clearfix" & QUOTE & ">", "inline_copyright", "Sentence Example") 'Firstly extracting the whole group
+            If SentenceExample.Length > 10 Then
+                Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
+            End If
+            If Example.Length < 100 And Example.Length > 5 Then
+                Console.WriteLine()
+                Console.WriteLine(Example)
+            End If
         End If
 
         Console.WriteLine()
@@ -1638,7 +1747,7 @@ Module Module1
                 End Try
 
                 JustEng = JustEng.Replace(",", ", ")
-                JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
+                'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
 
                 ActualInfo(Looper, 1) = JustEng
 
@@ -1659,7 +1768,7 @@ Module Module1
                         FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 2) &= ReadingSnip & ", " 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
 
                         KunReading = Mid(KunReading, SecondFinder + 10)
 
@@ -1668,7 +1777,7 @@ Module Module1
                         FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 2) &= ReadingSnip 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
 
                         LastReadingFound = True
                     Else
@@ -1682,7 +1791,7 @@ Module Module1
                         FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 3) &= ReadingSnip & ", " 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
 
                         OnReading = Mid(OnReading, SecondFinder + 10)
 
@@ -1691,7 +1800,7 @@ Module Module1
                         FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
                         ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                        ActualInfo(Looper, 3) &= ReadingSnip 'Adding the reading to the Actual info array
+                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
 
                         LastReadingFound = True
                     Else
