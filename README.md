@@ -23,9 +23,10 @@ For the main functionality of bringing up conjugations of a word, simple type th
 
 ***
 ## Features planned to be coming soon
-* Listening practice - Listen to words and type in what you heard
 * Important Anki decks and generate reverse cards.
 * New parameters
-* Preferences (settings that will be remembered for the next time you run the program), cool right? No? Ok then :(
 * New forms - new forms are constantly being added
+* Search for grammar
+* Input sentences and then get definitions for each word
+* Listen to/watch a clip from a random movie that contains the word you search
 ***
