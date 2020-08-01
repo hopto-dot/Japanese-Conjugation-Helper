@@ -11,6 +11,7 @@ For the main functionality of bringing up conjugations of a word, simple type th
 * Word Lookup - looks up any word or phrase (main feature)
 * /p - conjugation practice (practice conjugating a word of your choice into different forms)
 * /r - reading practice (essentially a flash card creator)
+* /prefs - Lets you change program settings, these are saved for the next time you use the program.
 * /h or /help (brings up more information about a command, not as detailed as the Wiki)
 
 ***
