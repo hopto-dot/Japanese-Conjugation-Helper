@@ -2,23 +2,71 @@
 Imports System.Net
 Imports System.Text.RegularExpressions
 Imports Microsoft.VisualBasic
+Imports System.IO
 Module Module1
     Sub Main()
+        Console.Clear()
         'For the input of Japanese Chaaracters
         Console.Title() = "Conjugator"
         Console.InputEncoding = System.Text.Encoding.Unicode
         Console.OutputEncoding = System.Text.Encoding.Unicode
         Randomize()
+
         Const QUOTE = """"
 
+        'Download()
         'Template for sound
         'My.Computer.Audio.Play("", AudioPlayMode.Background)
+        Dim ExePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)
+        Dim User As String = Mid(ExePath, ExePath.IndexOf("Users") + 7)
+        User = Left(User, User.IndexOf("\"))
 
-        Console.Clear()
-        Console.WriteLine("Enter command, type " & QUOTE & "/h" & QUOTE & " for help")
+        If Int((50) * Rnd()) <> 2 Then
+            Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
+        Else
+            Console.WriteLine("Enter a command! ^o^")
+        End If
 
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
-        Dim Word As String = Console.ReadLine 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
+        Dim Word As String = Console.ReadLine.ToLower 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
+
+        If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
+            Main()
+        End If
+
+        If Word = "!test" Then 'This is just a test
+            Download()
+            Console.WriteLine("Done.")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Left(Word, 4) = "/git" Or Word = "/project" Then
+            Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "github.com/hopto-dot/Japanese-Conjugation-Helper")
+            Main()
+        End If
+
+        If Left(Word, 7) = "/review" Or Left(Word, 5) = "/rate" Or Left(Word, 9) = "/feedback" Then
+            Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "forms.gle/t1EYz8vWqg9VVrwL6")
+            Main()
+        End If
+
+        If Left(Word, 5) = "/file" Then
+            Try
+                Process.Start("C:\ProgramData\Japanese Conjugation Helper")
+            Catch
+                Console.Clear()
+                Console.WriteLine("No program files have been created yet.")
+                Console.WriteLine("Type '/prefs' to get started.")
+                Console.ReadLine()
+            End Try
+
+            Main()
+        End If
+
+        If Left(Word, 5) = "/pref" Then
+            Preferences()
+        End If
 
         If Word = "/" Then
             Console.WriteLine("This is not a command")
@@ -38,18 +86,15 @@ Module Module1
         If Left(Word, 3) = "/p " Then
             ConjugationPractice(Right(Word, Word.Length - 3))
         End If
-        'If Left(Word, 2) = "/p" Then
-        'Console.WriteLine("Wrong format.")
-        'Console.ReadLine()
-        'Main()
-        'End If
 
         If Word = "/h" Or Word = "/help" Then
             Console.Clear()
+            Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Find more info in the wiki.")
-            Console.WriteLine("If you want to give feedback or request features or report bugs, you may do so here -> https://forms.gle/WNV1s41cWKrjSMhH6")
+            Console.WriteLine("If you want to give feedback, request a feature or report bugs do '/feeback' or '/rate'")
+            Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine()
-            Console.WriteLine("List of commands (note commands aren't case sensitive):")
+            Console.WriteLine("List of commands (note: commands are case sensitive):")
 
             Console.WriteLine()
             Console.WriteLine("/h: brings up this help menu, if you want more help with a command then add the [command] parameter:")
@@ -69,6 +114,18 @@ Module Module1
             Console.WriteLine("Syntax: /p [english/japanese/romaji word]")
             Console.WriteLine()
 
+            Console.WriteLine()
+            Console.WriteLine("/prefs: Changes program preferences")
+            Console.WriteLine()
+
+            Console.WriteLine()
+            Console.WriteLine("/git: Brings the program repository page on github using Chrome")
+            Console.WriteLine()
+
+            Console.WriteLine()
+            Console.WriteLine("/files: Opens the folder the program uses to safe preferences")
+            Console.WriteLine("Note: Only works once you have used the '/prefs' command")
+            Console.WriteLine()
 
             Console.ReadLine()
             Main()
@@ -79,20 +136,6 @@ Module Module1
         End If
         If Left(Word, 6) = "/help " Then
             Help(Right(Word, Word.Length - 6))
-        End If
-
-        If (Word.ToLower).IndexOf("/shit") <> -1 Or (Word.ToLower).IndexOf("/poo") <> -1 Or (Word.ToLower).IndexOf("/crap") <> -1 Or (Word.ToLower).IndexOf("/stink") <> -1 Or (Word.ToLower).IndexOf("/smell") <> -1 Then
-            Console.WriteLine("P")
-            For shit = 1 To Int((20 + 1) * Rnd())
-                Threading.Thread.Sleep(85)
-                Console.WriteLine("o")
-            Next
-            Threading.Thread.Sleep(120)
-            Console.WriteLine("p")
-            Threading.Thread.Sleep(150)
-            Console.WriteLine(".")
-            Console.ReadLine()
-            Main()
         End If
 
         If Left(Word, 1) = "/" Then
@@ -202,10 +245,48 @@ Module Module1
     Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer, ByVal Anki As Boolean)
         Const QUOTE = """"
         Dim SEquals As String = ""
+        Dim DefG1Test As String = ""
+        Dim DefG1 As Integer = 10
 
-        'Code for the "-a" parameter; only shows the more advanced forms:
+        'Code for the "s=" parameter; only shows the more advanced forms:
+        Dim AdvancedParam As Integer = 0
+
+        Dim PreferenceReader As String = ""
+        Dim GeneralSettings(0) As String
+        Try
+            PreferenceReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+            GeneralSettings = PreferenceReader.Split(vbCrLf)
+            For Trimmer = 0 To GeneralSettings.Length - 1
+                GeneralSettings(Trimmer) = GeneralSettings(Trimmer).Trim
+            Next
+            Try
+                AdvancedParam = Right(GeneralSettings(0), 1)
+            Catch
+                AdvancedParam = 1
+            End Try
+
+            Try
+                If IsNumeric(Right(GeneralSettings(1), 2)) = True Then
+                    DefG1Test = Right(GeneralSettings(1), 2)
+                Else
+                    DefG1Test = Right(GeneralSettings(1), 1)
+                End If
+                If IsNumeric(DefG1Test) = True Then
+                    DefG1 = CInt(DefG1Test)
+                Else
+                    DefG1 = 10
+                End If
+            Catch
+                DefG1 = 10
+            End Try
+
+        Catch
+            DefG1 = 10
+            AdvancedParam = 1
+        End Try
+
+
         SEquals = Word.IndexOf(" s=")
-        Dim AdvancedParam As Integer = 1
         Dim Read As String = ""
         If SEquals <> -1 Then
             If IsNumeric(Mid(Word, SEquals + 4, 1)) = False Then 'If the user tried to enter a letter for a S parameter
@@ -215,7 +296,7 @@ Module Module1
             End If
             AdvancedParam = Mid(Word, SEquals + 4, 1)
 
-            If AdvancedParam < 1 Or AdvancedParam > 4 Then 'Making sure the S parameter is 1-3
+            If AdvancedParam < 0 Or AdvancedParam > 4 Then 'Making sure the S parameter is 1-3
                 Console.WriteLine()
 
                 Do Until IsNumeric(Read) = True
@@ -223,8 +304,8 @@ Module Module1
                     Console.WriteLine("Please type a number in the range 1-4")
                     Read = Console.ReadLine
                 Loop
-                Do Until Read > 0 And Read < 5
-                    If Read < 1 Or Read > 4 Then
+                Do Until Read > -1 And Read < 5
+                    If Read < 0 Or Read > 4 Then
                         Console.WriteLine("The 's' parameter must be in the range 1-4")
                         Console.WriteLine("Please type a number in the range 1-4")
                     End If
@@ -251,6 +332,38 @@ Module Module1
                 Word = Word.Replace(" s=" & AdvancedParam, "")
             End If
         End If
+
+
+        'Hooking up with the custom S=0 Parameter settings: -----------
+        Dim PreferenceReaderS As String = ""
+        Dim PreferencesString(0) As String
+        Try
+            PreferenceReaderS = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+        Catch
+            Console.Clear()
+            Console.WriteLine("You haven't got a custom S parameter set up.")
+            Console.WriteLine("To do this, use the '/pref' command.")
+            Console.ReadLine()
+            Main()
+        End Try
+
+        PreferencesString = PreferenceReaderS.Split(vbCrLf)
+
+        Dim SRead As Boolean = False
+        Dim Index As Integer = 0
+        Do Until SRead = True Or Index = PreferencesString.Length - 1
+            PreferencesString(Index) = PreferencesString(Index).Trim
+
+            Try
+                PreferencesString(Index) = Right(PreferencesString(Index), 1)
+            Catch
+                Array.Resize(PreferencesString, PreferencesString.Length - 1)
+                SRead = True
+            End Try
+
+            Index += 1
+        Loop
+        'S param file hookup done ______________________________________
 
 
         Dim SentenceExample As String = ""
@@ -530,11 +643,14 @@ Module Module1
         End Try
 
         'Displaying word definitions WITH corresponding the word types: -------------------------
+        DefG1 -= 1
         Dim NumberCheckD As String = ""
         Dim NumberCheckT As String = ""
         Dim Type As Integer = 0
         Dim Definition As Integer = 0
         Dim MatchT As Boolean = False
+        Dim SB1, SB2 As Integer
+        Dim BArea, BArea2 As String
         Do Until Definition = SelectedDefinition.Length
             NumberCheckD = Right(SelectedDefinition(Definition), 2)
             If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
@@ -546,6 +662,7 @@ Module Module1
             If IsNumeric(NumberCheckD) = False Then
                 Console.WriteLine("Error: Conjugate; Definition no; D")
             End If
+            NumberCheckD = NumberCheckD.Replace(" ", "")
 
 
             MatchT = False
@@ -562,17 +679,61 @@ Module Module1
                 If IsNumeric(NumberCheckT) = False Then
                     NumberCheckT = Right(SelectedType(Type), 1)
                 End If
-
+                NumberCheckT = NumberCheckT.Replace(" ", "")
 
                 If NumberCheckT = NumberCheckD Then
-                    If Definition <> 0 Or SelectedType(Type).IndexOf("aux") <> -1 Or Definition <> 0 And SelectedType(Type).IndexOf("irr") Then
+                    If Definition < DefG1 + 1 Then
+                        If Definition <> 0 Then
+                            Console.WriteLine()
+                        End If
+                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                        ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
+                            Console.WriteLine()
+                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
                         Console.WriteLine()
-                    End If
-                    If Definition < 10 Then
-                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                    ElseIf Definition > 9 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > 9 And SelectedType(Type).IndexOf("irr") Then
-                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+
+                        'Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                        If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                            Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                        Else
+                            SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                            SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                            BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                            If BArea.IndexOf("kana") = -1 Then
+                                Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                Console.ForegroundColor = ConsoleColor.DarkGray
+                                Console.WriteLine(BArea)
+                                Console.ForegroundColor = ConsoleColor.White
+                                Console.WriteLine()
+                            Else
+                                SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                                SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                                BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                                If BArea.IndexOf("kana") = -1 Then
+                                    Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                    Console.ForegroundColor = ConsoleColor.DarkGray
+                                    Console.WriteLine(BArea)
+                                    Console.ForegroundColor = ConsoleColor.White
+                                Else
+                                    BArea2 = BArea 'BArea is acting like a temp
+
+                                    If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
+                                        BArea2 = BArea.Replace("Usually written using kana alone", "")
+                                        BArea2 = BArea2.Replace(", ", "")
+                                    End If
+
+                                    If BArea2.Length > 3 Then
+                                        BArea2 = BArea2.Replace("See also", "See also ")
+                                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2)
+                                    Else
+                                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                    End If
+                                End If
+                            End If
+                        End If
+
                     End If
                     MatchT = True
                     SelectedType(Type) = "!"
@@ -581,15 +742,47 @@ Module Module1
                 Type += 1
             Loop
 
-            If Definition < 10 Then
-                Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+            If Definition < DefG1 + 1 Then
+                If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                    Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                Else
+                    SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                    SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                    BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                    If BArea.IndexOf("kana") = -1 Then
+                        Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                        BArea = BArea.Replace("See also", "See also ")
+                        Console.ForegroundColor = ConsoleColor.DarkGray
+                        Console.WriteLine(BArea)
+                        Console.ForegroundColor = ConsoleColor.White
+                    Else
+                        BArea2 = BArea 'BArea is acting like a temp
+
+                        If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
+                            BArea2 = BArea.Replace("Usually written using kana alone", "")
+                            BArea2 = BArea2.Replace(", ", "")
+                        End If
+
+                        If BArea2.Length > 3 Then
+                            BArea2 = BArea2.Replace("See also", "See also ")
+                            Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                            Console.ForegroundColor = ConsoleColor.DarkGray
+                            Console.WriteLine(BArea2)
+                            Console.ForegroundColor = ConsoleColor.White
+                        Else
+                            Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                        End If
+                    End If
+                End If
             End If
 
 
             Definition += 1
         Loop
 
-        If SelectedDefinition.Length > 10 Then
+        If SelectedDefinition.Length > DefG1 Then
+            Console.WriteLine()
             Console.ForegroundColor = ConsoleColor.DarkGray
             Console.WriteLine("[this word has a total of " & SelectedDefinition.Length & " definitions]")
             Console.ForegroundColor = ConsoleColor.White
@@ -671,69 +864,33 @@ Module Module1
 
         'Preparing some variables for the word being searched
         Dim Iadjective, NaAdjective, NoAdjective, Noun, Suru, Verb As Boolean 'Word Types Checker varibles
+        'If the S=0 parameter allows it
         If TypeSnipEnd <> -1 Then 'Meaning: If the word has more than one type. The way I implemented the word type checker is kind of weird with the Else block. I could change this at a later date to make it more efficient.
 
-            'These are checks for each type of word
-            If FullWordType.IndexOf("I-adjective") <> -1 Then 'Meaning: if "I-adjective Is found in the list of word types
-                Iadjective = True
-            End If
-            If FullWordType.IndexOf("Na-adjective") <> -1 Then
-                NaAdjective = True
-            End If
-            If FullWordType.IndexOf("No-adjective") <> -1 Then
-                NoAdjective = True
-            End If
-            If FullWordType.IndexOf("Noun") <> -1 Then
-                Noun = True
-            End If
-            If FullWordType.IndexOf("Suru verb") <> -1 Then
-                Suru = True
-            End If
-
-            'Because "Adverbial" contains verb we need to make sure the program doesn't think that it is a verb
-
-            If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
-                Verb = True
-                If Anki = True Then
-                    Verb = False
+                'These are checks for each type of word
+                If FullWordType.IndexOf("I-adjective") <> -1 Then 'Meaning: if "I-adjective Is found in the list of word types
+                    Iadjective = True
                 End If
-            End If
-        End If
+                If FullWordType.IndexOf("Na-adjective") <> -1 Then
+                    NaAdjective = True
+                End If
+                If FullWordType.IndexOf("No-adjective") <> -1 Then
+                    NoAdjective = True
+                End If
+                If FullWordType.IndexOf("Noun") <> -1 Then
+                    Noun = True
+                End If
+                If FullWordType.IndexOf("Suru verb") <> -1 Then
+                    Suru = True
+                End If
 
-        If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
-            Dim ComparativeType As String = ""
-            If FullWordType.IndexOf("Transitive") <> -1 Then
-                ComparativeType = "t"
-            End If
-            If FullWordType.IndexOf("intransitive") <> -1 Then
-                ComparativeType = "i"
-            End If
+                'Because "Adverbial" contains verb we need to make sure the program doesn't think that it is a verb
 
-            If FullWordType.IndexOf("Godan verb") <> -1 Then
-                ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
-            End If
-
-            If FullWordType.IndexOf("Ichidan verb") <> -1 Then
-                ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
-            End If
-            Console.WriteLine("Something went wrong when identifying the verb")
-            Console.Read()
-            Main()
-
-        Else 'If there is only one word type, the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
-            If TypeSnip = "I-adjective" Then
-                Iadjective = True
-            ElseIf TypeSnip = "Na-adjective" Then
-                NaAdjective = True
-            ElseIf TypeSnip = "Noun" Then
-                Noun = True
-            End If
-
-            'For verbs:
-            If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
-                Verb = True
-                If Anki = True Then
-                    Verb = False
+                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
+                    Verb = True
+                    If Anki = True Then
+                        Verb = False
+                    End If
                 End If
             End If
 
@@ -756,107 +913,144 @@ Module Module1
                 Console.WriteLine("Something went wrong when identifying the verb")
                 Console.Read()
                 Main()
-            End If
-        End If
 
-        'This is checking if the start of the meaning variable is a vowel so that it can change the example sentence from a -> an if it is
-        Dim Vowel As Boolean = False
-        If Scrap(0) = "a" Or Scrap(0) = "e" Or Scrap(0) = "i" Or Scrap(0) = "o" Or Scrap(0) = "u" Then
-            Vowel = True
-        End If
-
-
-
-        If Iadjective = True Then
-            ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
-            If AdvancedParam < 3 Then
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.Write("- i-adjective conjugation -")
-                Console.BackgroundColor = ConsoleColor.Black
-                Console.WriteLine()
-                Console.WriteLine("Polite:")
-                Console.WriteLine("it is: " & ActualSearchWord & "いです")
-                Console.WriteLine("is not: " & ActualSearchWord & "くありません")
-                Console.WriteLine("")
-                Console.WriteLine("it was: " & ActualSearchWord & "かったです")
-                Console.WriteLine("was not:" & ActualSearchWord & "くありませんでした")
-
-                Console.WriteLine("")
-
-                Console.WriteLine("Informal:")
-                Console.WriteLine("is: " & ActualSearchWord & "い")
-                Console.WriteLine("isn't: " & ActualSearchWord & "くない")
-                Console.WriteLine("")
-                Console.WriteLine("was: " & ActualSearchWord & "かった")
-                Console.WriteLine("wasn't: " & ActualSearchWord & "くなかった")
-                Console.WriteLine()
-                Console.WriteLine("te-form: " & ActualSearchWord & "くて")
-                Console.WriteLine("te-form of negative: " & ActualSearchWord & "くなくて")
-
-                Console.WriteLine()
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.Write("i-adjective usage:")
-                Console.BackgroundColor = ConsoleColor.Black
-                Console.WriteLine()
-                Console.WriteLine("子供の頃、私は" & ActualSearchWord & "かったです | When (I) was a kid, I was " & Scrap & ".")
-                Console.WriteLine("彼は" & ActualSearchWord & "くて頭が良かった | He was " & Scrap & " and smart.")
-                Console.WriteLine("これは" & ActualSearchWord & "くない | This is not " & Scrap & ".")
-                Console.WriteLine("その映画は" & ActualSearchWord & "くなかった | That film wasn't " & Scrap)
-                Console.WriteLine("パーティーは楽しくも" & ActualSearchWord & "くもなかった | The party was neither fun nor " & Scrap)
-            End If
-        End If
-        If NaAdjective = True Or Noun = True Then
-            'Checking if な exists at the end of the word so that it can be erased if it does exist
-            If Right(ActualSearchWord, 1) = "な" Then
-                ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
-            End If
-            If AdvancedParam < 3 Then
-                If NaAdjective = True And Noun = False Then
-                    Console.BackgroundColor = ConsoleColor.DarkGray
-                    Console.Write("- na-adjective couplas -")
-                    Console.BackgroundColor = ConsoleColor.Black
-                Else
-                    Console.BackgroundColor = ConsoleColor.DarkGray
-                    Console.Write("- na-adjective and noun couplas -")
-                    Console.BackgroundColor = ConsoleColor.Black
+            Else 'If there is only one word type, the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
+                If TypeSnip = "I-adjective" Then
+                    Iadjective = True
+                ElseIf TypeSnip = "Na-adjective" Then
+                    NaAdjective = True
+                ElseIf TypeSnip = "Noun" Then
+                    Noun = True
                 End If
 
-                Console.WriteLine()
-                Console.WriteLine("Polite:")
-                Console.WriteLine("it is: " & ActualSearchWord & "です")
-                Console.WriteLine("is not: " & ActualSearchWord & "じゃありません")
-                Console.WriteLine("")
-                Console.WriteLine("it was: " & ActualSearchWord & "でした")
-                Console.WriteLine("was not: " & ActualSearchWord & "じゃありませんでした")
+                'For verbs:
+                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
+                    Verb = True
+                    If Anki = True Then
+                        Verb = False
+                    End If
+                End If
 
-                Console.WriteLine("")
+                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
+                    Dim ComparativeType As String = ""
+                    If FullWordType.IndexOf("Transitive") <> -1 Then
+                        ComparativeType = "t"
+                    End If
+                    If FullWordType.IndexOf("intransitive") <> -1 Then
+                        ComparativeType = "i"
+                    End If
 
-                Console.WriteLine("Informal")
-                Console.WriteLine("is: " & ActualSearchWord & "だ")
-                Console.WriteLine("isn't: " & ActualSearchWord & "じゃない")
-                Console.WriteLine("")
-                Console.WriteLine("was: " & ActualSearchWord & "だった")
-                Console.WriteLine("wasn't: " & ActualSearchWord & "じゃなかった")
-                Console.WriteLine()
-                Console.WriteLine("te-form: " & ActualSearchWord & "で")
+                    If FullWordType.IndexOf("Godan verb") <> -1 Then
+                        ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                    End If
+
+                    If FullWordType.IndexOf("Ichidan verb") <> -1 Then
+                        ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                    End If
+                    Console.WriteLine("Something went wrong when identifying the verb")
+                    Console.Read()
+                    Main()
+                End If
+            End If
+
+            'This is checking if the start of the meaning variable is a vowel so that it can change the example sentence from a -> an if it is
+            Dim Vowel As Boolean = False
+            If Scrap(0) = "a" Or Scrap(0) = "e" Or Scrap(0) = "i" Or Scrap(0) = "o" Or Scrap(0) = "u" Then
+                Vowel = True
+            End If
+
+
+        If AdvancedParam = 0 And PreferencesString(10) <> 0 Or AdvancedParam > 1 Then
+            If Iadjective = True Then
+                ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
+                If AdvancedParam <> 1 Or AdvancedParam <> 2 Then
+                    Console.BackgroundColor = ConsoleColor.DarkGray
+                    Console.Write("- i-adjective conjugation -")
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.WriteLine()
+                    Console.WriteLine("Polite:")
+                    Console.WriteLine("it is: " & ActualSearchWord & "いです")
+                    Console.WriteLine("is not: " & ActualSearchWord & "くありません")
+                    Console.WriteLine("")
+                    Console.WriteLine("it was: " & ActualSearchWord & "かったです")
+                    Console.WriteLine("was not:" & ActualSearchWord & "くありませんでした")
+
+                    Console.WriteLine("")
+
+                    Console.WriteLine("Informal:")
+                    Console.WriteLine("is: " & ActualSearchWord & "い")
+                    Console.WriteLine("isn't: " & ActualSearchWord & "くない")
+                    Console.WriteLine("")
+                    Console.WriteLine("was: " & ActualSearchWord & "かった")
+                    Console.WriteLine("wasn't: " & ActualSearchWord & "くなかった")
+                    Console.WriteLine()
+                    Console.WriteLine("te-form: " & ActualSearchWord & "くて")
+                    Console.WriteLine("te-form of negative: " & ActualSearchWord & "くなくて")
+
+                    Console.WriteLine()
+                    Console.BackgroundColor = ConsoleColor.DarkGray
+                    Console.Write("i-adjective usage:")
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.WriteLine()
+                    Console.WriteLine("子供の頃、私は" & ActualSearchWord & "かったです | When (I) was a kid, I was " & Scrap & ".")
+                    Console.WriteLine("彼は" & ActualSearchWord & "くて頭が良かった | He was " & Scrap & " and smart.")
+                    Console.WriteLine("これは" & ActualSearchWord & "くない | This is not " & Scrap & ".")
+                    Console.WriteLine("その映画は" & ActualSearchWord & "くなかった | That film wasn't " & Scrap)
+                    Console.WriteLine("パーティーは楽しくも" & ActualSearchWord & "くもなかった | The party was neither fun nor " & Scrap)
+                End If
+            End If
+            If NaAdjective = True Or Noun = True Then
+                'Checking if な exists at the end of the word so that it can be erased if it does exist
+                If Right(ActualSearchWord, 1) = "な" Then
+                    ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
+                End If
+                If AdvancedParam <> 1 Or AdvancedParam <> 2 Then
+                    If NaAdjective = True And Noun = False Then
+                        Console.BackgroundColor = ConsoleColor.DarkGray
+                        Console.Write("- na-adjective couplas -")
+                        Console.BackgroundColor = ConsoleColor.Black
+                    Else
+                        Console.BackgroundColor = ConsoleColor.DarkGray
+                        Console.Write("- na-adjective and noun couplas -")
+                        Console.BackgroundColor = ConsoleColor.Black
+                    End If
+
+                    Console.WriteLine()
+                    Console.WriteLine("Polite:")
+                    Console.WriteLine("it is: " & ActualSearchWord & "です")
+                    Console.WriteLine("is not: " & ActualSearchWord & "じゃありません")
+                    Console.WriteLine("")
+                    Console.WriteLine("it was: " & ActualSearchWord & "でした")
+                    Console.WriteLine("was not: " & ActualSearchWord & "じゃありませんでした")
+
+                    Console.WriteLine("")
+
+                    Console.WriteLine("Informal")
+                    Console.WriteLine("is: " & ActualSearchWord & "だ")
+                    Console.WriteLine("isn't: " & ActualSearchWord & "じゃない")
+                    Console.WriteLine("")
+                    Console.WriteLine("was: " & ActualSearchWord & "だった")
+                    Console.WriteLine("wasn't: " & ActualSearchWord & "じゃなかった")
+                    Console.WriteLine()
+                    Console.WriteLine("te-form: " & ActualSearchWord & "で")
+                End If
+            End If
+
+
+            If NoAdjective = True Then
+                If AdvancedParam <> 1 Or AdvancedParam <> 2 Then
+                    'Important "titles" are highlighted to make reading the information easier
+                    Console.BackgroundColor = ConsoleColor.DarkGray
+                    Console.Write("No-adjective usage:")
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.WriteLine()
+
+                    Console.WriteLine("これは" & ActualSearchWord & "の木です  | This is a tree of the " & Scrap & ".")
+                    Console.WriteLine("これらは私たちの" & ActualSearchWord & "の伝統です | These are our family " & Scrap & "s.")
+                    Console.WriteLine(ActualSearchWord & "の銀行に行きましょう！ | Let's go to the bank of " & Scrap & "!")
+                End If
             End If
         End If
-
-
-        If NoAdjective = True Then
-            If AdvancedParam < 3 Then
-                'Important "titles" are highlighted to make reading the information easier
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.Write("No-adjective usage:")
-                Console.BackgroundColor = ConsoleColor.Black
-                Console.WriteLine()
-
-                Console.WriteLine("これは" & ActualSearchWord & "の木です  | This is a tree of the " & Scrap & ".")
-                Console.WriteLine("これらは私たちの" & ActualSearchWord & "の伝統です | These are our family " & Scrap & "s.")
-                Console.WriteLine(ActualSearchWord & "の銀行に行きましょう！ | Let's go to the bank of " & Scrap & "!")
-            End If
-        End If
-
 
 
         'Adding the い back on to the end of the word (if it is an i-adjective)
@@ -864,7 +1058,6 @@ Module Module1
         If Iadjective = True Then
             ActualSearchWord = ActualSearchWord & "い"
         End If
-
 
         'Example Sentence extraction:
         HTMLTemp = Client.DownloadString(New Uri(WordURL))
@@ -877,304 +1070,350 @@ Module Module1
             Console.WriteLine(Example)
         End If
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.White
-        Console.ForegroundColor = ConsoleColor.Black
-        Console.WriteLine("Kanji:")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.ForegroundColor = ConsoleColor.White
-
-        Dim WordHTML As String = ""
-        Try
-            'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
-            Dim WordWordURL As String = ("https://jisho.org/word/" & ActualSearchWord)
-
-            WordHTML = Client.DownloadString(New Uri(WordWordURL))
-
-
-        Catch
-            Console.WriteLine("No kanji information.")
-            Console.ReadLine()
-            Main()
-        End Try
-
-        Dim KanjiInfo As String = ""
-        Try
-            KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
-        Catch
-            Console.WriteLine("No kanji information.")
-            Console.ReadLine()
-            Main()
-        End Try
-
-        If KanjiInfo = "" Then
-            Console.WriteLine("No kanji information.")
-            Console.ReadLine()
-            Main()
+        Dim KanjiBool As Boolean = False
+        If AdvancedParam = 0 Then
+            If PreferencesString(11) <> 0 Then
+                KanjiBool = True
+            End If
         End If
 
-        Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
-        Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
-        Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
-        Dim LastDetailsIndex As Integer = KanjiInfo.LastIndexOf("Details")
+        If AdvancedParam <> 0 Or KanjiBool = True Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Black
+            Console.WriteLine("Kanji:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
 
-        Try
-            KanjiInfo = Left(KanjiInfo, LastDetailsIndex)
+            Dim WordHTML As String = ""
+            Try
+                'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
+                Dim WordWordURL As String = ("https://jisho.org/word/" & ActualSearchWord)
 
-            Dim Finished As Boolean = False
-            Do Until Finished = True 'Do until no more end splitters can be found. The sentences that are pasted won't end in "|" because of how the AHK sentence grabber works
-                I += 1
-                Array.Resize(KanjiGroup, KanjiGroup.Length + 1)
-                KanjiGroupEnd = KanjiInfo.IndexOf("Details") + 10
-                If KanjiGroupEnd = 9 Then '(-1 but at add because of the above line. This means if "Details" isn't found
-                    KanjiGroup(I) = KanjiInfo
-                    Finished = True
-                    Continue Do
-                End If
-
-                KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
-                KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
-            Loop
-            Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
-        Catch
-
-        End Try
-
-        Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
-
-        Try
-            'Y indexs:
-            '0 = Kanji
-            '1 = English meaning(s) (I will concatinate multiple meanings)
-            '2 = kun readings (concatentated if needed, usually so)
-            '3 = on readings (concatentated if needed, usually so)
-            Dim FirstFinder As Integer
-            Dim SecondFinder As Integer
-
-            Dim AllEng, AllKun, AllOn As Boolean
-            AllEng = False
-            AllKun = False
-            AllOn = False
-            Dim LastReadingFound As Boolean = False 'This is used to find the last reading of a kanji, it knows that it is a last because it ends in "</a>、" and not "</a>"
-            Dim JustEng As String
-            Dim KunReading, OnReading, ReadingSnip As String
-
-            KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
-
-            For Looper = 0 To KanjiGroup.Length - 1
-                Try 'This is for if there are no kanji
-                    FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
-                Catch
-                    Console.ReadLine()
-                    Main()
-                End Try
-                'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
-                ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
-
-                FirstFinder = KanjiGroup(Looper).IndexOf("sense")
-                KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
-
-                FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
+                WordHTML = Client.DownloadString(New Uri(WordWordURL))
 
 
-                JustEng = Left(KanjiGroup(Looper), FirstFinder)
+            Catch
+                Console.WriteLine("No kanji information.")
+                Console.ReadLine()
+                Main()
+            End Try
 
-                JustEng = Mid(JustEng, 18)
-                JustEng = Left(JustEng, JustEng.Length - 14)
-                KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
+            Dim KanjiInfo As String = ""
+            Try
+                KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
+            Catch
+                Console.WriteLine("No kanji information.")
+                Console.ReadLine()
+                Main()
+            End Try
 
-                JustEng = JustEng.Replace("           ", "")
-                FirstFinder = JustEng.IndexOf("</span>")
-                SecondFinder = JustEng.IndexOf("<span>")
-                Try
-                    JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
-                Catch
-
-                End Try
-
-                JustEng = JustEng.Replace(",", ", ")
-                'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
-
-                ActualInfo(Looper, 1) = JustEng
-
-                'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
-                FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
-                KunReading = Left(KanjiGroup(Looper), FirstFinder)
-                OnReading = Mid(KanjiGroup(Looper), FirstFinder)
-
-                ActualInfo(Looper, 2) &= "Kun Readings: "
-                ActualInfo(Looper, 3) &= "On Readings: "
-
-                LastReadingFound = False
-                Do Until LastReadingFound = True
-                    If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
-                        SecondFinder = KunReading.IndexOf("</a>、")
-                        FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
-
-                        KunReading = Mid(KunReading, SecondFinder + 10)
-
-                    ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
-                        SecondFinder = KunReading.IndexOf("</a>")
-                        FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
-
-                        LastReadingFound = True
-                    Else
-                        LastReadingFound = True
-                    End If
-                Loop
-                LastReadingFound = False
-                Do Until LastReadingFound = True
-                    If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
-                        SecondFinder = OnReading.IndexOf("</a>、")
-                        FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
-
-                        OnReading = Mid(OnReading, SecondFinder + 10)
-
-                    ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
-                        SecondFinder = OnReading.IndexOf("</a>")
-                        FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
-
-                        LastReadingFound = True
-                    Else
-                        LastReadingFound = True
-                    End If
-
-                Loop
-
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
-                Console.BackgroundColor = ConsoleColor.Black
-                Console.WriteLine(ActualInfo(Looper, 2))
-                Console.WriteLine(ActualInfo(Looper, 3))
-                Console.WriteLine("Found in: " & JustResultsScraper(ActualInfo(Looper, 0), 2, ActualSearchWord))
-                Console.WriteLine()
-
-            Next
-        Catch
-            Console.WriteLine("Couldn't generate kanji readings")
-        End Try
-
-
-        'End of Kanji information generation ________________________________________________________
-
-        Dim KanjisLine As String = "【"
-        For Kanji = 1 To ActualInfo.Length / 4
-            If Kanji <> ActualInfo.Length / 4 Then
-                KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ") ")
-            Else
-                KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ")】")
-            End If
-        Next
-
-
-        'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
-        Dim LastRequest As String = ""
-        If Anki = False Then
-            LastRequest = Console.ReadLine().ToLower()
-        End If
-
-        Dim Types As String = FoundTypes(0)
-        If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
-            My.Computer.Clipboard.SetText(KanjisLine)
-            Console.Clear()
-            Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
-            Console.ReadLine()
-
-
-        ElseIf LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Or Anki = True Then
-            If FoundTypes.IndexOf("!") = FoundTypes.Length Then
-                FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
+            If KanjiInfo = "" Then
+                Console.WriteLine("No kanji information.")
+                Console.ReadLine()
+                Main()
             End If
 
-            Dim AnkiString() As String = FoundTypes.Split("|")
-            Dim AnkiCopy As String = ""
-            NumberCheckD = ""
-            NumberCheckT = ""
-            Type = 0
-            Definition = 0
-            MatchT = False
-            Do Until Definition = SelectedDefinition.Length
-                NumberCheckD = Right(SelectedDefinition(Definition), 2)
-                If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
-                    NumberCheckD = Right(NumberCheckD, 1)
-                End If
-                If IsNumeric(NumberCheckD) = False Then
-                    NumberCheckD = Right(SelectedDefinition(Definition), 1)
-                End If
-                If IsNumeric(NumberCheckD) = False Then
-                    Console.WriteLine("Error: Conjugate; Definition no; D")
-                End If
+            Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
+            Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
+            Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
+            Dim LastDetailsIndex As Integer = KanjiInfo.LastIndexOf("Details")
 
-                If NumberCheckT = NumberCheckD Then
-                    AnkiCopy = AnkiCopy & vbCrLf
-                End If
-                MatchT = False
-                Type = 0
-                Do Until Type = AnkiString.Length Or MatchT = True
-                    MatchT = False
-                    If AnkiString(Type) = "!" Then
-                        Type += 1
+            Try
+                KanjiInfo = Left(KanjiInfo, LastDetailsIndex)
+
+                Dim Finished As Boolean = False
+                Do Until Finished = True 'Do until no more end splitters can be found. The sentences that are pasted won't end in "|" because of how the AHK sentence grabber works
+                    I += 1
+                    Array.Resize(KanjiGroup, KanjiGroup.Length + 1)
+                    KanjiGroupEnd = KanjiInfo.IndexOf("Details") + 10
+                    If KanjiGroupEnd = 9 Then '(-1 but at add because of the above line. This means if "Details" isn't found
+                        KanjiGroup(I) = KanjiInfo
+                        Finished = True
                         Continue Do
                     End If
 
-                    NumberCheckT = Right(AnkiString(Type), 2)
-                    If IsNumeric(NumberCheckT) = False Then
-                        NumberCheckT = Right(AnkiString(Type), 1)
+                    KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
+                    KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
+                Loop
+                Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
+            Catch
+
+            End Try
+
+            Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
+
+            Try
+                'Y indexs:
+                '0 = Kanji
+                '1 = English meaning(s) (I will concatinate multiple meanings)
+                '2 = kun readings (concatentated if needed, usually so)
+                '3 = on readings (concatentated if needed, usually so)
+                Dim FirstFinder As Integer
+                Dim SecondFinder As Integer
+
+                Dim AllEng, AllKun, AllOn As Boolean
+                AllEng = False
+                AllKun = False
+                AllOn = False
+                Dim LastReadingFound As Boolean = False 'This is used to find the last reading of a kanji, it knows that it is a last because it ends in "</a>、" and not "</a>"
+                Dim JustEng As String
+                Dim KunReading, OnReading, ReadingSnip As String
+
+                KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
+
+                For Looper = 0 To KanjiGroup.Length - 1
+                    Try 'This is for if there are no kanji
+                        FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
+                    Catch
+                        Console.ReadLine()
+                        Main()
+                    End Try
+                    'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+                    ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
+
+                    FirstFinder = KanjiGroup(Looper).IndexOf("sense")
+                    KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+
+                    FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
+
+
+                    JustEng = Left(KanjiGroup(Looper), FirstFinder)
+
+                    JustEng = Mid(JustEng, 18)
+                    JustEng = Left(JustEng, JustEng.Length - 14)
+                    KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
+
+                    JustEng = JustEng.Replace("           ", "")
+                    FirstFinder = JustEng.IndexOf("</span>")
+                    SecondFinder = JustEng.IndexOf("<span>")
+                    Try
+                        JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
+                    Catch
+
+                    End Try
+
+                    JustEng = JustEng.Replace(",", ", ")
+                    'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
+
+                    ActualInfo(Looper, 1) = JustEng
+
+                    'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
+                    FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
+                    KunReading = Left(KanjiGroup(Looper), FirstFinder)
+                    OnReading = Mid(KanjiGroup(Looper), FirstFinder)
+
+                    ActualInfo(Looper, 2) &= "Kun Readings: "
+                    ActualInfo(Looper, 3) &= "On Readings: "
+
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = KunReading.IndexOf("</a>、")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+
+                            KunReading = Mid(KunReading, SecondFinder + 10)
+
+                        ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = KunReading.IndexOf("</a>")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+                    Loop
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = OnReading.IndexOf("</a>、")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+
+                            OnReading = Mid(OnReading, SecondFinder + 10)
+
+                        ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = OnReading.IndexOf("</a>")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+
+                    Loop
+
+                    Console.BackgroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.WriteLine(ActualInfo(Looper, 2))
+                    Console.WriteLine(ActualInfo(Looper, 3))
+                    Console.WriteLine("Found in: " & JustResultsScraper(ActualInfo(Looper, 0), 1, ActualSearchWord))
+                    Console.WriteLine()
+
+                Next
+            Catch
+                Console.WriteLine("Couldn't generate kanji readings")
+            End Try
+
+
+            'End of Kanji information generation ________________________________________________________
+
+            Dim KanjisLine As String = "【"
+            For Kanji = 1 To ActualInfo.Length / 4
+                If Kanji <> ActualInfo.Length / 4 Then
+                    KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ") ")
+                Else
+                    KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ")】")
+                End If
+            Next
+
+
+            'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
+            Dim LastRequest As String = ""
+            If Anki = False Then
+                LastRequest = Console.ReadLine().ToLower()
+            End If
+
+            Dim Types As String = FoundTypes(0)
+            If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
+                My.Computer.Clipboard.SetText(KanjisLine)
+                Console.Clear()
+                Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
+                Console.ReadLine()
+
+
+            ElseIf LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Or Anki = True Then
+                If FoundTypes.IndexOf("!") = FoundTypes.Length Then
+                    FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
+                End If
+
+                Dim AnkiString() As String = FoundTypes.Split("|") 'How holds the types
+                Dim AnkiCopy As String = ""
+                NumberCheckD = ""
+                NumberCheckT = ""
+                Type = 0
+                Definition = 0
+                MatchT = False
+                Do Until Definition = SelectedDefinition.Length
+                    NumberCheckD = Right(SelectedDefinition(Definition), 2)
+                    If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
+                        NumberCheckD = Right(NumberCheckD, 1)
                     End If
+                    If IsNumeric(NumberCheckD) = False Then
+                        NumberCheckD = Right(SelectedDefinition(Definition), 1)
+                    End If
+                    If IsNumeric(NumberCheckD) = False Then
+                        Console.WriteLine("Error: Conjugate; Definition no; D")
+                    End If
+                    NumberCheckD = NumberCheckD.Replace(" ", "")
 
                     If NumberCheckT = NumberCheckD Then
-                        If Definition <> 0 Or AnkiString(Type).IndexOf("aux") <> -1 Or Definition <> 0 And AnkiString(Type).IndexOf("irr") Then
-                            AnkiCopy = vbCrLf & vbCrLf & AnkiCopy
-                        End If
-                        If Definition < 10 Then
-                            AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & vbCrLf
-                        ElseIf Definition > 9 And AnkiString(Type).IndexOf("aux") <> -1 Or Definition > 9 And AnkiString(Type).IndexOf("irr") Then
-                            AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
-                            AnkiCopy = AnkiCopy & vbCrLf & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
-                        End If
-                        MatchT = True
-                        AnkiString(Type) = "!"
-                        Continue Do
+                        AnkiCopy = AnkiCopy & vbCrLf
                     End If
-                    Type += 1
+                    MatchT = False
+                    Type = 0
+                    Do Until Type = AnkiString.Length Or MatchT = True
+                        MatchT = False
+                        If AnkiString(Type) = "!" Then
+                            Type += 1
+                            Continue Do
+                        End If
+
+                        NumberCheckT = Right(AnkiString(Type), 2)
+                        If IsNumeric(NumberCheckT) = False Then
+                            NumberCheckT = Right(AnkiString(Type), 1)
+                        End If
+                        NumberCheckD = NumberCheckD.Replace(" ", "")
+                        NumberCheckD = NumberCheckD.Replace(".", "")
+
+                        If NumberCheckT = NumberCheckD Then
+
+                            If Definition <> 0 Then
+                                AnkiCopy = vbCrLf & AnkiCopy
+                            End If
+
+                            If Definition < 10 Then
+                                AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & vbCrLf
+                            ElseIf Definition > 9 And AnkiString(Type).IndexOf("aux") <> -1 Or Definition > 9 And AnkiString(Type).IndexOf("irr") Then
+                                AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
+
+                                If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                                    AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                                Else
+                                    SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                                    SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                                    BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                                    If BArea.IndexOf("kana") = -1 Then
+
+                                        AnkiCopy = AnkiCopy & vbCrLf
+
+                                        AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                                    Else
+                                        AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                    End If
+
+                                End If
+                            End If
+                            MatchT = True
+                            AnkiString(Type) = "!"
+                            Continue Do
+                        End If
+                        Type += 1
+                    Loop
+
+                    If Definition < 10 Then
+                        'AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & vbCrLf
+
+                        If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                            AnkiCopy = AnkiCopy.TrimEnd
+                            AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                        Else
+                            SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                            SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                            BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                            If BArea.IndexOf("kana") = -1 Then
+                                If Definition <> 0 Then
+                                    AnkiCopy = AnkiCopy & vbCrLf
+                                End If
+                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                            Else
+                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                            End If
+                        End If
+                    End If
+
+
+                    Definition += 1
                 Loop
 
-                If Definition < 10 Then
-                    AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & vbCrLf
-                End If
+                AnkiCopy = AnkiCopy.Trim
 
+                AnkiCopy = AnkiCopy & vbCrLf & KanjisLine
 
-                Definition += 1
-            Loop
+                My.Computer.Clipboard.SetText(AnkiCopy)
 
-            AnkiCopy = Mid(AnkiCopy, 5)
-            AnkiCopy = AnkiCopy & vbCrLf & KanjisLine
+                Console.Clear()
+                Console.WriteLine("Copied " & QUOTE & AnkiCopy & QUOTE & " to clipboard")
+                Console.ReadLine()
+            End If
 
-            For I = 1 To 3
-                If Not Char.IsLetter(AnkiCopy(1)) Then
-                    AnkiCopy = Mid(AnkiCopy, 3)
-                End If
-            Next
-
-            My.Computer.Clipboard.SetText(AnkiCopy)
-
-            Console.Clear()
-            Console.WriteLine("Copied " & QUOTE & AnkiCopy & QUOTE & " to clipboard")
+        Else
             Console.ReadLine()
         End If
-
 
         Main()
     End Sub
@@ -1193,6 +1432,11 @@ Module Module1
         Dim teStem As String
         Dim Volitional As String
 
+        'Removing [], AKA Extra info
+        Try
+            Meaning = Left(Meaning, Meaning.indexof("["))
+        Catch
+        End Try
 
         Dim NumberRemover As String = Right(Meaning, 2)
         If NumberRemover.IndexOf(".") <> -1 Then
@@ -1419,8 +1663,8 @@ Module Module1
             PresentMeaning = "becoming slim"
         End If
 
-
-        If S = 1 Then
+        Dim PreferencesString(0) As String
+        If S = 4 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Formal:")
             Console.BackgroundColor = ConsoleColor.Black
@@ -1438,6 +1682,7 @@ Module Module1
             Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
             Console.WriteLine("Didn't " & PlainMeaning & ": " & NegativeStem & "なかった")
             Console.WriteLine()
+
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Te-forms:")
             Console.BackgroundColor = ConsoleColor.Black
@@ -1503,7 +1748,7 @@ Module Module1
             Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
             Console.WriteLine("Wanted to try " & PlainMeaning & ": " & teStem & "みたかった")
             Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
-            Console.WriteLine("Wanted to try " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たかった")
+            Console.WriteLine("Wanted to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たかった")
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -1532,7 +1777,7 @@ Module Module1
             Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " to prepare for something:" & teStem & "おく")
             Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
 
-        ElseIf S = 2 Then
+        ElseIf S = 3 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Te-forms:")
             Console.BackgroundColor = ConsoleColor.Black
@@ -1548,8 +1793,8 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Volitional:")
             Console.BackgroundColor = ConsoleColor.Black
-            Console.WriteLine("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう")
             Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+            Console.WriteLine("I've decided to " & PlainMeaning & ": " & Volitional & "と思っています")
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -1595,11 +1840,12 @@ Module Module1
             Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
             Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " to prepare for something: " & teStem & "おく")
             Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
-        ElseIf S = 3 Then
+        ElseIf S = 2 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Volitional:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -1632,12 +1878,316 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Te-stem: " & teStem)
             Console.WriteLine("Negative: " & NegativeStem & "ない")
-        ElseIf S = 4 Then
+        ElseIf S = 1 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Important:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Te-stem: " & teStem)
             Console.WriteLine("Negative: " & NegativeStem & "ない")
+        ElseIf S = 0 Then
+            Dim PreferenceReader As String = ""
+            'Dim PreferencesString(0) As String 'this is dimmed somewhere else so that it isn't in an if statement
+            Try
+                PreferenceReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+            Catch
+                Console.Clear()
+                Console.WriteLine("You haven't got a custom S parameter set up.")
+                Console.WriteLine("To do this, use the '/pref' command.")
+                Console.ReadLine()
+                Main()
+            End Try
+
+            PreferencesString = PreferenceReader.Split(vbCrLf)
+
+            Dim SRead As Boolean = False
+            Dim Index As Integer = 0
+            Do Until SRead = True Or Index = PreferencesString.Length - 1
+                PreferencesString(Index) = PreferencesString(Index).Trim
+
+                Try
+                    PreferencesString(Index) = Right(PreferencesString(Index), 1)
+                Catch
+                    Array.Resize(PreferencesString, PreferencesString.Length - 1)
+                    SRead = True
+                End Try
+
+                Index += 1
+            Loop
+
+            'PreferencesString()
+            'Text file to array positions:
+            'Formal:0
+            'Informal:1
+            'Te-form: 2
+            'Volitional:3
+            'Potential:4
+            'Causative:5
+            'Conditional:6
+            'Want:7
+            'Need to:8
+            'Auxilaries:9
+            'Noun/adj:10
+            'Kanji details:11
+
+            If PreferencesString(0) = 3 Then
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Formal:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("I " & PlainMeaning & ": " & masuStem & "ます")
+                Console.WriteLine("I do not " & PlainMeaning & ":   " & masuStem & "ません")
+                Console.WriteLine("I " & PastMeaning & ": " & masuStem & "ました")
+                Console.WriteLine("I did not " & PlainMeaning & ":  " & masuStem & "ませんでした")
+                Console.WriteLine("masu-stem: " & masuStem)
+            ElseIf PreferencesString(0) = 2 Then
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Formal:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("I " & PlainMeaning & ": " & masuStem & "ます")
+                Console.WriteLine("I do not " & PlainMeaning & ":   " & masuStem & "ません")
+                Console.WriteLine("I " & PastMeaning & ": " & masuStem & "ました")
+                Console.WriteLine("I did not " & PlainMeaning & ":  " & masuStem & "ませんでした")
+            ElseIf PreferencesString(0) = 1 Then
+                Console.WriteLine("masu-stem: " & masuStem)
+            End If
+
+            If PreferencesString(1) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Informal")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & ": " & PlainVerb)
+                Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ない")
+                Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
+                Console.WriteLine("Didn't " & PlainMeaning & ": " & NegativeStem & "なかった")
+                Console.WriteLine("Negative stem:" & NegativeStem)
+            ElseIf PreferencesString(1) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Informal")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & ": " & PlainVerb)
+                Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ない")
+                Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
+                Console.WriteLine("Didn't " & PlainMeaning & ": " & NegativeStem & "なかった")
+                Console.WriteLine()
+            ElseIf PreferencesString(1) = 1 Then
+                Console.WriteLine()
+                Console.WriteLine("Negative stem:" & NegativeStem)
+            End If
+
+            If PreferencesString(2) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Te-forms:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Te-stem: " & teStem)
+                Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "いる")
+                Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "います")
+                Console.WriteLine("Te-form of negative:")
+                Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "なくて")
+                Console.WriteLine("Negative te-form:")
+                Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ないで")
+            ElseIf PreferencesString(2) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Te-forms:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Te-form: " & teStem)
+                Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "いる")
+                Console.WriteLine("Te-form of negative: " & NegativeStem & "なくて")
+                Console.WriteLine("Negative te-form: " & NegativeStem & "ないで")
+            ElseIf PreferencesString(2) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Te-forms:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Te-form of negative: " & NegativeStem & "なくて")
+                Console.WriteLine("Negative te-form: " & NegativeStem & "ないで")
+            End If
+
+            If PreferencesString(3) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Volitional:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう")
+                Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+                Console.WriteLine("I've decided to " & PlainMeaning & ": " & Volitional & "と思っています")
+            ElseIf PreferencesString(3) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Volitional:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう")
+                Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+            ElseIf PreferencesString(3) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Volitional:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
+            End If
+
+            If PreferencesString(4) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Potential (Ability):")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
+                Console.WriteLine("Aren't able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "ない")
+                Console.WriteLine("Have the ability to " & PlainMeaning & " (formal): " & PlainVerb & "ことができる")
+            ElseIf PreferencesString(4) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Potential (Ability):")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
+                Console.WriteLine("Aren't able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "ない")
+            ElseIf PreferencesString(4) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Potential (Ability):")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Able to " & PlainMeaning & ": " & Potential)
+            End If
+
+            If PreferencesString(5) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Causative (Being made to do something or letting it be done):")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
+                Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
+                Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
+            ElseIf PreferencesString(5) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Causative (Being made to do something or letting it be done):")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
+                Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
+            ElseIf PreferencesString(5) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Causative (Being made to do something or letting it be done):")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
+            End If
+
+            If PreferencesString(6) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Conditional:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
+                Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
+                Console.WriteLine()
+                Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
+                Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら")
+            ElseIf PreferencesString(6) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Conditional:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
+                Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
+                Console.WriteLine()
+                Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
+            ElseIf PreferencesString(6) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Conditional:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
+                Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
+            End If
+
+            If PreferencesString(7) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Want:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Want to " & PlainMeaning & ": " & masuStem & "たい")
+                Console.WriteLine("Wanted to " & PlainMeaning & ": " & masuStem & "たかった")
+                Console.WriteLine("Don't want to " & PlainMeaning & ": " & masuStem & "たくない")
+                Console.WriteLine("Didn't want to " & PlainMeaning & ": " & masuStem & "たくなかった")
+                Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
+                Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
+            ElseIf PreferencesString(7) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Want:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Want to " & PlainMeaning & ": " & masuStem & "たい")
+                Console.WriteLine("Don't want to " & PlainMeaning & ": " & masuStem & "たくない")
+                Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
+                Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
+            ElseIf PreferencesString(7) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Want:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
+                Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
+            End If
+
+            If PreferencesString(8) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Do and don't need to:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Need to/should " & PlainMeaning & "　(very informal): " & NegativeStem & "なきゃ")
+                Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なくちゃいけない")
+                Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なければいけません")
+                Console.WriteLine("Don't need to " & PlainMeaning & ": " & NegativeStem & "なくてもいい")
+            ElseIf PreferencesString(8) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Do and don't need to:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Need to/should " & PlainMeaning & "　(very informal): " & NegativeStem & "なきゃ")
+                Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なくちゃいけない")
+                Console.WriteLine("Don't need to " & PlainMeaning & ": " & NegativeStem & "なくてもいい")
+            ElseIf PreferencesString(8) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Do and don't need to:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なくちゃいけない")
+                Console.WriteLine("Don't need to " & PlainMeaning & ": " & NegativeStem & "なくてもいい")
+            End If
+
+            If PreferencesString(9) = 3 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Extras:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " too much: " & masuStem & "すぎる")
+                Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
+                Console.WriteLine("I intend to " & PlainMeaning & ": " & PlainVerb & "つもりです")
+                Console.WriteLine("May " & PlainMeaning & ": " & PlainVerb & "かもしれない")
+                Console.WriteLine("Why don't you " & PlainMeaning & " (informal): " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "らどうですか")
+                Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " to prepare for something:" & teStem & "おく")
+                Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
+            ElseIf PreferencesString(9) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Extras:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " too much: " & masuStem & "すぎる")
+                Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
+                Console.WriteLine("May " & PlainMeaning & ": " & PlainVerb & "かもしれない")
+                Console.WriteLine("Why don't you " & PlainMeaning & " (informal): " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "らどうですか")
+                Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
+            ElseIf PreferencesString(9) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Extras:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("May " & PlainMeaning & ": " & PlainVerb & "かもしれない")
+                Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
+            End If
+            Console.WriteLine()
         End If
 
         Dim Client As New WebClient
@@ -1658,51 +2208,59 @@ Module Module1
             End If
         End If
 
-        Console.WriteLine()
-        Console.BackgroundColor = ConsoleColor.White
-        Console.ForegroundColor = ConsoleColor.Black
-        Console.WriteLine("Kanji:")
-        Console.BackgroundColor = ConsoleColor.Black
-        Console.ForegroundColor = ConsoleColor.White
+        Dim KanjiBool As Boolean = False
+        If S = 0 Then
+            If PreferencesString(11) <> 0 Then
+                KanjiBool = True
+            End If
+        End If
 
-        Dim WordHTML As String = ""
-        Try
-            'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
-            Dim WordWordURL As String = ("https://jisho.org/word/" & PlainVerb)
-            WordHTML = Client.DownloadString(New Uri(WordWordURL))
-        Catch
-            Console.ReadLine()
-            Main()
-        End Try
-        Dim KanjiInfo As String = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
+        If S <> 0 Or KanjiBool = True Then
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Black
+            Console.WriteLine("Kanji:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+
+            Dim WordHTML As String = ""
+            Try
+                'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
+                Dim WordWordURL As String = ("https://jisho.org/word/" & PlainVerb)
+                WordHTML = Client.DownloadString(New Uri(WordWordURL))
+            Catch
+                Console.ReadLine()
+                Main()
+            End Try
+            Dim KanjiInfo As String = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
 
             Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
             Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
             Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
             Dim LastDetailsIndex As Integer = KanjiInfo.LastIndexOf("Details")
             KanjiInfo = Left(KanjiInfo, LastDetailsIndex)
-        Try
-            Dim Finished As Boolean = False
-            Do Until Finished = True 'Do until no more end splitters can be found. The sentences that are pasted won't end in "|" because of how the AHK sentence grabber works
-                I += 1
-                Array.Resize(KanjiGroup, KanjiGroup.Length + 1)
-                KanjiGroupEnd = KanjiInfo.IndexOf("Details") + 10
-                If KanjiGroupEnd = 9 Then '(-1 but at add because of the above line. This means if "Details" isn't found
-                    KanjiGroup(I) = KanjiInfo
-                    Finished = True
-                    Continue Do
-                End If
+            Try
+                Dim Finished As Boolean = False
+                Do Until Finished = True 'Do until no more end splitters can be found. The sentences that are pasted won't end in "|" because of how the AHK sentence grabber works
+                    I += 1
+                    Array.Resize(KanjiGroup, KanjiGroup.Length + 1)
+                    KanjiGroupEnd = KanjiInfo.IndexOf("Details") + 10
+                    If KanjiGroupEnd = 9 Then '(-1 but at add because of the above line. This means if "Details" isn't found
+                        KanjiGroup(I) = KanjiInfo
+                        Finished = True
+                        Continue Do
+                    End If
 
-                KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
-                KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
-            Loop
-            Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
-        Catch
-            Console.ReadLine()
-            Main()
-        End Try
+                    KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
+                    KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
+                Loop
+                Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
+            Catch
+                Console.ReadLine()
+                Main()
+            End Try
 
-        Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
+            Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
             'Y indexs:
             '0 = Kanji
             '1 = English meaning(s) (I will concatinate multiple meanings)
@@ -1718,130 +2276,142 @@ Module Module1
             Dim LastReadingFound As Boolean = False 'This is used to find the last reading of a kanji, it knows that it is a last because it ends in "</a>、" and not "</a>"
             Dim JustEng As String
             Dim KunReading, OnReading, ReadingSnip As String
-        Try
-            KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
+            Try
+                KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
 
-            For Looper = 0 To KanjiGroup.Length - 1
-                FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
-                'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
-                ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
+                For Looper = 0 To KanjiGroup.Length - 1
+                    FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
+                    'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+                    ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
 
-                FirstFinder = KanjiGroup(Looper).IndexOf("sense")
-                KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+                    FirstFinder = KanjiGroup(Looper).IndexOf("sense")
+                    KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
 
-                FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
-
-
-                JustEng = Left(KanjiGroup(Looper), FirstFinder)
-
-                JustEng = Mid(JustEng, 18)
-                JustEng = Left(JustEng, JustEng.Length - 14)
-                KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
-
-                JustEng = JustEng.Replace("           ", "")
-                FirstFinder = JustEng.IndexOf("</span>")
-                SecondFinder = JustEng.IndexOf("<span>")
-                Try
-                    JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
-                Catch
-                End Try
-
-                JustEng = JustEng.Replace(",", ", ")
-                'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
-
-                ActualInfo(Looper, 1) = JustEng
-
-                'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
+                    FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
 
 
-                FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
-                KunReading = Left(KanjiGroup(Looper), FirstFinder)
-                OnReading = Mid(KanjiGroup(Looper), FirstFinder)
+                    JustEng = Left(KanjiGroup(Looper), FirstFinder)
 
-                ActualInfo(Looper, 2) &= "Kun Readings: "
-                ActualInfo(Looper, 3) &= "On Readings: "
+                    JustEng = Mid(JustEng, 18)
+                    JustEng = Left(JustEng, JustEng.Length - 14)
+                    KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
 
-                LastReadingFound = False
-                Do Until LastReadingFound = True
-                    If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
-                        SecondFinder = KunReading.IndexOf("</a>、")
-                        FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+                    JustEng = JustEng.Replace("           ", "")
+                    FirstFinder = JustEng.IndexOf("</span>")
+                    SecondFinder = JustEng.IndexOf("<span>")
+                    Try
+                        JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
+                    Catch
+                    End Try
 
-                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+                    JustEng = JustEng.Replace(",", ", ")
+                    'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
 
-                        KunReading = Mid(KunReading, SecondFinder + 10)
+                    ActualInfo(Looper, 1) = JustEng
 
-                    ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
-                        SecondFinder = KunReading.IndexOf("</a>")
-                        FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+                    'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
 
-                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
 
-                        LastReadingFound = True
-                    Else
-                        LastReadingFound = True
-                    End If
-                Loop
-                LastReadingFound = False
-                Do Until LastReadingFound = True
-                    If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
-                        SecondFinder = OnReading.IndexOf("</a>、")
-                        FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+                    FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
+                    KunReading = Left(KanjiGroup(Looper), FirstFinder)
+                    OnReading = Mid(KanjiGroup(Looper), FirstFinder)
 
-                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+                    ActualInfo(Looper, 2) &= "Kun Readings: "
+                    ActualInfo(Looper, 3) &= "On Readings: "
 
-                        OnReading = Mid(OnReading, SecondFinder + 10)
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = KunReading.IndexOf("</a>、")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
 
-                    ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
-                        SecondFinder = OnReading.IndexOf("</a>")
-                        FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
 
-                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+                            KunReading = Mid(KunReading, SecondFinder + 10)
 
-                        LastReadingFound = True
-                    Else
-                        LastReadingFound = True
-                    End If
-                Loop
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
-                Console.BackgroundColor = ConsoleColor.Black
-                Console.WriteLine(ActualInfo(Looper, 2))
-                Console.WriteLine(ActualInfo(Looper, 3))
-                Console.WriteLine("Found in :" & JustResultsScraper(ActualInfo(Looper, 0), 2, PlainVerb))
-                Console.WriteLine()
+                        ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = KunReading.IndexOf("</a>")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+                    Loop
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = OnReading.IndexOf("</a>、")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+
+                            OnReading = Mid(OnReading, SecondFinder + 10)
+
+                        ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = OnReading.IndexOf("</a>")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+                    Loop
+                    Console.BackgroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.WriteLine(ActualInfo(Looper, 2))
+                    Console.WriteLine(ActualInfo(Looper, 3))
+                    Console.WriteLine("Found in :" & JustResultsScraper(ActualInfo(Looper, 0), 1, PlainVerb))
+                    Console.WriteLine()
+                Next
+            Catch
+                Console.WriteLine("Couldn't generate kanji readings")
+                Console.ReadLine()
+                Main()
+            End Try
+
+            Dim KanjisLine As String = "【"
+            For Kanji = 1 To ActualInfo.Length / 4
+                If Kanji <> ActualInfo.Length / 4 Then
+                    KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ") ")
+                Else
+                    KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ")】")
+                End If
             Next
-        Catch
-            Console.WriteLine("Couldn't generate kanji readings")
-            Console.ReadLine()
-            Main()
-        End Try
 
-        Dim KanjisLine As String = "【"
-        For Kanji = 1 To ActualInfo.Length / 4
-            If Kanji <> ActualInfo.Length / 4 Then
-                KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ") ")
-            Else
-                KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ")】")
+            Dim LastRequest As String = Console.ReadLine().ToLower
+
+            If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
+                My.Computer.Clipboard.SetText(KanjisLine)
+                Console.Clear()
+                Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
+                Console.ReadLine()
+                Main()
+            ElseIf LastRequest.ToLower = "anki" Then
+
+                'This code used to exist here:
+                'Try
+                'Meaning = Left(Meaning, Meaning.indexof("["))
+                'Catch
+                'End Try
+
+                WordConjugate(PlainVerb & " " & Meaning, 1, True)
             End If
-        Next
 
-        Dim LastRequest As String = Console.ReadLine().ToLower
-
-        If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
-            My.Computer.Clipboard.SetText(KanjisLine)
-            Console.Clear()
-            Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
+        Else
             Console.ReadLine()
-            Main()
-        ElseIf LastRequest.ToLower = "anki" Then
-            WordConjugate(PlainVerb & " " & PlainMeaning, 1, True)
         End If
 
+        'Console.ReadLine()
         Main()
     End Sub
     Sub ReadingPractice(ByRef Sentences)
@@ -1986,21 +2556,38 @@ Module Module1
 
         Dim ActualSearchWord As String = ""
         Dim ActualSearch1stAppearance As Integer = 0
+        Dim ActualSearch2ndAppearance As Integer = 0
+        Dim WordLink As String = ""
         Dim Definition As String
         Dim Max As Integer = 3
 
+        ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
+        ActualSearchWord = Mid(ActualSearchWord, 30)
+        ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+        ActualSearchWord = ActualSearchWord.Replace("</span>", "")
 
-        ActualSearchWord = RetrieveClassRange(HTMLTemp, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
+
+        'Getting the link of the actual word:
+        ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
+        HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+        ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+        HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+        ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+        ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+        WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+
+        ActualSearchWord = RetrieveClassRange(HTML, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
         ActualSearchWord = RetrieveClassRange(ActualSearchWord, "text", "</span", "Actual word search")
         ActualSearchWord = Mid(ActualSearchWord, 17)
         ActualSearchWord = ActualSearchWord.Replace("<span>", "")
         ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+
         If ActualSearchWord.Length = 0 Then
             Console.WriteLine("Word wasn't found.")
             Console.ReadLine()
             Main()
         End If
-        Definition = DefinitionScraper(ActualSearchWord)
+        Definition = DefinitionScraper(WordLink)
 
 
 
@@ -2389,8 +2976,6 @@ Module Module1
 
 
 
-
-
         Randomize()
         Dim Remaining As String = "0123456789"
         Dim Random As Integer = Int((8 + 1) * Rnd())
@@ -2429,7 +3014,7 @@ Module Module1
 
                 Attempts += 1
                 Console.Clear()
-                If Read <> Forms(Random, 1) Or Read <> Forms(Random, 3) Then
+                If Read <> Forms(Random, 1) Then
 
                     Score -= 20 * Attempts
                     If Attempts > 2 Then
@@ -2547,8 +3132,8 @@ Module Module1
         'Try
         'Loading the website's HTML code and storing it in a HTML as a string:
         Dim Client As New WebClient
-            Client.Encoding = System.Text.Encoding.UTF8
-            URL = "https://" & URL
+        Client.Encoding = System.Text.Encoding.UTF8
+        URL = "https://" & URL
         HTML = Client.DownloadString(New Uri(URL))
         Try
             ExtraIndex = HTML.IndexOf("Details ▸")
@@ -2564,20 +3149,20 @@ Module Module1
 
         'Cutting text out of the HTML code:
         SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
-            SnipStart += 18
+        SnipStart += 18
 
-            SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
+        SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
 
 
 
-            'Console.WriteLine(SnipEnd)
+        'Console.WriteLine(SnipEnd)
 
-            If SnipEnd = -1 Then
-                FirstFail = True 'For debugging
-                SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
-            End If
+        If SnipEnd = -1 Then
+            FirstFail = True 'For debugging
+            SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
+        End If
 
-            Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+        Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
 
 
 
@@ -2617,7 +3202,6 @@ Module Module1
 
         Return (Snip)
     End Function
-
     Function TypeScraper(ByVal URL)
         Const QUOTE = """"
         Dim Read As String = URL
@@ -2767,11 +3351,10 @@ Module Module1
         Dim HTML As String = ""
         HTML = Client.DownloadString(New Uri("https://" & URL))
 
-
-
         Dim SnipStart As Integer
         Dim SnipEnd As Integer
         Dim Snip As String = "NOTHING"
+        Dim Snip2 As String = "" 'This is used for the HTML code tag called 'sense-tag', it adds extra information about the definition if there is any (which usually there isn't any)
         Dim FirstFail As Boolean = False
         Dim ExtraIndex As Integer
         Dim FinishedAll As Boolean = False
@@ -2817,9 +3400,62 @@ Module Module1
             End If
 
             Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+
             HTML = Mid(HTML, SnipEnd + 10)
-            FoundMeanings(FoundMeanings.Length - 1) = Snip
+
+
+
+            SnipStart = HTML.IndexOf("meaning-definition-section_divider") 'This will be used to get the Extra Details for the current word up to (but not including) the next
+
+            Try
+                If Left(HTML, SnipStart).IndexOf("sense-tag") <> -1 Then
+                    'Snipping up to the sense tag:
+                    SnipStart = Left(HTML, SnipStart).IndexOf("sense-tag")
+                    HTML = Mid(HTML, SnipStart)
+
+                    SnipStart = HTML.IndexOf(">") + 2
+                    HTML = Mid(HTML, SnipStart)
+
+                    SnipEnd = HTML.IndexOf("</")
+                    Snip2 = Left(HTML, SnipEnd)
+                    HTML = Mid(HTML, SnipStart)
+
+                    SnipStart = HTML.IndexOf("meaning-definition-section_divider") '*again*, this will be used to get the Extra Details for the current word up to (but not including) the next
+
+                    If Left(HTML, SnipStart).IndexOf("sense-tag") <> -1 Then
+                        SnipStart = HTML.IndexOf("sense-tag")
+                        HTML = Mid(HTML, SnipStart)
+
+                        SnipStart = HTML.IndexOf(">") + 2
+                        HTML = Mid(HTML, SnipStart)
+
+                        SnipEnd = HTML.IndexOf("</")
+                        Snip2 = Snip2 & ", " & Left(HTML, SnipEnd)
+
+                        If Snip2.IndexOf("href") <> -1 Then
+                            SnipStart = Snip2.IndexOf("<a href=")
+                            SnipEnd = Snip2.IndexOf(">")
+                            Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
+                        End If
+                    End If
+
+                    If Snip2.IndexOf("href") <> -1 Then
+                        SnipStart = Snip2.IndexOf("<a href=")
+                        SnipEnd = Snip2.IndexOf(">")
+                        Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
+                    End If
+
+                    Snip2 = "[" & Snip2 & "]"
+
+                End If
+
+            Catch
+            End Try
+
+            FoundMeanings(FoundMeanings.Length - 1) = Snip & " " & Snip2
+
             Array.Resize(FoundMeanings, FoundMeanings.Length + 1)
+            Snip2 = ""
         Loop
 
         Array.Resize(FoundMeanings, FoundMeanings.Length - 1)
@@ -2855,11 +3491,20 @@ Module Module1
             End Try
         End Try
 
-        ActualSearchWord = Mid(ActualSearchWord, 30)
-        ActualSearchWord = ActualSearchWord.Replace("<span>", "")
-        ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+        Try
+            ActualSearchWord = Mid(ActualSearchWord, 30)
+            ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+            ActualSearchWord = ActualSearchWord.Replace("</span>", "")
 
-        ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
+
+            ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
+        Catch
+            If Number <> 1 Then
+                JustResultsScraper(Word, 1, ActualWord)
+            Else
+                Return ("")
+            End If
+        End Try
 
         If Number > 1 And ActualSearchWord.Length = 1 Then
             JustResultsScraper(Word, Number + 1, ActualWord)
@@ -2871,31 +3516,566 @@ Module Module1
 
         'Getting the definition -------------------------------------
         HTML = Client.DownloadString(New Uri("https://jisho.org/search/" & ActualSearchWord))
-            Dim SnipStart, SnipEnd, ExtraIndex As Integer
-            Dim Snip As String
-            Try
-                ExtraIndex = HTML.IndexOf("Details ▸")
-                HTML = Left(HTML, ExtraIndex)
-            Catch
-            End Try
-            ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
-            HTML = Mid(HTML, ExtraIndex)
+        Dim SnipStart, SnipEnd, ExtraIndex As Integer
+        Dim Snip As String
+        Try
+            ExtraIndex = HTML.IndexOf("Details ▸")
+            HTML = Left(HTML, ExtraIndex)
+        Catch
+        End Try
+        ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
+        HTML = Mid(HTML, ExtraIndex)
 
-            'Cutting text out of the HTML code:
-            SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
-            SnipStart += 18
+        'Cutting text out of the HTML code:
+        SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
+        SnipStart += 18
 
-            SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
+        SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
 
-            If SnipEnd = -1 Then
-                SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
+        If SnipEnd = -1 Then
+            SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
+        End If
+
+        Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+
+
+        Return (ActualSearchWord & " (" & Snip & ")")
+    End Function
+
+    Sub Preferences()
+        Const QUOTE = """"
+        Dim MsgResponse As Integer
+        My.Computer.FileSystem.CreateDirectory("C:\ProgramData\Japanese Conjugation Helper") 'This folder will be used to store program data
+
+        If Dir$("C:\ProgramData\Japanese Conjugation Helper\ReadMe.txt") = "" Then
+            MsgResponse = MsgBox("This is your first time using preferences, would you like to check the wiki?", 4, "Preferences")
+            If MsgResponse = 6 Then
+                Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use")
+            End If
+            My.Computer.FileSystem.CreateDirectory("C:\ProgramData\Japanese Conjugation Helper\Preferences")
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\ReadMe.txt").Dispose()
+            Dim FirstWriter As System.IO.StreamWriter
+            FirstWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\ReadMe.txt")
+            FirstWriter.WriteLine("This program has not been error trapped to stop you from messing with the files, so if you make manual changes to the files it will likely mess up the program.")
+            FirstWriter.WriteLine("If you ever mess with the files you can do '/prefs' then type '3' to set the files back to normal.")
+            FirstWriter.Close()
+            Preferences()
+        End If
+
+
+        Dim Choice As String = ""
+        Console.Clear()
+
+        Do Until IsNumeric(Choice) = True
+            Console.WriteLine("What would you like to do?")
+            Console.WriteLine()
+            Console.WriteLine("0 = Back to main menu")
+            Console.WriteLine("1 = Custom S Parameter Settings")
+            Console.WriteLine("2 = General Settings")
+            Console.WriteLine("3 = Reset ALL settings")
+
+            Choice = Console.ReadLine.ToLower
+
+            If Choice = "0" Or Choice = "main" Or Choice.IndexOf("b") <> -1 Then
+                Main()
             End If
 
-            Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+            If IsNumeric(Choice) = True Then
+                If Choice < 0 Or Choice > 3 Then
+                    Choice = ""
+                End If
+            End If
+            Console.Clear()
+        Loop
+
+        Dim FileReader As String = ""
+        Dim TextWriter As System.IO.StreamWriter
+        Try
+            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+        Catch
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt").Dispose() 'This text file will store user preferences
+            TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+            TextWriter.WriteLine("Formal:1")
+            TextWriter.WriteLine("Informal:1")
+
+            TextWriter.WriteLine("Te-form:1")
+
+            TextWriter.WriteLine("Volitional:1")
+            TextWriter.WriteLine("Potential:1")
+            TextWriter.WriteLine("Causative (let & made):1")
+            TextWriter.WriteLine("Conditional:1")
+
+            TextWriter.WriteLine("Want:1")
+
+            TextWriter.WriteLine("Need to:1")
+
+            TextWriter.WriteLine("Extras:1")
+
+            TextWriter.WriteLine("Noun/adj conjugations:1")
+
+            TextWriter.WriteLine("Kanji details:1")
+
+            TextWriter.Close()
+        End Try
+
+        Dim TextString(0) As String
+        TextString = FileReader.Split(vbCrLf)
+        If Choice = "1" Then
+            Console.WriteLine("What would you like to do?")
+            Console.WriteLine("Type 'b' to go back")
+            Console.WriteLine()
+            Console.WriteLine("1 = Change custom S parameter")
+            Console.WriteLine("2 = View current S parameter settings")
+            Console.WriteLine("3 = Reset S parameter settings")
+            Console.WriteLine()
+            Choice = Console.ReadLine.ToLower
+
+            If Choice.IndexOf("b") <> -1 Then
+                Preferences()
+            End If
+
+            If Choice = 1 Then
+                For I = 0 To TextString.Length - 1
+                    TextString(I) = TextString(I).TrimStart
+                Next
+                If TextString(TextString.Length - 1) = "" Then
+                    Array.Resize(TextString, TextString.Length - 1)
+                    If TextString(TextString.Length - 1) = "" Then
+                        Array.Resize(TextString, TextString.Length - 1)
+                    End If
+                    If TextString(TextString.Length - 1) = "" Then
+                        Array.Resize(TextString, TextString.Length - 1)
+                    End If
+                    If TextString(TextString.Length - 1) = "" Then
+                        Array.Resize(TextString, TextString.Length - 1)
+                    End If
+                End If
+
+                'Setting your own results for the custom S=0 parameter:
+                Dim Line As Integer = 0
+                Dim InformationType As String = ""
+                Dim AmountChoice As String = ""
+                Dim CheckedAmount As String = ""
+                Do Until Line = TextString.Length
+                    Try
+                        InformationType = Left(TextString(Line), TextString(Line).IndexOf(":"))
+                    Catch
+                        If TextString(Line).IndexOf("|") <> -1 Then
+                            Line = TextString.Length
+                            Continue Do
+                        Else
+                            Console.WriteLine("The program files have been tampered with, please avoid doing this.")
+                            Console.ReadLine()
+                        End If
+                    End Try
+
+                    AmountChoice = "a"
+                    Do Until IsNumeric(AmountChoice) = True
+                        Console.Clear()
+                        Console.WriteLine("How much information would you like for '" & InformationType & "' (" & Line + 1 & "/" & TextString.Length - 1 & ")?")
+                        Console.WriteLine("Type a number in the range 0-2. (0 being nothing, 2 being everything)")
+                        Console.WriteLine()
+
+                        For SType = 0 To TextString.Length - 1
+                            If SType = Line Then
+                                Console.ForegroundColor = ConsoleColor.DarkGray
+                                Console.WriteLine(TextString(SType))
+                                Console.ForegroundColor = ConsoleColor.White
+                                Console.WriteLine()
+                            ElseIf TextString(SType).IndexOf("|") <> -1 Or TextString(SType).IndexOf(":") = -1 Then
+                            Else
+                                Try
+                                    Console.WriteLine(TextString(SType))
+                                    Console.WriteLine()
+                                Catch
+                                    Console.WriteLine()
+                                End Try
+                            End If
+                        Next
+
+                        AmountChoice = Console.ReadLine
+                        If IsNumeric(AmountChoice) = False Then
+                            Continue Do
+                        ElseIf AmountChoice < 0 Or AmountChoice > 3 Or AmountChoice.Length > 1 Then
+                            AmountChoice = "a"
+                        End If
+                    Loop
+
+                    Try
+                        CheckedAmount = Mid(TextString(Line), TextString(Line).IndexOf(":") + 1)
+                    Catch
+                        TextString(Line) = TextString(Line) & "_"
+                        CheckedAmount = "_"
+                    End Try
+
+                    AmountChoice = AmountChoice.Replace("-", "")
+
+                    TextString(Line) = TextString(Line).Replace(CheckedAmount, ":" & AmountChoice)
 
 
-            Return (ActualSearchWord & " (" & Snip & ")")
-    End Function
+                    Line += 1
+                Loop
+
+                Dim TextUpdater As System.IO.StreamWriter
+                TextUpdater = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+                For Writer = 0 To TextString.Length - 1
+                    TextUpdater.WriteLine(TextString(Writer))
+                Next
+                TextUpdater.Close()
+
+                Console.Clear()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Now, using an S parameter of 0 will show these results you have just set.")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine()
+
+                For SType = 0 To TextString.Length - 1
+                    If SType = Line Then
+                        Console.ForegroundColor = ConsoleColor.DarkGray
+                        Console.WriteLine(TextString(SType))
+                        Console.ForegroundColor = ConsoleColor.White
+                        Console.WriteLine()
+                    ElseIf TextString(SType).IndexOf("|") <> -1 Or TextString(SType).IndexOf(":") = -1 Then
+                    Else
+                        Try
+                            Console.WriteLine(TextString(SType))
+                            Console.WriteLine()
+                        Catch
+                            Console.WriteLine()
+                        End Try
+                    End If
+                Next
+
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Done!")
+                Console.BackgroundColor = ConsoleColor.Black
+
+                Console.ReadLine()
+            ElseIf Choice = "2" Then
+                Console.Clear()
+                Console.WriteLine("Here are your custom S parameter settings:")
+                Console.WriteLine()
+
+                For SType = 0 To TextString.Length - 1
+                    If TextString(SType).IndexOf("|") <> -1 Or TextString(SType).IndexOf(":") = -1 Then
+                    Else
+                        Try
+                            Console.WriteLine(TextString(SType))
+                        Catch
+                        End Try
+                    End If
+                Next
+
+                For Clear = 0 To TextString.Length - 1
+                    TextString(Clear) = TextString(Clear).Trim
+                Next
+
+                If TextString.Length < 3 Then
+                    Console.WriteLine("There are not settings to show, you have not set any yet.")
+                End If
+
+                Console.ReadLine()
+                Preferences()
+            ElseIf Choice = "3" Then
+                My.Computer.FileSystem.DeleteFile("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+
+                TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+                TextWriter.WriteLine("Formal:1")
+                TextWriter.WriteLine("Informal:1")
+
+                TextWriter.WriteLine("Te-form:1")
+
+                TextWriter.WriteLine("Volitional:1")
+                TextWriter.WriteLine("Potential:1")
+                TextWriter.WriteLine("Causative (let & made):1")
+                TextWriter.WriteLine("Conditional:1")
+
+                TextWriter.WriteLine("Want:1")
+
+                TextWriter.WriteLine("Need to:1")
+
+                TextWriter.WriteLine("Extras:1")
+
+                TextWriter.WriteLine("Noun/adj conjugations:1")
+
+                TextWriter.WriteLine("Kanji details:1")
+
+                TextWriter.Close()
+
+                Console.Clear()
+                Console.WriteLine("Your preferences have been reset!")
+                Console.ReadLine()
+                Preferences()
+            Else
+
+                Main()
+            End If
+
+            Main()
+        ElseIf Choice = "2" Then
+            Try
+                FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+            Catch
+                File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt").Dispose() 'This text file will store user preferences
+                TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                TextWriter.WriteLine("Default 's=' parameter:4")
+                TextWriter.WriteLine("Maximum definitions shown:6")
+                TextWriter.Close()
+            End Try
+
+            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+            TextString = FileReader.Split(vbCrLf)
+
+            Dim All As Boolean = False
+            Dim Write As Integer = 0
+
+            Dim SettingChange As String = ""
+            Choice = False
+
+            Do Until IsNumeric(SettingChange) = True
+                Console.Clear()
+                Console.WriteLine("Which setting would you like to change?")
+                Console.WriteLine("Type 'b' to go back")
+                Console.WriteLine()
+                Console.WriteLine("0 = View current settings")
+                Console.WriteLine("1 = Reset general settings")
+
+                Write = 0
+                All = False
+
+                For Clear = 0 To TextString.Length - 1
+                    TextString(Clear) = TextString(Clear).Trim
+                Next
+
+                'Getting rid of extra lines at the end
+                Do Until TextString(TextString.Length - 1) <> ""
+                    If TextString(TextString.Length - 1) = "" Then
+                        Array.Resize(TextString, TextString.Length - 1)
+                    End If
+                Loop
+
+                Dim LineLooser As System.IO.StreamWriter
+                LineLooser = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                For Writer = 0 To TextString.Length - 1
+                    LineLooser.WriteLine(TextString(Writer))
+                Next
+                LineLooser.Close()
+
+                Do Until Write = TextString.Length Or All = True
+                    Try
+                        'Console.WriteLine(Write + 2 & " = " & Left(TextString(Write).Trim, TextString(Write).Trim.IndexOf(":")))
+                        Console.WriteLine(Write + 2 & " = " & TextString(Write).Trim)
+                    Catch
+                        All = True
+                        Continue Do
+                    End Try
+
+                    Write += 1
+                Loop
+
+                SettingChange = Console.ReadLine.ToLower
+
+                If SettingChange.IndexOf("b") <> -1 Then
+                    Preferences()
+                End If
+
+                If IsNumeric(SettingChange) = True Then
+                    If SettingChange < 0 Or SettingChange > TextString.Length + 1 Then
+                        SettingChange = "a"
+                    End If
+                End If
+
+                Console.WriteLine()
+            Loop
+
+            Dim NewSetting As String = ""
+            Write = 0
+            All = False
+            If SettingChange = 0 Then
+                Console.Clear()
+                Console.WriteLine("Current General Settings:")
+                Console.WriteLine()
+
+                Do Until Write = TextString.Length + 1 Or All = True
+                    Try
+                        Console.WriteLine(TextString(Write).Trim)
+                    Catch
+                        All = True
+                        Continue Do
+                    End Try
+
+                    Write += 1
+                Loop
+                Console.ReadLine()
+                Preferences()
+
+            ElseIf SettingChange = 1 Then
+                TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                TextWriter.WriteLine("Default 's=' parameter:4")
+                TextWriter.WriteLine("Maximum definitions shown:6")
+                TextWriter.Close()
+                Console.WriteLine("Done")
+
+                Console.ReadLine()
+                Preferences()
+
+            ElseIf SettingChange = 2 Then
+                Do Until IsNumeric(NewSetting) = True
+                    Console.Clear()
+                    Console.WriteLine("What would you like the new default S value to be (0-4)?")
+                    Console.WriteLine()
+
+                    NewSetting = Console.ReadLine
+                    If IsNumeric(NewSetting) = True Then
+                        If NewSetting < 0 Or NewSetting > 4 Or NewSetting.Length > 1 Then
+                            NewSetting = ""
+                        End If
+                    End If
+                Loop
+
+                TextString(0) = TextString(0).Replace(Right(TextString(0), 1), NewSetting)
+
+                Dim TextUpdater As System.IO.StreamWriter
+                TextUpdater = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                For Writer = 0 To TextString.Length - 1
+                    TextUpdater.WriteLine(TextString(Writer))
+                Next
+                TextUpdater.Close()
+
+                Console.WriteLine("Done")
+
+                Console.ReadLine()
+                Preferences()
+            ElseIf SettingChange = "3" Then
+
+                Do Until IsNumeric(NewSetting) = True
+                    Console.Clear()
+                    Console.WriteLine("What would you like the new Maximum Definition value to be (1-99)?")
+                    Console.ForegroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine("Note: The program ignores this number if there is a definition of the type 'Auxiliary Verb', 'prefix' or 'suffix'")
+                    Console.ForegroundColor = ConsoleColor.White
+                    Console.WriteLine()
+
+                    NewSetting = Console.ReadLine
+                    If IsNumeric(NewSetting) = True Then
+                        If NewSetting < 1 Or NewSetting > 99 Or NewSetting.Length > 2 Then
+                            NewSetting = ""
+                        End If
+                    End If
+                Loop
+
+                NewSetting = NewSetting.Replace(".", "")
+
+                If IsNumeric(Right(TextString(1), 2)) = False Then
+                    TextString(1) = TextString(1).Replace(Right(TextString(1), 1), NewSetting)
+                Else
+                    TextString(1) = TextString(1).Replace(Right(TextString(1), 2), NewSetting)
+                End If
+
+                Dim TextUpdater As System.IO.StreamWriter
+                TextUpdater = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                For Writer = 0 To TextString.Length - 1
+                    TextUpdater.WriteLine(TextString(Writer))
+                Next
+                TextUpdater.Close()
+
+                Console.WriteLine("Done")
+
+                Console.ReadLine()
+                Preferences()
+            End If
+
+        ElseIf Choice = "3" Then
+            Console.WriteLine("Are you sure you want to reset ALL settings?")
+            Console.WriteLine("Please type " & QUOTE & "yes" & QUOTE & " if you are sure that you want to do this.")
+            Console.ForegroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Type 'b' to go back, or anything else to cancel the reset.")
+            Console.ForegroundColor = ConsoleColor.White
+
+            Choice = Console.ReadLine.ToLower
+
+            If Choice = "yes" Then
+                Try
+                    My.Computer.FileSystem.DeleteFile("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+                Catch
+                    Try
+                        My.Computer.FileSystem.DeleteFile("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                    Catch
+                    End Try
+                End Try
+
+                Try
+                    Dim FileBuilderUpdater As System.IO.StreamWriter
+                    FileBuilderUpdater = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                    FileBuilderUpdater.WriteLine("Default 's=' parameter:4")
+                    FileBuilderUpdater.WriteLine("Maximum definitions shown:6")
+                    FileBuilderUpdater.Close()
+
+                    Dim FileBuilderUpdater2 As System.IO.StreamWriter
+                    FileBuilderUpdater2 = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+                    FileBuilderUpdater2.WriteLine("Formal:1")
+                    FileBuilderUpdater2.WriteLine("Informal:1")
+                    FileBuilderUpdater2.WriteLine("Te-form:1")
+                    FileBuilderUpdater2.WriteLine("Volitional:1")
+                    FileBuilderUpdater2.WriteLine("Potential:1")
+                    FileBuilderUpdater2.WriteLine("Causative (let & made):1")
+                    FileBuilderUpdater2.WriteLine("Conditional:1")
+                    FileBuilderUpdater2.WriteLine("Want:1")
+                    FileBuilderUpdater2.WriteLine("Need to:1")
+                    FileBuilderUpdater2.WriteLine("Extras:1")
+                    FileBuilderUpdater2.WriteLine("Noun/adj conjugations:1")
+                    FileBuilderUpdater2.WriteLine("Kanji details:1")
+                    FileBuilderUpdater2.Close()
+                Catch
+                    Console.Clear()
+                    Console.WriteLine("Something went wrong :O")
+                    Console.ReadLine()
+                    Main()
+                End Try
+
+                Console.Clear()
+                Console.WriteLine("All settings were successfully reset.")
+                Console.ReadLine()
+                Preferences()
+            ElseIf Choice = "b" Or Choice = "back" Then
+                Preferences()
+            ElseIf Choice = "n" Or Choice = "no" Or Choice = "main" Then
+                Main()
+            Else
+                Console.Clear()
+                Console.WriteLine("No settings were reset because you didn't type " & QUOTE & "yes" & QUOTE & ".")
+                Console.ReadLine()
+            End If
+
+
+        End If
+
+
+
+
+
+
+
+        Main()
+    End Sub
+
+    Sub Download()
+        'Just to test the downloading of files
+        Console.Clear()
+
+        Try
+            My.Computer.Network.DownloadFile("http://d237wsm7x2l2ke.cloudfront.net/41e62e8fc52e4bee8d4060280a9b823a.mp4", "C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
+        Catch
+            My.Computer.FileSystem.DeleteFile("C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
+            My.Computer.Network.DownloadFile("http://d237wsm7x2l2ke.cloudfront.net/41e62e8fc52e4bee8d4060280a9b823a.mp4", "C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
+            Process.Start("C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
+        End Try
+    End Sub
+
+
+
+
+
 
     'TO DO:
     ''Bring up more definitions than just 1
