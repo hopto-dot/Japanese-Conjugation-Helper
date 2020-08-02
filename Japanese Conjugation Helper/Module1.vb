@@ -285,7 +285,6 @@ Module Module1
             AdvancedParam = 1
         End Try
 
-
         SEquals = Word.IndexOf(" s=")
         Dim Read As String = ""
         If SEquals <> -1 Then
@@ -376,6 +375,10 @@ Module Module1
         HTML = Client.DownloadString(New Uri(WordURL))
         Dim AddingTemp As String
 
+        If HTML.IndexOf("zen_bar") <> -1 Then
+            TranslateSentence(Word)
+        End If
+
         If WordIndex > 20 Then
             WordURL = ("https://jisho.org/search/" & Word & "%20%23words?page=2")
             AddingTemp = Client.DownloadString(New Uri(WordURL))
@@ -436,7 +439,7 @@ Module Module1
                     WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
 
                 Catch 'If there are no more search results then:
-                        LoopIndex = WordIndex
+                    LoopIndex = WordIndex
                     Console.WriteLine(LoopIndex + 1 & ": " & ActualSearchWord & " - " & FoundDefinitions(LoopIndex))
                     If ActualSearchWord = "" Then
                         Console.WriteLine("Word couldn't be found")
@@ -687,8 +690,8 @@ Module Module1
                             Console.WriteLine()
                         End If
                         Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                        ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
-                            Console.WriteLine()
+                    ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
+                        Console.WriteLine()
                         Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
                         Console.WriteLine()
 
@@ -867,30 +870,67 @@ Module Module1
         'If the S=0 parameter allows it
         If TypeSnipEnd <> -1 Then 'Meaning: If the word has more than one type. The way I implemented the word type checker is kind of weird with the Else block. I could change this at a later date to make it more efficient.
 
-                'These are checks for each type of word
-                If FullWordType.IndexOf("I-adjective") <> -1 Then 'Meaning: if "I-adjective Is found in the list of word types
-                    Iadjective = True
-                End If
-                If FullWordType.IndexOf("Na-adjective") <> -1 Then
-                    NaAdjective = True
-                End If
-                If FullWordType.IndexOf("No-adjective") <> -1 Then
-                    NoAdjective = True
-                End If
-                If FullWordType.IndexOf("Noun") <> -1 Then
-                    Noun = True
-                End If
-                If FullWordType.IndexOf("Suru verb") <> -1 Then
-                    Suru = True
-                End If
+            'These are checks for each type of word
+            If FullWordType.IndexOf("I-adjective") <> -1 Then 'Meaning: if "I-adjective Is found in the list of word types
+                Iadjective = True
+            End If
+            If FullWordType.IndexOf("Na-adjective") <> -1 Then
+                NaAdjective = True
+            End If
+            If FullWordType.IndexOf("No-adjective") <> -1 Then
+                NoAdjective = True
+            End If
+            If FullWordType.IndexOf("Noun") <> -1 Then
+                Noun = True
+            End If
+            If FullWordType.IndexOf("Suru verb") <> -1 Then
+                Suru = True
+            End If
 
-                'Because "Adverbial" contains verb we need to make sure the program doesn't think that it is a verb
+            'Because "Adverbial" contains verb we need to make sure the program doesn't think that it is a verb
 
-                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
-                    Verb = True
-                    If Anki = True Then
-                        Verb = False
-                    End If
+            If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
+                Verb = True
+                If Anki = True Then
+                    Verb = False
+                End If
+            End If
+        End If
+
+        If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
+            Dim ComparativeType As String = ""
+            If FullWordType.IndexOf("Transitive") <> -1 Then
+                ComparativeType = "t"
+            End If
+            If FullWordType.IndexOf("intransitive") <> -1 Then
+                ComparativeType = "i"
+            End If
+
+            If FullWordType.IndexOf("Godan verb") <> -1 Then
+                ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+            End If
+
+            If FullWordType.IndexOf("Ichidan verb") <> -1 Then
+                ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+            End If
+            Console.WriteLine("Something went wrong when identifying the verb")
+            Console.Read()
+            Main()
+
+        Else 'If there is only one word type, the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
+            If TypeSnip = "I-adjective" Then
+                Iadjective = True
+            ElseIf TypeSnip = "Na-adjective" Then
+                NaAdjective = True
+            ElseIf TypeSnip = "Noun" Then
+                Noun = True
+            End If
+
+            'For verbs:
+            If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
+                Verb = True
+                If Anki = True Then
+                    Verb = False
                 End If
             End If
 
@@ -913,51 +953,14 @@ Module Module1
                 Console.WriteLine("Something went wrong when identifying the verb")
                 Console.Read()
                 Main()
-
-            Else 'If there is only one word type, the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
-                If TypeSnip = "I-adjective" Then
-                    Iadjective = True
-                ElseIf TypeSnip = "Na-adjective" Then
-                    NaAdjective = True
-                ElseIf TypeSnip = "Noun" Then
-                    Noun = True
-                End If
-
-                'For verbs:
-                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
-                    Verb = True
-                    If Anki = True Then
-                        Verb = False
-                    End If
-                End If
-
-                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
-                    Dim ComparativeType As String = ""
-                    If FullWordType.IndexOf("Transitive") <> -1 Then
-                        ComparativeType = "t"
-                    End If
-                    If FullWordType.IndexOf("intransitive") <> -1 Then
-                        ComparativeType = "i"
-                    End If
-
-                    If FullWordType.IndexOf("Godan verb") <> -1 Then
-                        ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
-                    End If
-
-                    If FullWordType.IndexOf("Ichidan verb") <> -1 Then
-                        ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
-                    End If
-                    Console.WriteLine("Something went wrong when identifying the verb")
-                    Console.Read()
-                    Main()
-                End If
             End If
+        End If
 
-            'This is checking if the start of the meaning variable is a vowel so that it can change the example sentence from a -> an if it is
-            Dim Vowel As Boolean = False
-            If Scrap(0) = "a" Or Scrap(0) = "e" Or Scrap(0) = "i" Or Scrap(0) = "o" Or Scrap(0) = "u" Then
-                Vowel = True
-            End If
+        'This is checking if the start of the meaning variable is a vowel so that it can change the example sentence from a -> an if it is
+        Dim Vowel As Boolean = False
+        If Scrap(0) = "a" Or Scrap(0) = "e" Or Scrap(0) = "i" Or Scrap(0) = "o" Or Scrap(0) = "u" Then
+            Vowel = True
+        End If
 
 
         If AdvancedParam = 0 And PreferencesString(10) <> 0 Or AdvancedParam > 1 Then
@@ -1283,6 +1286,10 @@ Module Module1
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
             Dim LastRequest As String = ""
             If Anki = False Then
+                Console.ForegroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'anki')")
+                Console.ForegroundColor = ConsoleColor.White
+
                 LastRequest = Console.ReadLine().ToLower()
             End If
 
@@ -1415,6 +1422,27 @@ Module Module1
             Console.ReadLine()
         End If
 
+        Main()
+    End Sub
+
+    Sub TranslateSentence(ByVal Sentence)
+        Console.Clear()
+        Console.WriteLine("Sentence detected")
+
+        Dim WordURL As String = "https://www.romajidesu.com/translator/" & Sentence
+        Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
+        Dim HTML As String
+        HTML = Client.DownloadString(New Uri(WordURL))
+        HTML = Mid(HTML, HTML.IndexOf("Original Japanese sentence"), HTML.Length - (HTML.Length - HTML.IndexOf("Translated Romaji/Kana")) - HTML.IndexOf("Original Japanese sentence")).Trim
+        HTML = HTML.Replace(vbLf, "").Replace("       ", "").Replace("    ", "").Replace("   ", "") 'Cleaning up the HTML so it is easier to read and scrap from. Yes, I probably should have done this for the other web scraping.
+        Console.WriteLine(HTML)
+
+
+
+
+
+        Console.ReadLine()
         Main()
     End Sub
     Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType, ByVal S)
@@ -2234,6 +2262,12 @@ Module Module1
             End Try
             Dim KanjiInfo As String = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
 
+            If KanjiInfo.Length < 10 Then
+                Console.WriteLine("No kanji information")
+                Console.ReadLine()
+                Main()
+            End If
+
             Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
             Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
             Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
@@ -2387,6 +2421,10 @@ Module Module1
                     KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ")】")
                 End If
             Next
+
+            Console.ForegroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'anki')")
+            Console.ForegroundColor = ConsoleColor.White
 
             Dim LastRequest As String = Console.ReadLine().ToLower
 
@@ -3368,6 +3406,10 @@ Module Module1
             ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
             HTML = Mid(HTML, ExtraIndex)
             ExtraIndex = HTML.IndexOf("</span></div></div></div>")
+            If ExtraIndex < 1 Then
+                ExtraIndex = HTML.IndexOf("</div></span></div></div>")
+            End If
+
             HTML = Left(HTML, ExtraIndex)
         End Try
 
@@ -3673,7 +3715,7 @@ Module Module1
                     Do Until IsNumeric(AmountChoice) = True
                         Console.Clear()
                         Console.WriteLine("How much information would you like for '" & InformationType & "' (" & Line + 1 & "/" & TextString.Length - 1 & ")?")
-                        Console.WriteLine("Type a number in the range 0-2. (0 being nothing, 2 being everything)")
+                        Console.WriteLine("Type a number in the range 0-3. (0 being nothing, 3 being everything)")
                         Console.WriteLine()
 
                         For SType = 0 To TextString.Length - 1
