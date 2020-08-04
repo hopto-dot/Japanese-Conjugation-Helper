@@ -1426,22 +1426,157 @@ Module Module1
     End Sub
 
     Sub TranslateSentence(ByVal Sentence)
-        Console.Clear()
-        Console.WriteLine("Sentence detected")
+        Const QUOTE = """"
+        '彼は銀行に行くことが難しいと思ってしまいます。
 
-        Dim WordURL As String = "https://www.romajidesu.com/translator/" & Sentence
+        Dim WordURL As String = "www.romajidesu.com/translator/" & Sentence
         Dim Client As New WebClient
+        Dim WordGroups() As String
         Client.Encoding = System.Text.Encoding.UTF8
-        Dim HTML As String
-        HTML = Client.DownloadString(New Uri(WordURL))
+        Dim HTML As String = ""
+        HTML = Client.DownloadString(New Uri("http://" & WordURL))
+
+        If HTML.Length < 100 Then
+            Console.WriteLine("Something went wrong.")
+            Console.ReadLine()
+            Main()
+        End If
+
         HTML = Mid(HTML, HTML.IndexOf("Original Japanese sentence"), HTML.Length - (HTML.Length - HTML.IndexOf("Translated Romaji/Kana")) - HTML.IndexOf("Original Japanese sentence")).Trim
         HTML = HTML.Replace(vbLf, "").Replace("       ", "").Replace("    ", "").Replace("   ", "") 'Cleaning up the HTML so it is easier to read and scrap from. Yes, I probably should have done this for the other web scraping.
-        Console.WriteLine(HTML)
+        WordGroups = Split(HTML, "bf=")
+
+        ' Console.WriteLine("Debug?")
+        'If Console.ReadLine = "1" Then
+        'For Printer = 0 To WordGroups.Length - 1
+        'Console.WriteLine(WordGroups(Printer) & "__")
+        'Console.WriteLine()
+        'Console.WriteLine()
+        'Console.WriteLine()
+        'Console.WriteLine()
+        'Next
+        'End If
+
+        Console.Clear()
+        Console.WriteLine("Sentence breakdown (not a translator):")
+        Console.WriteLine()
+        Console.WriteLine(Sentence)
+        Console.WriteLine()
+        Dim FoundInfo, WriteWord, CurrentWord As String
+        Dim WriteWord2 = ""
+        Dim Snip1, Snip2 As Integer
+        Dim Definition(0) As String
+        Dim Furigana As String
+
+        For I = 1 To WordGroups.Length - 1
+            'Snipping the "base form"
+            Snip2 = Mid(WordGroups(I), 2).IndexOf(QUOTE) - 1
+            FoundInfo = Mid(WordGroups(I), 2, Snip2 + 1)
+            WriteWord = FoundInfo
+            CurrentWord = FoundInfo
+
+            'Getting the definition:
+            Definition(I - 1) = DefinitionScraper("jisho.org/search/" & CurrentWord)
+            Snip1 = Definition(I - 1).IndexOf(";")
+            If Snip1 <> -1 Then
+                Definition(I - 1) = Left(Definition(I - 1), Snip1)
+            End If
+            Snip1 = Definition(I - 1).IndexOf("(")
+            If Snip1 <> -1 Then
+                Definition(I - 1) = Left(Definition(I - 1), Snip1)
+            End If
+
+            'Snipping furigana:
+            Snip1 = WordGroups(I).IndexOf("_blank") + 9
+            WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+            Snip2 = WordGroups(I).IndexOf(" ")
+            WriteWord = Left(WordGroups(I), Snip2).Replace("<div", "")
+
+            Snip2 = WordGroups(I).IndexOf("<br/>")
+            Furigana = Left(WordGroups(I), Snip2)
+            Snip1 = Furigana.LastIndexOf(" ") + 1
+            Furigana = Mid(Furigana, Snip1).Trim
+
+            'Snipping the <i> info 1
+            Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
+            Snip2 = WordGroups(I).IndexOf("</i>")
+            FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
+
+            WriteWord = FoundInfo & " " & WriteWord 'word type + word
+            If Furigana.Length > 0 Then
+                WriteWord = WriteWord & " (" & Furigana & ")" '(word type + word) + furigana
+            End If
 
 
+            Try
+                Snip1 = WordGroups(I).IndexOf("particle") + 5
+                WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+                'Snipping the helping particle
+                Snip1 = WordGroups(I).IndexOf(">") + 1 '+2 because that is the length of ">"
+                Snip2 = WordGroups(I).IndexOf("<")
+                WriteWord2 = Mid(WordGroups(I), Snip1 + 1, Snip2 - Snip1)
+                WriteWord2 = WriteWord2.Replace(CurrentWord, "")
+            Catch
+                WriteWord2 = ""
+            End Try
+
+            Try
+                'Snipping the second <i> (if it exists):
+                Snip1 = WordGroups(I).IndexOf("</i>") + 3 'I probably could be 4, but using 3 to be safe
+                WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+                Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
+                Snip2 = WordGroups(I).IndexOf("</i>")
+                FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
+                If FoundInfo.IndexOf("symbol") = -1 Then
+                    WriteWord2 = WriteWord2 & FoundInfo 'Adding the word type before the word
+                End If
+
+                Try 'Snipping the third <i> (if it exists):
+                    Snip1 = WordGroups(I).IndexOf("</i>") + 3 'I probably could be 4, but using 3 to be safe
+                    WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+                    Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
+                    Snip2 = WordGroups(I).IndexOf("</i>")
+                    FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
+
+                    If FoundInfo.IndexOf("symbol") = -1 Then
+                        WriteWord2 = WriteWord2 & FoundInfo 'Adding the word type before the word
+                    End If
+                Catch
+                End Try
+
+            Catch
+            End Try
+
+            WriteWord = WriteWord.Trim
+            WriteWord2 = WriteWord2.Trim
+            If Left(WriteWord2, 2) = ", " Then
+                WriteWord2 = Mid(WriteWord2, 3)
+            End If
+
+            If WriteWord2 <> "" Then
+                Console.WriteLine(WriteWord & " (" & WriteWord2 & "): " & Definition(I - 1))
+            Else
+                Console.WriteLine(WriteWord & ": " & Definition(I - 1))
+            End If
+            Console.WriteLine()
+            WriteWord2 = ""
 
 
+            Array.Resize(Definition, Definition.Length + 1)
+        Next
+        Array.Resize(Definition, Definition.Length - 1)
 
+        Console.WriteLine()
+
+        Console.WriteLine()
+        Console.WriteLine()
+        Console.ForegroundColor = ConsoleColor.DarkGray
+        Console.WriteLine("Note: Entering ungrammatical nonsense leads to weird results.")
+        Console.ForegroundColor = ConsoleColor.White
         Console.ReadLine()
         Main()
     End Sub
@@ -1672,10 +1807,10 @@ Module Module1
             '   PresentMeaning = Left(PlainMeaning, PlainMeaning.Length - 1) & "ing"
         ElseIf Vowel1 = False And Vowel2 = False Then
             PresentMeaning = PlainMeaning & "ing"
-        ElseIf PlainMeaning.Length < 7 And Vowel1 = False Then
-            PresentMeaning = PlainMeaning & "ing"
-        Else
-            PresentMeaning = PlainMeaning & "ing"
+        ElseIf PlainMeaning.Length <7 And Vowel1= False Then
+            PresentMeaning= PlainMeaning & "ing"
+                                       Else
+            PresentMeaning= PlainMeaning & "ing"
         End If
 
         'Fixing a few broken "double-word" definitions
@@ -3171,15 +3306,21 @@ Module Module1
         'Loading the website's HTML code and storing it in a HTML as a string:
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
-        URL = "https://" & URL
-        HTML = Client.DownloadString(New Uri(URL))
+
+        HTML = Client.DownloadString(New Uri("http://" & URL))
+
         Try
             ExtraIndex = HTML.IndexOf("Details ▸")
             HTML = Left(HTML, ExtraIndex)
         Catch
         End Try
         ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
-        HTML = Mid(HTML, ExtraIndex)
+        Try
+            HTML = Mid(HTML, ExtraIndex)
+        Catch
+            Return ("")
+        End Try
+
         'Used to debug:
         'Console.WriteLine(HTML)
         'Console.WriteLine("URL: " & URL)
