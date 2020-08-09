@@ -23,11 +23,12 @@ For the main functionality of bringing up conjugations of a word, simple type th
 ![Japanese Characters](https://i.imgur.com/x7gDhB9.png)
 
 ***
-## Features planned to be coming soon
-* Important Anki decks and generate reverse cards.
+## Features that might come soon
+* Important Anki decks and generate reverse cards
 * New parameters
 * New forms - new forms are constantly being added
 * Search for grammar
 * Input sentences and then get definitions for each word
 * Listen to/watch a clip from a random movie that contains the word you search
+* I am contemplating making a version of this program that has a User Interface, but this probably won't happen as I've never done that before
 ***
