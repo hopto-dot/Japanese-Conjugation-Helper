@@ -583,7 +583,7 @@ Module Module1
         Dim SelectedDefinition() As String = FoundDefinitions(0).Split("|")
         Dim SelectedType() As String = FoundTypes.Split("|")
         For Add = 1 To SelectedDefinition.Length
-            SelectedDefinition(Add - 1) = SelectedDefinition(Add - 1) & Add
+            SelectedDefinition(Add - 1) = SelectedDefinition(Add - 1).Replace("&quot;", QUOTE) & Add
         Next
 
 
@@ -606,10 +606,14 @@ Module Module1
 
 
         'Extracting furigana and then snipping from the start up to the furigana
+        Dim WordHTML0, WordHTML As String
+        WordHTML0 = Client.DownloadString(New Uri("https://" & FoundWordLinks(WordChoice - 1))) 'This is used for the furigana
+        WordHTML = WordHTML0 'This is a copy, used for the kanji readings at the end
         Dim Furigana As String = ""
         Dim FuriganaStart As Integer
+
         Try
-            Furigana = RetrieveClassRange(HTMLTemp, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
+            Furigana = RetrieveClassRange(WordHTML0, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
             If Furigana.Length < 600 And Furigana.Length <> 0 Then
                 FuriganaStart = Furigana.IndexOf("search for")
                 Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
@@ -622,8 +626,8 @@ Module Module1
             End If
 
             If Furigana = ActualSearchWord Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
-                Furigana = RetrieveClassRange(HTMLTemp, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
-                If Furigana.Length < 600 And Furigana.Length <> 0 Then
+                Furigana = RetrieveClassRange(WordHTML0, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
+                If Furigana.Length < 50 And Furigana.Length <> 0 Then
                     FuriganaStart = Furigana.IndexOf("search for")
                     Furigana = Mid(Furigana, FuriganaStart + 5)
 
@@ -635,6 +639,16 @@ Module Module1
                 End If
             End If
 
+            If Furigana = ActualSearchWord Or Furigana = "" Or Furigana.Length > 20 Then 'Another try
+                Furigana = RetrieveClassRange(WordHTML0, "kanji-3-up kanji", "</span><span></span>", "Furigana")
+                If Furigana.Length < 50 And Furigana.Length <> 0 Then
+                    Furigana = Mid(Furigana, Furigana.LastIndexOf(">") + 2)
+                Else
+                    Furigana = ""
+                End If
+
+            End If
+
             If Furigana.Length < 1 Or IsNothing(Furigana) Then
                 Furigana = RetrieveClassRange(HTML, "audio id=" & QUOTE & "audio_" & ActualSearchWord, "<source src=", "Furigana2")
                 Furigana = Furigana.Replace("<", "")
@@ -644,6 +658,7 @@ Module Module1
         Catch
             Furigana = ""
         End Try
+
 
         'Displaying word definitions WITH corresponding the word types: -------------------------
         DefG1 -= 1
@@ -1088,12 +1103,11 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.ForegroundColor = ConsoleColor.White
 
-            Dim WordHTML As String = ""
             Try
                 'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
                 Dim WordWordURL As String = ("https://jisho.org/word/" & ActualSearchWord)
 
-                WordHTML = Client.DownloadString(New Uri(WordWordURL))
+
 
 
             Catch
@@ -1287,7 +1301,7 @@ Module Module1
             Dim LastRequest As String = ""
             If Anki = False Then
                 Console.ForegroundColor = ConsoleColor.DarkGray
-                Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'anki')")
+                Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'kanji')")
                 Console.ForegroundColor = ConsoleColor.White
 
                 LastRequest = Console.ReadLine().ToLower()
