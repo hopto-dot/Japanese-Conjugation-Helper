@@ -978,7 +978,7 @@ Module Module1
         End If
 
 
-        If AdvancedParam = 0 And PreferencesString(10) <> 0 Or AdvancedParam > 1 Then
+        If AdvancedParam = 0 And PreferencesString(11) <> 0 Or AdvancedParam > 1 Then
             If Iadjective = True Then
                 ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
                 If AdvancedParam <> 1 Or AdvancedParam <> 2 Then
@@ -1090,7 +1090,7 @@ Module Module1
 
         Dim KanjiBool As Boolean = False
         If AdvancedParam = 0 Then
-            If PreferencesString(11) <> 0 Then
+            If PreferencesString(12) <> 0 Then
                 KanjiBool = True
             End If
         End If
@@ -1608,6 +1608,7 @@ Module Module1
         Dim Conditional As String = ""
         Dim teStem As String
         Dim Volitional As String
+        Dim Passive As String
 
         'Removing [], AKA Extra info
         Try
@@ -1729,11 +1730,13 @@ Module Module1
             Potential = Left(PlainVerb, PlainVerb.length - 1) & LastAddPot
             Causative = Left(PlainVerb, PlainVerb.length - 1) & LastAdd & "せる"
             Conditional = Left(Potential, Potential.Length - 1) & "ば"
+            Passive = Left(PlainVerb, PlainVerb.length - 1) & LastAdd & "れる"
         Else
             NegativeStem = Left(PlainVerb, PlainVerb.length - 1)
             Potential = Left(PlainVerb, PlainVerb.length - 1) & "られる"
             Causative = Left(PlainVerb, PlainVerb.length - 1) & "させる"
             Conditional = Left(PlainVerb, PlainVerb.length - 1) & "れば"
+            Passive = masuStem & "られる"
         End If
 
         'Creating te-form stem of searched word
@@ -1900,6 +1903,15 @@ Module Module1
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Passive:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Plain passive: " & Passive)
+            Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
+            Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
+            Console.WriteLine("Negative causative passive: " & Left(Causative, Passive.Length - 1) & "られない")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Conditional:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
@@ -1991,6 +2003,14 @@ Module Module1
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Passive:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Plain passive: " & Passive)
+            Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
+            Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Conditional:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
@@ -2038,6 +2058,13 @@ Module Module1
             Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
             Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
             Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
+
+            Console.WriteLine()
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Passive:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Plain passive: " & Passive)
+            Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2099,12 +2126,13 @@ Module Module1
             'Volitional:3
             'Potential:4
             'Causative:5
-            'Conditional:6
-            'Want:7
-            'Need to:8
-            'Auxilaries:9
-            'Noun/adj:10
-            'Kanji details:11
+            'Passive:6            <-------
+            'Conditional:7
+            'Want:8
+            'Need to:9
+            'Auxilaries:10
+            'Noun/adj:11
+            'Kanji details:12
 
             If PreferencesString(0) = 3 Then
                 Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2253,6 +2281,33 @@ Module Module1
 
             If PreferencesString(6) = 3 Then
                 Console.WriteLine()
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Passive:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Plain passive: " & Passive)
+                Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
+                Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
+                Console.WriteLine("Negative causative passive: " & Left(Causative, Passive.Length - 1) & "られない")
+            ElseIf PreferencesString(6) = 2 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Passive:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Plain passive: " & Passive)
+                Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
+                Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
+            ElseIf PreferencesString(6) = 1 Then
+                Console.WriteLine()
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Passive:")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.WriteLine("Plain passive: " & Passive)
+                Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
+            End If
+
+            If PreferencesString(7) = 3 Then
+                Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Conditional:")
                 Console.BackgroundColor = ConsoleColor.Black
@@ -2261,7 +2316,7 @@ Module Module1
                 Console.WriteLine()
                 Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
                 Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら")
-            ElseIf PreferencesString(6) = 2 Then
+            ElseIf PreferencesString(7) = 2 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Conditional:")
@@ -2270,7 +2325,7 @@ Module Module1
                 Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
                 Console.WriteLine()
                 Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
-            ElseIf PreferencesString(6) = 1 Then
+            ElseIf PreferencesString(7) = 1 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Conditional:")
@@ -2279,7 +2334,7 @@ Module Module1
                 Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
             End If
 
-            If PreferencesString(7) = 3 Then
+            If PreferencesString(8) = 3 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Want:")
@@ -2290,7 +2345,7 @@ Module Module1
                 Console.WriteLine("Didn't want to " & PlainMeaning & ": " & masuStem & "たくなかった")
                 Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
                 Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
-            ElseIf PreferencesString(7) = 2 Then
+            ElseIf PreferencesString(8) = 2 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Want:")
@@ -2299,7 +2354,7 @@ Module Module1
                 Console.WriteLine("Don't want to " & PlainMeaning & ": " & masuStem & "たくない")
                 Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
                 Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
-            ElseIf PreferencesString(7) = 1 Then
+            ElseIf PreferencesString(8) = 1 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Want:")
@@ -2308,7 +2363,7 @@ Module Module1
                 Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
             End If
 
-            If PreferencesString(8) = 3 Then
+            If PreferencesString(9) = 3 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Do and don't need to:")
@@ -2317,7 +2372,7 @@ Module Module1
                 Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なくちゃいけない")
                 Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なければいけません")
                 Console.WriteLine("Don't need to " & PlainMeaning & ": " & NegativeStem & "なくてもいい")
-            ElseIf PreferencesString(8) = 2 Then
+            ElseIf PreferencesString(9) = 2 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Do and don't need to:")
@@ -2325,7 +2380,7 @@ Module Module1
                 Console.WriteLine("Need to/should " & PlainMeaning & "　(very informal): " & NegativeStem & "なきゃ")
                 Console.WriteLine("Need to/should " & PlainMeaning & ": " & NegativeStem & "なくちゃいけない")
                 Console.WriteLine("Don't need to " & PlainMeaning & ": " & NegativeStem & "なくてもいい")
-            ElseIf PreferencesString(8) = 1 Then
+            ElseIf PreferencesString(9) = 1 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Do and don't need to:")
@@ -2334,7 +2389,7 @@ Module Module1
                 Console.WriteLine("Don't need to " & PlainMeaning & ": " & NegativeStem & "なくてもいい")
             End If
 
-            If PreferencesString(9) = 3 Then
+            If PreferencesString(10) = 3 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Extras:")
@@ -2346,7 +2401,7 @@ Module Module1
                 Console.WriteLine("Why don't you " & PlainMeaning & " (informal): " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "らどうですか")
                 Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " to prepare for something:" & teStem & "おく")
                 Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
-            ElseIf PreferencesString(9) = 2 Then
+            ElseIf PreferencesString(10) = 2 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Extras:")
@@ -2356,7 +2411,7 @@ Module Module1
                 Console.WriteLine("May " & PlainMeaning & ": " & PlainVerb & "かもしれない")
                 Console.WriteLine("Why don't you " & PlainMeaning & " (informal): " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "らどうですか")
                 Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
-            ElseIf PreferencesString(9) = 1 Then
+            ElseIf PreferencesString(10) = 1 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Extras:")
@@ -2387,7 +2442,7 @@ Module Module1
 
         Dim KanjiBool As Boolean = False
         If S = 0 Then
-            If PreferencesString(11) <> 0 Then
+            If PreferencesString(12) <> 0 Then
                 KanjiBool = True
             End If
         End If
@@ -3800,6 +3855,7 @@ Module Module1
             TextWriter.WriteLine("Volitional:1")
             TextWriter.WriteLine("Potential:1")
             TextWriter.WriteLine("Causative (let & made):1")
+            TextWriter.WriteLine("Passive:1")
             TextWriter.WriteLine("Conditional:1")
 
             TextWriter.WriteLine("Want:1")
@@ -3985,6 +4041,7 @@ Module Module1
                 TextWriter.WriteLine("Volitional:1")
                 TextWriter.WriteLine("Potential:1")
                 TextWriter.WriteLine("Causative (let & made):1")
+                TextWriter.WriteLine("Passive:1")
                 TextWriter.WriteLine("Conditional:1")
 
                 TextWriter.WriteLine("Want:1")
@@ -4216,6 +4273,7 @@ Module Module1
                     FileBuilderUpdater2.WriteLine("Volitional:1")
                     FileBuilderUpdater2.WriteLine("Potential:1")
                     FileBuilderUpdater2.WriteLine("Causative (let & made):1")
+                    FileBuilderUpdater2.WriteLine("Passive:1")
                     FileBuilderUpdater2.WriteLine("Conditional:1")
                     FileBuilderUpdater2.WriteLine("Want:1")
                     FileBuilderUpdater2.WriteLine("Need to:1")
