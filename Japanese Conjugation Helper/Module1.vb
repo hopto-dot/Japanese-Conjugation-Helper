@@ -375,7 +375,7 @@ Module Module1
         HTML = Client.DownloadString(New Uri(WordURL))
         Dim AddingTemp As String
 
-        If HTML.IndexOf("zen_bar") <> -1 Then
+        If HTML.IndexOf("zen_bar") <> -1 And Anki = False Then
             TranslateSentence(Word)
         End If
 
@@ -476,6 +476,16 @@ Module Module1
 
             Dim FirstBlank As Boolean = True
             Do Until WordChoice <= FoundDefinitions.Length And WordChoice >= 1
+                If IntTest.Length = 3 And Left(IntTest, 2).ToLower = "s=" Then
+                    If IsNumeric(Right(IntTest, 1)) = True Then
+                        If (Right(IntTest, 1)) > -1 And (Right(IntTest, 1)) < 5 Then
+                            AdvancedParam = (Right(IntTest, 1))
+                            Console.WriteLine("Changed S parameter")
+                            Threading.Thread.Sleep(500)
+                        End If
+                    End If
+                End If
+
                 If IsNumeric(IntTest) = True Then
                     WordChoice = CInt(IntTest)
                     If WordChoice <= FoundDefinitions.Length And WordChoice >= 1 Then
@@ -928,9 +938,10 @@ Module Module1
             If FullWordType.IndexOf("Ichidan verb") <> -1 Then
                 ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
             End If
-            Console.WriteLine("Something went wrong when identifying the verb")
-            Console.Read()
-            Main()
+
+            ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam)
+
+            'Main()
 
         Else 'If there is only one word type, the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
             If TypeSnip = "I-adjective" Then
@@ -965,7 +976,8 @@ Module Module1
                 If FullWordType.IndexOf("Ichidan verb") <> -1 Then
                     ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
                 End If
-                Console.WriteLine("Something went wrong when identifying the verb")
+
+                ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam)
                 Console.Read()
                 Main()
             End If
@@ -1083,7 +1095,7 @@ Module Module1
         If SentenceExample.Length > 10 Then
             Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
         End If
-        If Example.Length < 100 And Example.Length > 5 Then
+        If Example.Length < 200 And Example.Length > 4 Then
             Console.WriteLine()
             Console.WriteLine(Example)
         End If
@@ -1423,7 +1435,7 @@ Module Module1
 
                 AnkiCopy = AnkiCopy.Trim
 
-                AnkiCopy = AnkiCopy & vbCrLf & KanjisLine
+                AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & ActualSearchWord & vbCrLf & KanjisLine
 
                 My.Computer.Clipboard.SetText(AnkiCopy)
 
@@ -2427,17 +2439,16 @@ Module Module1
         Dim WordURL As String = ("https://jisho.org/search/" & PlainVerb & "%20%23sentences")
         Dim HTML As String = Client.DownloadString(New Uri(WordURL))
 
-        If S < 3 Then
-            Dim Example As String = ""
-            Dim SentenceExample As String
-            SentenceExample = RetrieveClassRange(HTML, "<li class=" & QUOTE & "clearfix" & QUOTE & ">", "inline_copyright", "Sentence Example") 'Firstly extracting the whole group
-            If SentenceExample.Length > 10 Then
-                Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
-            End If
-            If Example.Length < 100 And Example.Length > 5 Then
-                Console.WriteLine()
-                Console.WriteLine(Example)
-            End If
+        'Example sentence extraction -----
+        Dim Example As String = ""
+        Dim SentenceExample As String
+        SentenceExample = RetrieveClassRange(HTML, "<li class=" & QUOTE & "clearfix" & QUOTE & ">", "inline_copyright", "Sentence Example") 'Firstly extracting the whole group
+        If SentenceExample.Length > 10 Then
+            Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
+        End If
+        If Example.Length < 100 And Example.Length > 5 Then
+            Console.WriteLine()
+            Console.WriteLine(Example)
         End If
 
         Dim KanjiBool As Boolean = False
@@ -2627,7 +2638,7 @@ Module Module1
             Next
 
             Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'anki')")
+            Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'kanji')")
             Console.ForegroundColor = ConsoleColor.White
 
             Dim LastRequest As String = Console.ReadLine().ToLower
@@ -3318,6 +3329,10 @@ Module Module1
             Snip = Mid(HTML, SnipFirstIndex, HTML.Length - SnipFirstIndex - 1) 'This is getting rid of everything before the group/first snip. This is useful for the setting the second snip to something more ambigious/could be somewhere else (before) in the HTML
         End If
         Dim SnipSecondIndex As Integer = Snip.IndexOf(SnipEnd)
+
+        If SnipSecondIndex = -1 And SnipEnd = "inline_copyright" Then
+            SnipSecondIndex = Snip.IndexOf("english")
+        End If
         If SnipSecondIndex = -1 Then
             Return ("")
         End If
