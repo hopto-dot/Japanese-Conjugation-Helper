@@ -669,6 +669,9 @@ Module Module1
             Furigana = ""
         End Try
 
+        If Furigana.IndexOf(Right(Word, 1)) = -1 Then
+
+        End If
 
         'Displaying word definitions WITH corresponding the word types: -------------------------
         DefG1 -= 1
@@ -1617,10 +1620,12 @@ Module Module1
         Dim NegativeStem As String = ""
         Dim Potential As String = ""
         Dim Causative As String = ""
+        Dim CausativePassive As String = ""
         Dim Conditional As String = ""
-        Dim teStem As String
-        Dim Volitional As String
-        Dim Passive As String
+        Dim teStem As String = ""
+        Dim Volitional As String = ""
+        Dim Passive As String = ""
+        Dim Imperative = ""
 
         'Removing [], AKA Extra info
         Try
@@ -1741,14 +1746,18 @@ Module Module1
             NegativeStem = Left(PlainVerb, PlainVerb.length - 1) & LastAdd
             Potential = Left(PlainVerb, PlainVerb.length - 1) & LastAddPot
             Causative = Left(PlainVerb, PlainVerb.length - 1) & LastAdd & "せる"
+            CausativePassive = NegativeStem & "される"
             Conditional = Left(Potential, Potential.Length - 1) & "ば"
             Passive = Left(PlainVerb, PlainVerb.length - 1) & LastAdd & "れる"
+            Imperative = Left(Potential, Potential.Length - 1)
         Else
             NegativeStem = Left(PlainVerb, PlainVerb.length - 1)
             Potential = Left(PlainVerb, PlainVerb.length - 1) & "られる"
             Causative = Left(PlainVerb, PlainVerb.length - 1) & "させる"
+            CausativePassive = NegativeStem & "させられる"
             Conditional = Left(PlainVerb, PlainVerb.length - 1) & "れば"
             Passive = masuStem & "られる"
+            Imperative = masuStem + "ろ"
         End If
 
         'Creating te-form stem of searched word
@@ -1758,6 +1767,7 @@ Module Module1
             End If
             If Last = "す" Then
                 LastAdd = "して"
+                CausativePassive = NegativeStem & "せられる" 'させられる but without first せられる
             End If
             If Last = "ぐ" Then
                 LastAdd = "いで"
@@ -1771,6 +1781,12 @@ Module Module1
             teStem = Left(PlainVerb, PlainVerb.length - 1) & LastAdd
         Else
             teStem = Left(PlainVerb, PlainVerb.length - 1) & "て"
+        End If
+
+        If PlainVerb = "来る" Then
+            Imperative = "来い"
+        ElseIf PlainVerb = "する" Then
+            Imperative = "しろ"
         End If
 
         'For ShortPastForm:
@@ -1912,6 +1928,8 @@ Module Module1
             Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
             Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
             Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
+            Console.WriteLine("Causative-passive: " & CausativePassive)
+            Console.WriteLine("Negative-causative passive: " & Left(CausativePassive, CausativePassive.Length - 1) & "ない")
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -1919,8 +1937,7 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Plain passive: " & Passive)
             Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
-            Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
-            Console.WriteLine("Negative causative passive: " & Left(Causative, Passive.Length - 1) & "られない")
+
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -1972,6 +1989,7 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Extra:")
             Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Imperative: " & Imperative)
             Console.WriteLine("I intend to " & PlainMeaning & ": " & PlainVerb & "つもりです")
             Console.WriteLine("May " & PlainMeaning & ": " & PlainVerb & "かもしれない")
             Console.WriteLine("Why don't you " & PlainMeaning & " (informal): " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "らどうですか")
@@ -1982,13 +2000,11 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Te-forms:")
             Console.BackgroundColor = ConsoleColor.Black
-            Console.WriteLine("Te-stem: " & teStem)
-            Console.WriteLine("Is " & PresentMeaning & ": " & teStem & "いる")
             Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "なくて")
             Console.WriteLine("Negative te-form:")
             Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ないで")
             Console.WriteLine()
-            Console.WriteLine(Left(PastMeaning, 1).ToUpper & Right(PastMeaning, PastMeaning.Length - 1) & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
+            Console.WriteLine("Past tense: " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2012,6 +2028,7 @@ Module Module1
             Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
             Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
             Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
+            Console.WriteLine("Causative-passive: " & CausativePassive)
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2019,7 +2036,7 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Plain passive: " & Passive)
             Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
-            Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
+
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2039,8 +2056,9 @@ Module Module1
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Auxiliaries:")
+            Console.WriteLine("Extras:")
             Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine("Imperative: " & Imperative)
             Console.WriteLine("To try " & PresentMeaning & ": " & teStem & "みる")
             Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
             Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
@@ -2068,15 +2086,14 @@ Module Module1
             Console.WriteLine("Causative (Being made to do something or letting it be done):")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
-            Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
-            Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
+            Console.WriteLine("Causative-passive: " & CausativePassive)
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Passive:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Plain passive: " & Passive)
-            Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
+            Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2094,6 +2111,7 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Te-stem: " & teStem)
             Console.WriteLine("Negative: " & NegativeStem & "ない")
+            Console.WriteLine("Imperative: " & Imperative)
         ElseIf S = 1 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Important:")
@@ -2276,6 +2294,8 @@ Module Module1
                 Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
                 Console.WriteLine("Causative with te-form: " & Left(Causative, Causative.Length - 1) & "て")
                 Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
+                Console.WriteLine("Causative-passive: " & CausativePassive)
+                Console.WriteLine("Negative-causative passive: " & Left(CausativePassive, CausativePassive.Length - 1) & "ない")
             ElseIf PreferencesString(5) = 2 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2283,12 +2303,15 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
                 Console.WriteLine("Not made to/allowed to " & PlainMeaning & ": " & Left(Causative, Causative.Length - 1) & "ない")
+                Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
+                Console.WriteLine("Causative-passive: " & CausativePassive)
             ElseIf PreferencesString(5) = 1 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Causative (Being made to do something or letting it be done):")
                 Console.BackgroundColor = ConsoleColor.Black
-                Console.WriteLine("Made to/allowed to " & PlainMeaning & ": " & Causative)
+                Console.WriteLine("Causative " & PlainMeaning & ": " & Causative)
+                Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
             End If
 
             If PreferencesString(6) = 3 Then
@@ -2299,8 +2322,6 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine("Plain passive: " & Passive)
                 Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
-                Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
-                Console.WriteLine("Negative causative passive: " & Left(Causative, Passive.Length - 1) & "られない")
             ElseIf PreferencesString(6) = 2 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2308,14 +2329,12 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine("Plain passive: " & Passive)
                 Console.WriteLine("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない")
-                Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
             ElseIf PreferencesString(6) = 1 Then
                 Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Passive:")
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine("Plain passive: " & Passive)
-                Console.WriteLine("Causative passive: " & Left(Causative, Passive.Length - 1) & "られる")
             End If
 
             If PreferencesString(7) = 3 Then
