@@ -29,7 +29,6 @@ For the main functionality of bringing up conjugations of a word, simple type th
 ## Features that might come soon
 * Important Anki decks and generate reverse cards
 * New parameters
-* New forms - new forms are constantly being added
 * Search for grammar
 * Input sentences and then get definitions for each word
 * Listen to/watch a clip from a random movie that contains the word you search
