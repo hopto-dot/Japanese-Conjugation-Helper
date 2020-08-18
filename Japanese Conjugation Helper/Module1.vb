@@ -819,7 +819,6 @@ Module Module1
             Console.ForegroundColor = ConsoleColor.White
         End If
 
-        Console.WriteLine()
         'finished the writing of definitions and types____________________
 
         If Furigana.Length < 15 Then
@@ -1099,8 +1098,7 @@ Module Module1
             Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
         End If
         If Example.Length < 200 And Example.Length > 4 Then
-            Console.WriteLine()
-            Console.WriteLine(Example)
+            Console.WriteLine(Example.Trim)
         End If
 
         Dim KanjiBool As Boolean = False
@@ -1111,7 +1109,6 @@ Module Module1
         End If
 
         If AdvancedParam <> 0 Or KanjiBool = True Then
-            Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.White
             Console.ForegroundColor = ConsoleColor.Black
             Console.WriteLine("Kanji:")
@@ -1292,7 +1289,6 @@ Module Module1
                     Console.WriteLine(ActualInfo(Looper, 2))
                     Console.WriteLine(ActualInfo(Looper, 3))
                     Console.WriteLine("Found in: " & JustResultsScraper(ActualInfo(Looper, 0), 1, ActualSearchWord))
-                    Console.WriteLine()
 
                 Next
             Catch
@@ -1945,7 +1941,6 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
             Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
-            Console.WriteLine()
             Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
             Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら")
 
@@ -1997,14 +1992,14 @@ Module Module1
             Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
 
         ElseIf S = 3 Then
+            Console.WriteLine("Past tense: " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
+            Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Te-forms:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "なくて")
             Console.WriteLine("Negative te-form:")
             Console.WriteLine("Don't " & PlainMeaning & ": " & NegativeStem & "ないで")
-            Console.WriteLine()
-            Console.WriteLine("Past tense: " & Left(teStem, teStem.Length - 1) & ShortPastEnding)
 
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
@@ -2059,14 +2054,10 @@ Module Module1
             Console.WriteLine("Extras:")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Imperative: " & Imperative)
-            Console.WriteLine("To try " & PresentMeaning & ": " & teStem & "みる")
             Console.WriteLine("Want to try " & PresentMeaning & ": " & teStem & "みたい")
             Console.WriteLine("Want to be able to " & PlainMeaning & ": " & Left(Potential, Potential.Length - 1) & "たい")
             Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " too much: " & masuStem & "すぎる")
-            Console.WriteLine("I " & PlainMeaning & " too much: " & masuStem & "すぎます")
-            Console.WriteLine("Too much " & PresentMeaning & ": " & masuStem & "すぎること")
             Console.WriteLine(Left(PlainMeaning, 1).ToUpper & Right(PlainMeaning, PlainMeaning.Length - 1) & " to prepare for something: " & teStem & "おく")
-            Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
         ElseIf S = 2 Then
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Volitional:")
@@ -2182,7 +2173,7 @@ Module Module1
                 Console.WriteLine("I " & PastMeaning & ": " & masuStem & "ました")
                 Console.WriteLine("I did not " & PlainMeaning & ":  " & masuStem & "ませんでした")
             ElseIf PreferencesString(0) = 1 Then
-                Console.WriteLine("masu-stem: " & masuStem)
+                Console.WriteLine("Masu-stem: " & masuStem)
             End If
 
             If PreferencesString(1) = 3 Then
@@ -2206,7 +2197,9 @@ Module Module1
                 Console.WriteLine("Didn't " & PlainMeaning & ": " & NegativeStem & "なかった")
                 Console.WriteLine()
             ElseIf PreferencesString(1) = 1 Then
-                Console.WriteLine()
+                If PreferencesString(0) <> 1 Then
+                    Console.WriteLine()
+                End If
                 Console.WriteLine("Negative stem:" & NegativeStem)
             End If
 
@@ -2316,7 +2309,6 @@ Module Module1
 
             If PreferencesString(6) = 3 Then
                 Console.WriteLine()
-                Console.WriteLine()
                 Console.BackgroundColor = ConsoleColor.DarkGray
                 Console.WriteLine("Passive:")
                 Console.BackgroundColor = ConsoleColor.Black
@@ -2344,7 +2336,6 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
                 Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
-                Console.WriteLine()
                 Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
                 Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら")
             ElseIf PreferencesString(7) = 2 Then
@@ -2354,7 +2345,6 @@ Module Module1
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine("If " & PlainMeaning & ": " & Conditional)
                 Console.WriteLine("If don't " & PlainMeaning & ": " & NegativeStem & "なければ")
-                Console.WriteLine()
                 Console.WriteLine("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら")
             ElseIf PreferencesString(7) = 1 Then
                 Console.WriteLine()
@@ -2450,7 +2440,6 @@ Module Module1
                 Console.WriteLine("May " & PlainMeaning & ": " & PlainVerb & "かもしれない")
                 Console.WriteLine("Must/should " & PlainMeaning & " to prepare for something: " & teStem & "おかなくちゃいけません")
             End If
-            Console.WriteLine()
         End If
 
         Dim Client As New WebClient
@@ -2466,8 +2455,7 @@ Module Module1
             Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
         End If
         If Example.Length < 100 And Example.Length > 5 Then
-            Console.WriteLine()
-            Console.WriteLine(Example)
+            Console.WriteLine(Example.Trim)
         End If
 
         Dim KanjiBool As Boolean = False
@@ -2639,7 +2627,10 @@ Module Module1
                     Console.WriteLine(ActualInfo(Looper, 2))
                     Console.WriteLine(ActualInfo(Looper, 3))
                     Console.WriteLine("Found in :" & JustResultsScraper(ActualInfo(Looper, 0), 1, PlainVerb))
-                    Console.WriteLine()
+                    If LastReadingFound = False Then
+                        Console.WriteLine()
+                    End If
+
                 Next
             Catch
                 Console.WriteLine("Couldn't generate kanji readings")
@@ -2647,14 +2638,7 @@ Module Module1
                 Main()
             End Try
 
-            Dim KanjisLine As String = "【"
-            For Kanji = 1 To ActualInfo.Length / 4
-                If Kanji <> ActualInfo.Length / 4 Then
-                    KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ") ")
-                Else
-                    KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ")】")
-                End If
-            Next
+
 
             Console.ForegroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'kanji')")
@@ -2663,6 +2647,15 @@ Module Module1
             Dim LastRequest As String = Console.ReadLine().ToLower
 
             If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
+                Dim KanjisLine As String = "【"
+                For Kanji = 1 To ActualInfo.Length / 4
+                    If Kanji <> ActualInfo.Length / 4 Then
+                        KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ") ")
+                    Else
+                        KanjisLine &= (ActualInfo(Kanji - 1, 0) & "(" & ActualInfo(Kanji - 1, 1) & ")】")
+                    End If
+                Next
+
                 My.Computer.Clipboard.SetText(KanjisLine)
                 Console.Clear()
                 Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
@@ -3856,8 +3849,10 @@ Module Module1
             Console.WriteLine("What would you like to do?")
             Console.WriteLine()
             Console.WriteLine("0 = Back to main menu")
+            Console.WriteLine()
             Console.WriteLine("1 = Custom S Parameter Settings")
             Console.WriteLine("2 = General Settings")
+            Console.WriteLine()
             Console.WriteLine("3 = Reset ALL settings")
 
             Choice = Console.ReadLine.ToLower
@@ -3981,6 +3976,11 @@ Module Module1
                         Next
 
                         AmountChoice = Console.ReadLine
+
+                        If AmountChoice.ToLower = "b" Or AmountChoice.ToLower = "back" Or AmountChoice.ToLower = "stop" Then
+                            Main()
+                        End If
+
                         If IsNumeric(AmountChoice) = False Then
                             Continue Do
                         ElseIf AmountChoice < 0 Or AmountChoice > 3 Or AmountChoice.Length > 1 Then
@@ -4218,6 +4218,10 @@ Module Module1
                         If NewSetting < 0 Or NewSetting > 4 Or NewSetting.Length > 1 Then
                             NewSetting = ""
                         End If
+                    End If
+
+                    If NewSetting.ToLower = "b" Or NewSetting.ToLower = "back" Or NewSetting.ToLower = "stop" Then
+                        Main()
                     End If
                 Loop
 
