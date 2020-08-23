@@ -1,8 +1,10 @@
-﻿Imports System
+﻿Imports System.Web
+Imports System
 Imports System.Net
-Imports System.Text.RegularExpressions
-Imports Microsoft.VisualBasic
 Imports System.IO
+Imports System.Text
+Imports Newtonsoft.Json.Linq
+
 Module Module1
     Sub Main()
         Console.Clear()
@@ -14,12 +16,12 @@ Module Module1
 
         Const QUOTE = """"
 
-        'Download()
+
         'Template for sound
         'My.Computer.Audio.Play("", AudioPlayMode.Background)
-        Dim ExePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)
-        Dim User As String = Mid(ExePath, ExePath.IndexOf("Users") + 7)
-        User = Left(User, User.IndexOf("\"))
+        ' Dim ExePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)
+        'Dim User As String = Mid(ExePath, ExePath.IndexOf("Users") + 7)
+        'User = Left(User, User.IndexOf("\"))
 
         If Int((50) * Rnd()) <> 2 Then
             Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
@@ -28,15 +30,30 @@ Module Module1
         End If
 
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
-        Dim Word As String = Console.ReadLine.ToLower 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
+        Dim Word As String = Console.ReadLine.ToLower.Trim 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
+
 
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
             Main()
         End If
 
-        If Word = "!test" Then 'This is just a test
-            Download()
-            Console.WriteLine("Done.")
+        Dim Translated As String = ""
+        If Left(Word, 1) = "!" Then
+            Word = Mid(Word, 2)
+            Console.Clear()
+            Console.WriteLine("Translate:")
+
+            Console.WriteLine(Word)
+            Word = Word.Replace(QUOTE, "`")
+            Console.WriteLine()
+
+            Translated = gtranslate(Word, "ja", "en")
+            If Translated.ToLower = Word Then
+                Translated = gtranslate(Word, "en", "ja")
+            End If
+            Translated = Translated.Replace("`", QUOTE)
+            Console.WriteLine(Translated)
+
             Console.ReadLine()
             Main()
         End If
@@ -1483,7 +1500,7 @@ Module Module1
         'End If
 
         Console.Clear()
-        Console.WriteLine("Sentence breakdown (not a translator):")
+        Console.WriteLine("Sentence breakdown:")
         Console.WriteLine()
         Console.WriteLine(Sentence)
         Console.WriteLine()
@@ -1576,6 +1593,13 @@ Module Module1
             Catch
             End Try
 
+            If WordGroups.Length = 1 Or WordGroups(0).Length < 2 Then
+                Console.WriteLine("Trying again.")
+                Threading.Thread.Sleep(1000)
+                Console.Clear()
+                TranslateSentence(Sentence)
+            End If
+
             WriteWord = WriteWord.Trim
             WriteWord2 = WriteWord2.Trim
             If Left(WriteWord2, 2) = ", " Then
@@ -1587,7 +1611,7 @@ Module Module1
             Else
                 Console.WriteLine(WriteWord & ": " & Definition(I - 1))
             End If
-            Console.WriteLine()
+            'Console.WriteLine()
             WriteWord2 = ""
 
 
@@ -1595,9 +1619,9 @@ Module Module1
         Next
         Array.Resize(Definition, Definition.Length - 1)
 
-        Console.WriteLine()
 
         Console.WriteLine()
+        Console.WriteLine(gtranslate(Sentence, "ja", "en"))
         Console.WriteLine()
         Console.ForegroundColor = ConsoleColor.DarkGray
         Console.WriteLine("Note: Entering ungrammatical nonsense leads to weird results.")
@@ -3821,6 +3845,24 @@ Module Module1
         Return (ActualSearchWord & " (" & Snip & ")")
     End Function
 
+    Function GTranslate(ByVal inputtext As String, ByVal fromlangid As String, ByVal tolangid As String) As String
+        inputtext = HttpUtility.HtmlAttributeEncode(inputtext)
+        Dim step1 As New WebClient
+        step1.Encoding = Encoding.UTF8
+
+        Dim step2 As String = step1.DownloadString("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=" & tolangid & "&hl=" & fromlangid & "&dt=t&dt=bd&dj=1&source=icon&q=" & inputtext)
+        Dim step3 As Newtonsoft.Json.Linq.JObject = JObject.Parse(step2)
+        Dim step4 As String = "{nothing}"
+        Try
+            step4 = step3.SelectToken("sentences[0]").SelectToken("trans").ToString()
+        Catch
+            Console.WriteLine("Error; step 4")
+            Threading.Thread.Sleep(1000)
+            Console.WriteLine(step2)
+        End Try
+
+        Return step4
+    End Function
     Sub Preferences()
         Const QUOTE = """"
         Dim MsgResponse As Integer
