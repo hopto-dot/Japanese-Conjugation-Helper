@@ -4,6 +4,7 @@ Imports System.Net
 Imports System.IO
 Imports System.Text
 Imports Newtonsoft.Json.Linq
+'
 
 Module Module1
     Sub Main()
@@ -16,13 +17,6 @@ Module Module1
 
         Const QUOTE = """"
 
-
-        'Template for sound
-        'My.Computer.Audio.Play("", AudioPlayMode.Background)
-        ' Dim ExePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)
-        'Dim User As String = Mid(ExePath, ExePath.IndexOf("Users") + 7)
-        'User = Left(User, User.IndexOf("\"))
-
         If Int((50) * Rnd()) <> 2 Then
             Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
         Else
@@ -32,9 +26,12 @@ Module Module1
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
         Dim Word As String = Console.ReadLine.ToLower.Trim 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
 
-
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
             Main()
+        End If
+
+        If Word = "@" Then
+            'Test
         End If
 
         Dim Translated As String = ""
@@ -107,12 +104,14 @@ Module Module1
         If Word = "/h" Or Word = "/help" Then
             Console.Clear()
             Console.BackgroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Find more info in the wiki.")
+            Console.WriteLine("Find more info in the wiki (on GitHub).")
             Console.WriteLine("If you want to give feedback, request a feature or report bugs do '/feeback' or '/rate'")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine()
             Console.WriteLine("List of commands (note: commands are case sensitive):")
 
+            Console.WriteLine()
+            Console.WriteLine("type " & QUOTE & "!" & QUOTE & " and then a sentence, the program will translate it. (Works for English or Japanese)")
             Console.WriteLine()
             Console.WriteLine("/h: brings up this help menu, if you want more help with a command then add the [command] parameter:")
             Console.WriteLine("Syntax: /h [command]")
@@ -129,21 +128,16 @@ Module Module1
             Console.WriteLine()
             Console.WriteLine("/p: start a small quiz that helps you conjugate verbs, this only works with verbs but will later work with adjectives and nouns, the (word) parameter is the word that you want help conjugating")
             Console.WriteLine("Syntax: /p [english/japanese/romaji word]")
-            Console.WriteLine()
 
             Console.WriteLine()
             Console.WriteLine("/prefs: Changes program preferences")
-            Console.WriteLine()
 
             Console.WriteLine()
             Console.WriteLine("/git: Brings the program repository page on github using Chrome")
-            Console.WriteLine()
 
             Console.WriteLine()
             Console.WriteLine("/files: Opens the folder the program uses to safe preferences")
             Console.WriteLine("Note: Only works once you have used the '/prefs' command")
-            Console.WriteLine()
-
             Console.ReadLine()
             Main()
         End If
@@ -312,7 +306,7 @@ Module Module1
             End If
             AdvancedParam = Mid(Word, SEquals + 4, 1)
 
-            If AdvancedParam < 0 Or AdvancedParam > 4 Then 'Making sure the S parameter is 1-3
+            If AdvancedParam <0 Or AdvancedParam > 4 Then 'Making sure the S parameter is 1-3
                 Console.WriteLine()
 
                 Do Until IsNumeric(Read) = True
@@ -320,7 +314,7 @@ Module Module1
                     Console.WriteLine("Please type a number in the range 1-4")
                     Read = Console.ReadLine
                 Loop
-                Do Until Read > -1 And Read < 5
+                Do Until Read > -1 And Read <5
                     If Read < 0 Or Read > 4 Then
                         Console.WriteLine("The 's' parameter must be in the range 1-4")
                         Console.WriteLine("Please type a number in the range 1-4")
@@ -351,6 +345,7 @@ Module Module1
 
 
         'Hooking up with the custom S=0 Parameter settings: -----------
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
         Dim PreferenceReaderS As String = ""
         Dim PreferencesString(0) As String
         Try
@@ -380,7 +375,7 @@ Module Module1
             Index += 1
         Loop
         'S param file hookup done ______________________________________
-
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
 
         Dim SentenceExample As String = ""
         Dim Example As String = ""
@@ -652,15 +647,16 @@ Module Module1
                 Furigana = ""
             End If
 
-            If Furigana = ActualSearchWord Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
+            If Furigana = ActualSearchWord Or Furigana = "" Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
                 Furigana = RetrieveClassRange(WordHTML0, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
-                If Furigana.Length < 50 And Furigana.Length <> 0 Then
+                If Furigana.Length > 30 And Furigana.Length <> 0 Then
                     FuriganaStart = Furigana.IndexOf("search for")
                     Furigana = Mid(Furigana, FuriganaStart + 5)
 
                     FuriganaStart = Furigana.IndexOf("search for")
                     Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
                     FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                    Furigana = Left(Furigana, FuriganaStart)
                 Else
                     Furigana = ""
                 End If
@@ -668,7 +664,7 @@ Module Module1
 
             If Furigana = ActualSearchWord Or Furigana = "" Or Furigana.Length > 20 Then 'Another try
                 Furigana = RetrieveClassRange(WordHTML0, "kanji-3-up kanji", "</span><span></span>", "Furigana")
-                If Furigana.Length < 50 And Furigana.Length <> 0 Then
+                If Furigana.Length < 30 And Furigana.Length <> 0 Then
                     Furigana = Mid(Furigana, Furigana.LastIndexOf(">") + 2)
                 Else
                     Furigana = ""
@@ -1503,6 +1499,7 @@ Module Module1
         Console.WriteLine("Sentence breakdown:")
         Console.WriteLine()
         Console.WriteLine(Sentence)
+        Console.WriteLine(GTranslate(Sentence, "ja", "en"))
         Console.WriteLine()
         Dim FoundInfo, WriteWord, CurrentWord As String
         Dim WriteWord2 = ""
@@ -1619,9 +1616,6 @@ Module Module1
         Next
         Array.Resize(Definition, Definition.Length - 1)
 
-
-        Console.WriteLine()
-        Console.WriteLine(gtranslate(Sentence, "ja", "en"))
         Console.WriteLine()
         Console.ForegroundColor = ConsoleColor.DarkGray
         Console.WriteLine("Note: Entering ungrammatical nonsense leads to weird results.")
@@ -3740,12 +3734,30 @@ Module Module1
                             SnipEnd = Snip2.IndexOf(">")
                             Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
                         End If
-                    End If
 
-                    If Snip2.IndexOf("href") <> -1 Then
-                        SnipStart = Snip2.IndexOf("<a href=")
-                        SnipEnd = Snip2.IndexOf(">")
-                        Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
+
+                        ''''''''''''''''''''Want to add the grabbing of more info
+
+                    End If
+                    'New:
+                    SnipEnd = SnipEnd
+
+                    If Left(HTML, SnipStart).IndexOf("tag-restriction") <> -1 Then
+                        SnipStart = HTML.IndexOf("tag-restriction") + 14
+                        HTML = Mid(HTML, SnipStart)
+
+                        SnipStart = HTML.IndexOf(">") + 2
+                        HTML = Mid(HTML, SnipStart)
+
+                        SnipEnd = HTML.IndexOf("</")
+                        Snip2 = Snip2 & ", " & Left(HTML, SnipEnd)
+
+
+                        If Snip2.IndexOf("href") <> -1 Then
+                            SnipStart = Snip2.IndexOf("<a href=")
+                            SnipEnd = Snip2.IndexOf(">")
+                            Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
+                        End If
                     End If
 
                     Snip2 = "[" & Snip2 & "]"
@@ -3863,6 +3875,8 @@ Module Module1
 
         Return step4
     End Function
+
+
     Sub Preferences()
         Const QUOTE = """"
         Dim MsgResponse As Integer
@@ -3996,28 +4010,49 @@ Module Module1
                     AmountChoice = "a"
                     Do Until IsNumeric(AmountChoice) = True
                         Console.Clear()
-                        Console.WriteLine("How much information would you like for '" & InformationType & "' (" & Line + 1 & "/" & TextString.Length - 1 & ")?")
+                        Console.WriteLine("How much information would you like for '" & InformationType & "' (" & Line + 1 & "/13)?")
                         Console.WriteLine("Type a number in the range 0-3. (0 being nothing, 3 being everything)")
                         Console.WriteLine()
 
                         For SType = 0 To TextString.Length - 1
                             If SType = Line Then
-                                Console.ForegroundColor = ConsoleColor.DarkGray
+                                Console.BackgroundColor = ConsoleColor.DarkGray
                                 Console.WriteLine(TextString(SType))
-                                Console.ForegroundColor = ConsoleColor.White
-                                Console.WriteLine()
+                                Console.BackgroundColor = ConsoleColor.Black
                             ElseIf TextString(SType).IndexOf("|") <> -1 Or TextString(SType).IndexOf(":") = -1 Then
                             Else
                                 Try
                                     Console.WriteLine(TextString(SType))
-                                    Console.WriteLine()
                                 Catch
                                     Console.WriteLine()
                                 End Try
                             End If
                         Next
-
-                        AmountChoice = Console.ReadLine
+                        Dim KeyReader As ConsoleKeyInfo = Console.ReadKey
+                        If KeyReader.Key = ConsoleKey.UpArrow Then
+                            If Line <> 0 Then
+                                Line -= 1
+                            End If
+                        ElseIf KeyReader.Key = ConsoleKey.DownArrow Then
+                            If Line <> TextString.Length - 1 Then
+                                Line += 1
+                            End If
+                        ElseIf KeyReader.Key = ConsoleKey.Enter Then
+                            Console.WriteLine()
+                            Console.WriteLine("What do you want the new value to be?")
+                            AmountChoice = Console.ReadLine
+                        Else
+                            Try
+                                AmountChoice = KeyReader.KeyChar.ToString
+                            Catch
+                                AmountChoice = ""
+                            End Try
+                            If AmountChoice = "b" Then
+                                Preferences()
+                            ElseIf AmountChoice = "m" Then
+                                Main()
+                            End If
+                        End If
 
                         If AmountChoice.ToLower = "b" Or AmountChoice.ToLower = "back" Or AmountChoice.ToLower = "stop" Then
                             Main()
@@ -4099,7 +4134,7 @@ Module Module1
                     TextString(Clear) = TextString(Clear).Trim
                 Next
 
-                If TextString.Length < 3 Then
+                If TextString.Length <3 Then
                     Console.WriteLine("There are not settings to show, you have not set any yet.")
                 End If
 
@@ -4385,38 +4420,7 @@ Module Module1
 
         End If
 
-
-
-
-
-
-
         Main()
     End Sub
-
-    Sub Download()
-        'Just to test the downloading of files
-        Console.Clear()
-
-        Try
-            My.Computer.Network.DownloadFile("http://d237wsm7x2l2ke.cloudfront.net/41e62e8fc52e4bee8d4060280a9b823a.mp4", "C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
-        Catch
-            My.Computer.FileSystem.DeleteFile("C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
-            My.Computer.Network.DownloadFile("http://d237wsm7x2l2ke.cloudfront.net/41e62e8fc52e4bee8d4060280a9b823a.mp4", "C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
-            Process.Start("C:\ProgramData\Japanese Conjugation Helper\Media\Test.mp4")
-        End Try
-    End Sub
-
-
-
-
-
-
-    'TO DO:
-    ''Bring up more definitions than just 1
-    ''Make verb english conjugation better, for example change "to put on weight" -> is put on weight, -> is weight. or "to result in" -> "has result in"
-    'Allow input of romanised characters for the answers conjugation practice, this should be done in a new function
-    'A minor bug exists where something like "#1a23f2' is seen in some scraped data (not sure which exact data, I have a feeling that it is definitions
-    'To show kun and on readings of kanji in a word and show the corresponding kanji
 
 End Module
