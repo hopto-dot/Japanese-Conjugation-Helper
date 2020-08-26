@@ -8,6 +8,7 @@ Imports Newtonsoft.Json.Linq
 
 Module Module1
     Sub Main()
+        Const QUOTE = """"
         Console.Clear()
         'For the input of Japanese Chaaracters
         Console.Title() = "Conjugator"
@@ -15,7 +16,6 @@ Module Module1
         Console.OutputEncoding = System.Text.Encoding.Unicode
         Randomize()
 
-        Const QUOTE = """"
 
         If Int((50) * Rnd()) <> 2 Then
             Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
@@ -31,7 +31,7 @@ Module Module1
         End If
 
         If Word = "@" Then
-            'Test
+            ReverseAnki()
         End If
 
         Dim Translated As String = ""
@@ -44,9 +44,9 @@ Module Module1
             Word = Word.Replace(QUOTE, "`")
             Console.WriteLine()
 
-            Translated = gtranslate(Word, "ja", "en")
+            Translated = GTranslate(Word, "ja", "en")
             If Translated.ToLower = Word Then
-                Translated = gtranslate(Word, "en", "ja")
+                Translated = GTranslate(Word, "en", "ja")
             End If
             Translated = Translated.Replace("`", QUOTE)
             Console.WriteLine(Translated)
@@ -3876,7 +3876,448 @@ Module Module1
         Return step4
     End Function
 
+    Sub ReverseAnki()
+        Const QUOTE = """"
+        Console.Clear()
+        Console.WriteLine("What is the name of the text file? (must be in downloads folder and a .txt file)")
+        Dim FileName As String = Console.ReadLine
+        Try
+            If Right(FileName, 4) <> ".txt" Then
+                FileName &= ".txt"
+            End If
+        Catch
+            FileName &= ".txt"
+        End Try
 
+        Dim FileReader As String = ""
+        Try
+            FileReader = My.Computer.FileSystem.ReadAllText(Environ$("USERPROFILE") & "\Downloads\" & FileName)
+        Catch
+            Console.WriteLine("File " & QUOTE & FileName & QUOTE & " not found.")
+            Console.ReadLine()
+            Main()
+        End Try
+
+        Console.WriteLine("Are you carrying on from last time? (type 'yes' if so)")
+        Dim LastTime As Integer = 0
+        Dim CarryOn As String = Console.ReadLine.ToLower
+        If CarryOn = "y" Or CarryOn = "yes" Or CarryOn = "1" Then
+            CarryOn = "true"
+            Console.Clear()
+            Console.WriteLine("Which card number do you want to start from?")
+            Do Until IsNumeric(CarryOn) = True
+                CarryOn = Console.ReadLine()
+                If IsNumeric(CarryOn) = False Then
+                    Console.Clear()
+                    Console.WriteLine("Which card number do you want to start from?")
+                    Console.WriteLine()
+                    Continue Do
+                End If
+            Loop
+            LastTime = CInt(CarryOn)
+            CarryOn = "true"
+        End If
+
+
+        FileReader = FileReader.Replace(vbTab, "¬")
+
+        Dim Cards() As String = FileReader.Split(vbLf)
+
+        Console.Clear()
+        Console.WriteLine("Which field do you want to be the main?")
+        Console.WriteLine()
+        Dim CurrentCard As String = Cards(0)
+        Dim CurrentFields() As String
+        Dim FieldMax As Integer = -1
+        ReDim CurrentFields(CurrentCard.Split("¬").Length - 1)
+        CurrentFields = CurrentCard.Split("¬")
+        For Field = 0 To CurrentFields.Length - 1
+            If CurrentFields(Field) = "" And FieldMax = -1 Then
+                FieldMax = Field - 1
+            End If
+        Next
+        If FieldMax = -1 Then
+            FieldMax = CurrentFields.Length - 1
+        End If
+
+        For Writer = 0 To FieldMax
+            Console.WriteLine(Writer + 1 & ":" & CurrentFields(Writer))
+        Next
+
+        Dim MainField As String = ""
+        Do Until IsNumeric(MainField) = True
+            MainField = Console.ReadLine()
+            If IsNumeric(MainField) = False Then
+                Console.Clear()
+                Console.WriteLine("Which field do you want to be the main? (Can't be 1)")
+                Console.WriteLine()
+                For Writer = 0 To FieldMax
+                    Console.WriteLine(Writer + 1 & ":" & CurrentFields(Writer))
+                Next
+                Continue Do
+            End If
+
+            If MainField > 1 And MainField < FieldMax + 2 Then
+                Continue Do
+            Else
+                Console.Clear()
+                Console.WriteLine("Which field do you want to be the main? (Can't be 1)")
+                Console.WriteLine()
+                For Writer = 0 To FieldMax
+                    Console.WriteLine(Writer + 1 & ":" & CurrentFields(Writer))
+                Next
+                MainField = ""
+            End If
+        Loop
+
+        Dim B1, B2, CutEnd, MadeCards As Integer
+        Dim B3 As String = ""
+        Dim Chosen, ChosenCutter As Integer
+        Dim UserInput As String = ""
+        Dim ReversedCards(LastTime) As String
+        Dim RoundUnavailable As String
+        MadeCards = Cards.Length - 1
+        For Card = LastTime To Cards.Length - 1
+            RoundUnavailable = ""
+            Console.Clear()
+
+            CurrentCard = Cards(Card)
+            ReDim CurrentFields(CurrentCard.Split("¬").Length - 1)
+            CurrentFields = CurrentCard.Split("¬")
+
+            'Getting rid of "[]" (for readings)
+            B1 = CurrentFields(0).IndexOf("[")
+            B2 = CurrentFields(0).IndexOf("]")
+            Try
+                B3 = Mid(CurrentFields(0), B1 + 1, B2 + 1 - B1)
+            Catch
+            End Try
+            Do Until B1 = -1 Or B2 = -1 Or B3.Length = 0
+                B1 = CurrentFields(0).IndexOf("[")
+                B2 = CurrentFields(0).IndexOf("]")
+                Try
+                    B3 = Mid(CurrentFields(0), B1 + 1, B2 + 1 - B1)
+                    CurrentFields(0) = CurrentFields(0).Replace(B3, "").Replace(" ", "")
+                Catch
+                End Try
+            Loop
+
+            CutEnd = -1
+
+            B1 = CurrentFields(MainField - 1).IndexOf("[") - 2
+            B2 = CurrentFields(MainField - 1).IndexOf(CurrentFields(0)) - 1
+            Try
+                If B2 < 3 Then
+                    Try
+                        B2 = CurrentFields(MainField - 1).IndexOf(Left(CurrentFields(0), 1)) - 1
+                    Catch
+                    End Try
+                    If B2 < 3 Then
+                        B2 = CurrentFields(MainField - 1).LastIndexOf("nym") - 4
+                    End If
+                    If B2 < 3 Then
+                        B2 = CurrentFields(MainField - 1).IndexOf("~")
+                    End If
+                    If B2 < 3 Then
+                        B2 = CurrentFields(MainField - 1).IndexOf(";")
+                    End If
+                End If
+                If B1 < 3 Then
+                    B1 = CurrentFields(MainField - 1).LastIndexOf(";")
+                End If
+                If B1 < 3 Then
+                    B1 = CurrentFields(MainField - 1).LastIndexOf(".2")
+                    If B1 = -1 Then
+                        B1 = CurrentFields(MainField - 1).LastIndexOf(".3")
+                    End If
+                End If
+                If B2 < 3 Then
+                    B2 = CurrentFields(MainField - 1).LastIndexOf(".2")
+                    If B2 = -1 Then
+                        B2 = CurrentFields(MainField - 1).LastIndexOf(".3")
+                    End If
+                End If
+
+                If B2 = B1 Then
+                    B1 = CurrentFields(MainField - 1).LastIndexOf(",")
+                End If
+
+                If B2 < 3 Then
+                    B2 = CurrentFields(MainField - 1).LastIndexOf(")") + 1
+                End If
+                If B1 < 3 Then
+                    B1 = CurrentFields(MainField - 1).LastIndexOf(")") + 1
+                End If
+                If B1 < 3 Then
+                    B1 = CurrentFields(MainField - 1).LastIndexOf("2.")
+                End If
+
+                If B2 = CurrentFields(MainField - 1).Length Then
+                    B2 = CurrentFields(MainField - 1).LastIndexOf(";")
+                    If B2 = -1 Then
+                        B2 = CurrentFields(MainField - 1).LastIndexOf(",")
+                    End If
+                End If
+
+                If B1 = CurrentFields(MainField - 1).Length Then
+                    B1 = CurrentFields(MainField - 1).LastIndexOf("=") - 2
+                    If B1 = -1 Then
+                        B1 = CurrentFields(MainField - 1).LastIndexOf(" " - 2)
+                    End If
+                End If
+
+                If B2 < 5 Then
+                    B2 = CurrentFields(MainField - 1).LastIndexOf("​ ")
+                End If
+
+                If B1 = B2 Then
+                    B2 = B1 - 3
+                End If
+            Catch
+            End Try
+
+            ChosenCutter = 0
+            Chosen = False
+            Do Until Chosen = True
+                Console.Clear()
+                Console.WriteLine("Card " & Card + 1 & "/" & Cards.Length)
+                Console.WriteLine("Are any of these trims ok?: [for " & CurrentFields(0) & "] if you want to finish creating cards type 'finish', 'menu' to quit or 'back' to redo last")
+                Console.WriteLine()
+                Console.WriteLine("1:")
+                Console.WriteLine(CurrentFields(MainField - 1))
+
+                If B1 > 5 Then
+                    Console.WriteLine()
+                    Console.WriteLine("2:")
+                    Console.Write(Left(CurrentFields(MainField - 1), B1))
+                    Console.ForegroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine(Mid(CurrentFields(MainField - 1), B1 + 1, CurrentFields(MainField - 1).Length - B1))
+                    Console.ForegroundColor = ConsoleColor.White
+                Else
+                    RoundUnavailable &= 2
+                End If
+
+                If B2 > 5 Then
+                    Console.WriteLine()
+                    Console.WriteLine("3:")
+                    Console.Write(Left(CurrentFields(MainField - 1), B2))
+                    Console.ForegroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine(Mid(CurrentFields(MainField - 1), B2 + 1, CurrentFields(MainField - 1).Length - B2))
+                    Console.ForegroundColor = ConsoleColor.White
+                Else
+                    RoundUnavailable &= 3
+                End If
+
+                Console.WriteLine()
+                Console.WriteLine("4 = Custom trim")
+                Console.WriteLine()
+
+                UserInput = Console.ReadLine.ToLower
+                If UserInput = "1" Then
+                    ChosenCutter = 1
+                    Chosen = True
+                    CutEnd = CurrentFields(MainField - 1).Length
+                ElseIf UserInput = "2" And RoundUnavailable.IndexOf("2") = -1 Then
+                    ChosenCutter = 2
+                    Chosen = True
+                    CutEnd = B1
+                ElseIf UserInput = "3" And RoundUnavailable.IndexOf("3") = -1 Then
+                    ChosenCutter = 3
+                    Chosen = True
+                    CutEnd = B2
+                ElseIf UserInput = "4" Or UserInput = "custom" Or UserInput = "four" Then
+                    ChosenCutter = 4
+                    Chosen = True
+                ElseIf UserInput = "finish" Or UserInput = "done" Then
+                    MadeCards = Card - 1
+                    Card = Cards.Length - 1
+                    Chosen = True
+                    Continue Do
+                ElseIf UserInput = "menu" Or UserInput = "quit" Then
+                    Main()
+                ElseIf UserInput = "restart" Then
+                    ReverseAnki()
+                ElseIf UserInput = "back" Or UserInput = "previous" Or UserInput = "redo" Or UserInput = "retry" Then
+                    Card -= 2
+                    Chosen = True
+                    Continue For
+                End If
+            Loop
+            If MadeCards <> Cards.Length - 1 Then
+                Continue For
+            End If
+
+            Dim KeyReader As ConsoleKeyInfo
+            If ChosenCutter = 4 Then
+                CutEnd = B1 - 5
+                If CutEnd < 5 Then
+                    CutEnd = CurrentFields(MainField - 1).Length * 0.5
+                End If
+                Chosen = False
+                Do Until Chosen = True
+                    Console.Clear()
+                    Console.WriteLine("Card " & Card + 1 & "/" & Cards.Length)
+                    Console.WriteLine("Where do you to cut? Use left and right keys, press enter when done [for " & CurrentFields(0) & "]")
+                    Console.WriteLine()
+                    Console.Write(Left(CurrentFields(MainField - 1), CutEnd))
+                    Console.ForegroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine(Right(CurrentFields(MainField - 1), CurrentFields(MainField - 1).Length - CutEnd))
+                    Console.ForegroundColor = ConsoleColor.White
+                    KeyReader = Console.ReadKey
+                    If KeyReader.Key = ConsoleKey.RightArrow Then
+                        CutEnd += 1
+                        If CutEnd > CurrentFields(MainField - 1).Length Then
+                            CutEnd = CurrentFields(MainField - 1).Length
+                        End If
+                    ElseIf KeyReader.Key = ConsoleKey.LeftArrow Then
+                        CutEnd -= 1
+                        If CutEnd < 1 Then
+                            CutEnd = 1
+                        End If
+                    ElseIf KeyReader.Key = ConsoleKey.Enter Then
+                        Chosen = True
+                    ElseIf KeyReader.Key = ConsoleKey.Home Then
+                        CutEnd = 1
+                    ElseIf KeyReader.Key = ConsoleKey.End Then
+                        CutEnd = CurrentFields(MainField - 1).Length
+                    ElseIf KeyReader.Key = ConsoleKey.Tab Then
+                        CutEnd += 6
+                        If CutEnd > CurrentFields(MainField - 1).Length Then
+                            CutEnd = CurrentFields(MainField - 1).Length
+                        End If
+                    ElseIf KeyReader.Key = ConsoleKey.Delete Then
+                        CutEnd -= 6
+                        If CutEnd < 1 Then
+                            CutEnd = 1
+                        End If
+                    End If
+                Loop
+                ChosenCutter = True
+            End If
+
+            CurrentFields(MainField - 1) = Left(CurrentFields(MainField - 1), CutEnd)
+            Console.Clear()
+            Console.WriteLine("Card " & Card + 1 & "/" & Cards.Length)
+            Console.WriteLine("Anything to remove? [for " & CurrentFields(0) & "]")
+            Console.WriteLine()
+            Console.WriteLine(CurrentFields(MainField - 1))
+            UserInput = Console.ReadLine.ToLower
+            If UserInput = "y" Or UserInput = "yes" Or UserInput = "1" Then
+                Console.Clear()
+                Console.WriteLine("What would you like to replace?")
+                Console.WriteLine()
+                Console.WriteLine(CurrentFields(MainField - 1))
+                Try
+                    CurrentFields(MainField - 1) = CurrentFields(MainField - 1).Replace(Console.ReadLine, "")
+                Catch
+                End Try
+                Console.Clear()
+                Console.WriteLine("This is your new trim:")
+                Console.WriteLine()
+                Console.WriteLine(CurrentFields(MainField - 1))
+                Console.ReadLine()
+            End If
+
+            ReversedCards(Card) = CurrentFields(MainField - 1)
+            Array.Resize(ReversedCards, ReversedCards.Length + 1)
+            Console.WriteLine()
+        Next
+
+        If MadeCards = 0 Then
+            Console.Clear()
+            Console.WriteLine("You didn't create enough cards")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If ReversedCards(ReversedCards.Length - 1) = "" Then
+            Array.Resize(ReversedCards, ReversedCards.Length - 1)
+        End If
+
+        Dim TempSwitcher As String
+        Dim TempCut1, TempCut2 As String
+        Dim Texter As System.IO.StreamWriter
+        If LastTime = 0 Then
+            For Switch = LastTime To MadeCards
+                TempSwitcher = Cards(Switch)
+                B1 = TempSwitcher.IndexOf("¬")
+                TempCut1 = Left(TempSwitcher, B1)
+
+                TempCut2 = TempSwitcher
+                For FieldCut = 1 To CInt(MainField) - 1
+                    B2 = TempCut2.IndexOf("¬")
+                    TempCut2 = Mid(TempCut2, B2 + 2)
+                Next
+
+                B3 = TempCut2.IndexOf("¬")
+                TempCut2 = Left(TempCut2, B3)
+
+                TempSwitcher = Mid(TempSwitcher, B1 + 1)
+                TempSwitcher = TempSwitcher.Replace(TempCut2, TempCut1)
+                TempSwitcher = ReversedCards(Switch) & TempSwitcher
+
+                Cards(Switch) = TempSwitcher
+
+                File.Create(Environ$("USERPROFILE") & "\Downloads\" & FileName.Replace(".txt", "_reversed.txt")).Dispose()
+
+                Texter = New System.IO.StreamWriter(Environ$("USERPROFILE") & "\Downloads\" & FileName.Replace(".txt", "_reversed.txt"))
+
+                For Writer = 0 To MadeCards
+                    Texter.WriteLine(Cards(Writer))
+                Next
+                Texter.Close()
+
+            Next
+
+        Else ''''-------- ELSE ---------
+
+            If ReversedCards(ReversedCards.Length - 1) = "" Then
+                Array.Resize(ReversedCards, ReversedCards.Length - 1)
+            End If
+
+            For Switch = LastTime To ReversedCards.Length - 1
+                Try
+                    TempSwitcher = Cards(Switch)
+                Catch
+                End Try
+                B1 = TempSwitcher.IndexOf("¬")
+                TempCut1 = Left(TempSwitcher, B1)
+
+                TempCut2 = TempSwitcher
+                For FieldCut = 1 To CInt(MainField) - 1
+                    B2 = TempCut2.IndexOf("¬")
+                    TempCut2 = Mid(TempCut2, B2 + 2)
+                Next
+
+                B3 = TempCut2.IndexOf("¬")
+                TempCut2 = Left(TempCut2, B3)
+
+                TempSwitcher = Mid(TempSwitcher, B1 + 1)
+                Try
+                    TempSwitcher = TempSwitcher.Replace(TempCut2, TempCut1)
+
+                    TempSwitcher = ReversedCards(Switch) & TempSwitcher
+
+                    Cards(Switch) = TempSwitcher
+
+                    Texter = New System.IO.StreamWriter(Environ$("USERPROFILE") & "\Downloads\" & FileName.Replace(".txt", "_reversed.txt"), True)
+                    Texter.WriteLine(TempSwitcher)
+                Catch
+                End Try
+                Texter.Close()
+            Next
+        End If
+
+        Console.Clear()
+
+        If MadeCards < Cards.Length - 2 Then
+            Console.WriteLine("If you want to continue from this time, state the card '" & MadeCards + 1 & "'.")
+        End If
+
+        Console.WriteLine("Done!")
+        Console.ReadLine()
+        Main()
+    End Sub
     Sub Preferences()
         Const QUOTE = """"
         Dim MsgResponse As Integer
@@ -3898,7 +4339,7 @@ Module Module1
         End If
 
 
-        Dim Choice As String = ""
+                Dim Choice As String = ""
         Console.Clear()
 
         Do Until IsNumeric(Choice) = True
@@ -4134,7 +4575,7 @@ Module Module1
                     TextString(Clear) = TextString(Clear).Trim
                 Next
 
-                If TextString.Length <3 Then
+                If TextString.Length < 3 Then
                     Console.WriteLine("There are not settings to show, you have not set any yet.")
                 End If
 
