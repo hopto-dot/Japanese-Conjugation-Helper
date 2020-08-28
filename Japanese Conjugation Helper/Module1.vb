@@ -30,8 +30,12 @@ Module Module1
             Main()
         End If
 
-        If Word = "@" Then
+        If Word = "/ranki" Or Word = "/revanki" Or Word = "/reverseanki" Or Word = "/reversea" Then
             ReverseAnki()
+        End If
+
+        If Word = "/kt" Or Word = "/kanji" Or Word = "/kanjitest" Or Word = "/k" Then
+            KanjiTest()
         End If
 
         Dim Translated As String = ""
@@ -1131,7 +1135,7 @@ Module Module1
             Try
                 'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
                 Dim WordWordURL As String = ("https://jisho.org/word/" & ActualSearchWord)
-
+                WordHTML = Client.DownloadString(New Uri(WordWordURL))
 
 
 
@@ -3339,6 +3343,359 @@ Module Module1
         Main()
     End Sub
 
+    Sub KanjiTest()
+        '小週票用発表田島多摩伊
+        Const QUOTE = """"
+        Dim ActualSearchWord As String
+        Dim WordWordURL As String
+        Dim WordHTML As String = ""
+        Dim Client As New WebClient
+        Dim Correct As Boolean = False
+        Dim Answer As String = ""
+        Dim CutCorrect As String = ""
+        Dim NeedWork() As String = {""}
+        Dim Wrong As Integer = 0
+        Dim Multiple As Boolean = False
+        Dim PrevAns As String = ""
+
+        Console.Clear()
+        Console.WriteLine("Paste any string of Japanese text (must contain kanji)")
+        Dim KanjisString As String = Console.ReadLine
+
+        Client.Encoding = System.Text.Encoding.UTF8
+        For Kanji = 1 To KanjisString.Length
+            ActualSearchWord = Mid(KanjisString, Kanji, 1)
+
+            Try
+                'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
+                WordWordURL = ("https://jisho.org/word/" & ActualSearchWord)
+                WordHTML = Client.DownloadString(New Uri(WordWordURL))
+            Catch
+                Continue For
+            End Try
+
+            Dim KanjiInfo As String = ""
+            Try
+                KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
+            Catch
+                Continue For
+            End Try
+
+            If KanjiInfo = "" Then
+                Continue For
+            End If
+
+            Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
+            Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
+            Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
+            Dim LastDetailsIndex As Integer = KanjiInfo.LastIndexOf("Details")
+
+            Try
+                KanjiInfo = Left(KanjiInfo, LastDetailsIndex)
+
+                Dim Finished As Boolean = False
+                Do Until Finished = True 'Do until no more end splitters can be found. The sentences that are pasted won't end in "|" because of how the AHK sentence grabber works
+                    I += 1
+                    Array.Resize(KanjiGroup, KanjiGroup.Length + 1)
+                    KanjiGroupEnd = KanjiInfo.IndexOf("Details") + 10
+                    If KanjiGroupEnd = 9 Then '(-1 but at add because of the above line. This means if "Details" isn't found
+                        KanjiGroup(I) = KanjiInfo
+                        Finished = True
+                        Continue Do
+                    End If
+
+                    KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
+                    KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
+                Loop
+                Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
+            Catch
+
+            End Try
+
+            Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
+
+            Try
+                'Y indexs:
+                '0 = Kanji
+                '1 = English meaning(s) (I will concatinate multiple meanings)
+                '2 = kun readings (concatentated if needed, usually so)
+                '3 = on readings (concatentated if needed, usually so)
+                Dim FirstFinder As Integer
+                Dim SecondFinder As Integer
+
+                Dim AllEng, AllKun, AllOn As Boolean
+                AllEng = False
+                AllKun = False
+                AllOn = False
+                Dim LastReadingFound As Boolean = False 'This is used to find the last reading of a kanji, it knows that it is a last because it ends in "</a>、" and not "</a>"
+                Dim JustEng As String
+                Dim KunReading, OnReading, ReadingSnip As String
+
+                KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
+
+                For Looper = 0 To KanjiGroup.Length - 1
+                    Try 'This is for if there are no kanji
+                        FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
+                    Catch
+                        Console.ReadLine()
+                        Main()
+                    End Try
+                    'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+                    ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
+
+                    FirstFinder = KanjiGroup(Looper).IndexOf("sense")
+                    KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+
+                    FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
+
+
+                    JustEng = Left(KanjiGroup(Looper), FirstFinder)
+
+                    JustEng = Mid(JustEng, 18)
+                    JustEng = Left(JustEng, JustEng.Length - 14)
+                    KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
+
+                    JustEng = JustEng.Replace("           ", "")
+                    FirstFinder = JustEng.IndexOf("</span>")
+                    SecondFinder = JustEng.IndexOf("<span>")
+                    Try
+                        JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
+                    Catch
+
+                    End Try
+
+                    JustEng = JustEng.Replace(",", ", ")
+                    'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
+
+                    ActualInfo(Looper, 1) = JustEng
+
+                    'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
+                    FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
+                    KunReading = Left(KanjiGroup(Looper), FirstFinder)
+                    OnReading = Mid(KanjiGroup(Looper), FirstFinder)
+
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = KunReading.IndexOf("</a>、")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+
+                            KunReading = Mid(KunReading, SecondFinder + 10)
+
+                        ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = KunReading.IndexOf("</a>")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+                    Loop
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = OnReading.IndexOf("</a>、")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+
+                            OnReading = Mid(OnReading, SecondFinder + 10)
+
+                        ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = OnReading.IndexOf("</a>")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+
+                    Loop
+                    'Console.BackgroundColor = ConsoleColor.DarkGray
+                    'Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
+                    'Console.BackgroundColor = ConsoleColor.Black
+                    'Console.WriteLine(ActualInfo(Looper, 2))
+                    'Console.WriteLine(ActualInfo(Looper, 3))
+                    'Console.WriteLine("Found in: " & JustResultsScraper(ActualInfo(Looper, 0), 1, ActualSearchWord))
+                    ActualInfo(Looper, 1) = ActualInfo(Looper, 1) & ","
+                    ActualInfo(Looper, 2) = ActualInfo(Looper, 2) & ","
+
+
+                    Wrong = 0
+                    Correct = False
+                    Multiple = False
+                    For Attempt = 1 To 2
+                        Console.Clear()
+                        Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                        Console.Write("Meaning: ")
+                        Answer = Console.ReadLine
+
+                        Dim CorrectAnswers() As String = ActualInfo(Looper, 1).split(",")
+                        If CorrectAnswers.Length > 3 Then
+                            Multiple = True
+                        End If
+
+                        For Check = 0 To CorrectAnswers.Length - 1
+                            If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
+                                Attempt = 2
+                                Check = CorrectAnswers.Length - 1
+                                Correct = True
+                                Continue For
+                            End If
+                        Next
+                        If Correct = False Then
+                            Wrong += 1
+                        End If
+                    Next
+
+                    Multiple = False
+                    Correct = False
+                    If ActualInfo(Looper, 2) <> "," Then
+                        For Attempt = 1 To 2
+                            Console.Clear()
+                            Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                            Console.WriteLine("Meaning: " & ActualInfo(Looper, 1))
+                            Console.Write("Kun Readings: ")
+                            Answer = Console.ReadLine
+                            Answer = Answer.Replace("-", "")
+
+                            Dim CorrectAnswers() As String = ActualInfo(Looper, 2).split(",")
+                            For Check = 0 To CorrectAnswers.Length - 1
+                                If CorrectAnswers(Check).IndexOf(".") <> -1 Then
+                                    CorrectAnswers(Check) = Left(CorrectAnswers(Check), CorrectAnswers(Check).IndexOf("."))
+                                End If
+                                CorrectAnswers(Check) = CorrectAnswers(Check).Replace("-", "")
+
+                                If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
+                                    Attempt = 2
+                                    Check = CorrectAnswers.Length - 1
+                                    Correct = True
+                                    Continue For
+                                End If
+                            Next
+                            If Correct = False Then
+                                Wrong += 1
+                            End If
+                        Next
+                    Else
+                        ActualInfo(Looper, 2) = ""
+                    End If
+
+                    Correct = False
+                    If ActualInfo(Looper, 3) <> "," Then
+                        For Attempt = 1 To 2
+                            Console.Clear()
+                            Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                            Console.WriteLine("Meaning: " & ActualInfo(Looper, 1))
+                            Console.WriteLine("Kun Readings: " & ActualInfo(Looper, 2))
+                            Console.Write("On Readings: ")
+                            Answer = Console.ReadLine
+                            Answer = Answer.Replace("-", "")
+
+                            Dim CorrectAnswers() As String = ActualInfo(Looper, 3).split(",")
+                            For Check = 0 To CorrectAnswers.Length - 1
+                                If CorrectAnswers(Check).IndexOf(".") <> -1 Then
+                                    CorrectAnswers(Check) = Left(CorrectAnswers(Check), CorrectAnswers(Check).IndexOf("."))
+                                End If
+                                CorrectAnswers(Check) = CorrectAnswers(Check).Replace("-", "")
+
+                                If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
+                                    Attempt = 2
+                                    Check = CorrectAnswers.Length - 1
+                                    Correct = True
+                                    Continue For
+                                End If
+                            Next
+                            If Correct = False Then
+                                Wrong += 1
+                            End If
+                        Next
+                    Else
+                        ActualInfo(Looper, 3) = ""
+                    End If
+
+                    Array.Resize(NeedWork, NeedWork.Length + 1)
+                    NeedWork(NeedWork.Length - 2) = ActualInfo(Looper, 0) & Wrong
+
+                    Console.Clear()
+                    Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                    Console.WriteLine("Meaning: " & ActualInfo(Looper, 1))
+                    Console.WriteLine("Kun Readings: " & ActualInfo(Looper, 2))
+                    Console.WriteLine("On Readings: " & ActualInfo(Looper, 3))
+                    Console.ForegroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine(Wrong & " incorrect answers")
+                    Console.ForegroundColor = ConsoleColor.White
+                    Console.ReadLine()
+                Next
+            Catch
+                Console.WriteLine("...")
+            End Try
+        Next
+
+        Array.Resize(NeedWork, NeedWork.Length - 1)
+
+        Console.Clear()
+        If NeedWork.Length > 0 Then
+            'Challenging
+            Console.WriteLine("Kanji you don't know:")
+            For Printer = 0 To NeedWork.Length - 1
+                Wrong = Right(NeedWork(Printer), 1)
+                If Wrong > 3 Then
+                    Console.WriteLine(Left(NeedWork(Printer), 1))
+                End If
+            Next
+
+            Console.WriteLine()
+            Console.WriteLine("Kanji that still needs work:")
+            For Printer = 0 To NeedWork.Length - 1
+                Wrong = Right(NeedWork(Printer), 1)
+                If Wrong = 2 Or Wrong = 3 Then
+                    Console.WriteLine(Left(NeedWork(Printer), 1))
+                End If
+            Next
+
+            For Printer = 0 To NeedWork.Length - 1
+                Wrong = Right(NeedWork(Printer), 1)
+                If Wrong = 1 Then
+                    If Printer = 0 Then
+                        Console.WriteLine()
+                        Console.WriteLine("Almost Easy Kanji:")
+                    End If
+                    Console.WriteLine(Left(NeedWork(Printer), 1))
+                End If
+            Next
+
+            Console.WriteLine()
+            Console.WriteLine("Easy Kanji")
+            For Printer = 0 To NeedWork.Length - 1
+                Wrong = Right(NeedWork(Printer), 1)
+                If Wrong = 0 Then
+                    Console.WriteLine(Left(NeedWork(Printer), 1))
+                End If
+            Next
+        End If
+
+        Console.WriteLine()
+        Console.WriteLine()
+        Console.ForegroundColor = ConsoleColor.DarkGray
+        Console.WriteLine("KanjiTest will be upgraded to be much better soon!")
+        Console.ForegroundColor = ConsoleColor.White
+        Console.ReadLine()
+
+        Main()
+    End Sub
+
+
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
         'Loading the website's HTML code and storing it in a HTML as a string:
 
@@ -3856,7 +4213,6 @@ Module Module1
 
         Return (ActualSearchWord & " (" & Snip & ")")
     End Function
-
     Function GTranslate(ByVal inputtext As String, ByVal fromlangid As String, ByVal tolangid As String) As String
         inputtext = HttpUtility.HtmlAttributeEncode(inputtext)
         Dim step1 As New WebClient
@@ -4234,7 +4590,7 @@ Module Module1
             Array.Resize(ReversedCards, ReversedCards.Length - 1)
         End If
 
-        Dim TempSwitcher As String
+        Dim TempSwitcher As String = ""
         Dim TempCut1, TempCut2 As String
         Dim Texter As System.IO.StreamWriter
         If LastTime = 0 Then
