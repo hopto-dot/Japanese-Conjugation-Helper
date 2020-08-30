@@ -4,6 +4,8 @@ Imports System.Net
 Imports System.IO
 Imports System.Text
 Imports Newtonsoft.Json.Linq
+
+Imports WanaKanaNet
 '
 
 Module Module1
@@ -16,6 +18,15 @@ Module Module1
         Console.OutputEncoding = System.Text.Encoding.Unicode
         Randomize()
 
+        Try
+            Dim info = TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time")
+            Dim localServerTime As DateTimeOffset = DateTimeOffset.Now
+            Dim localTime As DateTimeOffset = TimeZoneInfo.ConvertTime(localServerTime, info)
+            Dim TimeInJapan As String = localTime.ToString
+            TimeInJapan = Left(localTime.DateTime, (localTime.DateTime).ToString.IndexOf("M") + 1)
+            Console.WriteLine("Japan: " & TimeInJapan)
+        Catch
+        End Try
 
         If Int((50) * Rnd()) <> 2 Then
             Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
@@ -3357,13 +3368,60 @@ Module Module1
         Dim Wrong As Integer = 0
         Dim Multiple As Boolean = False
         Dim PrevAns As String = ""
+        Dim MainFuri As String = ""
+        Dim DoMeaning, DoKun, DoOn As Boolean
+        DoMeaning = False
+        DoKun = False
+        DoOn = False
 
         Console.Clear()
         Console.WriteLine("Paste any string of Japanese text (must contain kanji)")
         Dim KanjisString As String = Console.ReadLine
+        Console.Clear()
 
+        Console.WriteLine("Which would you like to be tested on? ('y' for yes)")
+        Console.Write("Meaning: ")
+        Answer = Console.ReadLine.ToLower
+        If Answer = "y" Or Answer = "yes" Or Answer = "true" Or Answer = "1" Then
+            DoMeaning = True
+        End If
+        Console.Clear()
+        Console.WriteLine("Which would you like to be tested on? ('y' for yes)")
+        Console.WriteLine("Meaning: " & DoMeaning)
+        Console.Write("Kun Reading: ")
+        Answer = Console.ReadLine.ToLower
+        If Answer = "y" Or Answer = "yes" Or Answer = "true" Or Answer = "1" Then
+            DoKun = True
+        End If
+        Console.Clear()
+        Console.WriteLine("Which would you like to be tested on? ('y' for yes)")
+        Console.WriteLine("Meaning: " & DoMeaning)
+        Console.WriteLine("Kun Reading: " & DoKun)
+        Console.Write("On Reading: ")
+        Answer = Console.ReadLine.ToLower
+        If Answer = "y" Or Answer = "yes" Or Answer = "true" Or Answer = "1" Then
+            DoOn = True
+        End If
+
+        If DoMeaning = False And DoKun = False And DoOn = False Then
+            Console.Clear()
+            Console.WriteLine("You didn't choose anything to be tested on! (Type 'y' for something you want to tested on)")
+            Console.ReadLine()
+            Main()
+        End If
+
+        Console.Clear()
+        Console.WriteLine("You will be tested on these:")
+        Console.WriteLine("Meaning: " & DoMeaning)
+        Console.WriteLine("Kun Reading: " & DoKun)
+        Console.WriteLine("On Reading: " & DoOn)
+        Console.ReadLine()
+
+
+        Correct = False
         Client.Encoding = System.Text.Encoding.UTF8
         For Kanji = 1 To KanjisString.Length
+            Console.WriteLine(ActualSearchWord & "...")
             ActualSearchWord = Mid(KanjisString, Kanji, 1)
 
             Try
@@ -3371,6 +3429,7 @@ Module Module1
                 WordWordURL = ("https://jisho.org/word/" & ActualSearchWord)
                 WordHTML = Client.DownloadString(New Uri(WordWordURL))
             Catch
+                Console.Clear()
                 Continue For
             End Try
 
@@ -3378,10 +3437,12 @@ Module Module1
             Try
                 KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
             Catch
+                Console.Clear()
                 Continue For
             End Try
 
             If KanjiInfo = "" Then
+                Console.Clear()
                 Continue For
             End If
 
@@ -3409,7 +3470,7 @@ Module Module1
                 Loop
                 Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
             Catch
-
+                Console.Clear()
             End Try
 
             Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
@@ -3534,98 +3595,171 @@ Module Module1
                     Wrong = 0
                     Correct = False
                     Multiple = False
-                    For Attempt = 1 To 2
-                        Console.Clear()
-                        Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
-                        Console.Write("Meaning: ")
-                        Answer = Console.ReadLine
+                    If DoMeaning = True Then
+                        For Attempt = 1 To 2
+                            Console.Clear()
+                            Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                            Console.Write("Meaning: ")
+                            Answer = Console.ReadLine.ToLower
 
-                        Dim CorrectAnswers() As String = ActualInfo(Looper, 1).split(",")
-                        If CorrectAnswers.Length > 3 Then
-                            Multiple = True
-                        End If
+                            Dim CorrectAnswers() As String = ActualInfo(Looper, 1).split(",")
+                            If CorrectAnswers.Length > 2 Then
+                                Multiple = True
+                            End If
 
-                        For Check = 0 To CorrectAnswers.Length - 1
-                            If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
-                                Attempt = 2
-                                Check = CorrectAnswers.Length - 1
-                                Correct = True
-                                Continue For
+                            For Check = 0 To CorrectAnswers.Length - 1
+                                If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
+                                    Attempt = 2
+                                    Check = CorrectAnswers.Length - 1
+                                    Correct = True
+                                    PrevAns = Answer
+                                    Continue For
+                                End If
+
+                                If Answer & "s" = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
+                                    Attempt = 2
+                                    Check = CorrectAnswers.Length - 1
+                                    Correct = True
+                                    PrevAns = Answer
+                                    Continue For
+                                End If
+                            Next
+                            If Correct = False Then
+                                Wrong += 1
                             End If
                         Next
-                        If Correct = False Then
-                            Wrong += 1
+
+                        If Multiple = True And Correct = True Then
+                            Correct = False
+                            For Attempt = 1 To 2
+                                Console.Clear()
+                                Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                                Console.Write("Meaning: " & PrevAns & ", ")
+                                Answer = Console.ReadLine
+
+                                Dim CorrectAnswers() As String = ActualInfo(Looper, 1).split(",")
+                                If CorrectAnswers.Length > 2 Then
+                                    Multiple = True
+                                End If
+
+                                For Check = 0 To CorrectAnswers.Length - 1
+                                    If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" And Answer <> PrevAns And Answer & "s" <> PrevAns And Answer <> PrevAns & "s" Then
+                                        Attempt = 2
+                                        Check = CorrectAnswers.Length - 1
+                                        Correct = True
+                                        PrevAns = Answer
+                                        Continue For
+                                    End If
+                                    If Answer & "s" = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" And Answer <> PrevAns And Answer & "s" <> PrevAns And Answer <> PrevAns & "s" Then
+                                        Attempt = 2
+                                        Check = CorrectAnswers.Length - 1
+                                        Correct = True
+                                        PrevAns = Answer
+                                        Continue For
+                                    End If
+                                Next
+                                If Correct = False Then
+                                    Wrong += 1
+                                End If
+                            Next
                         End If
-                    Next
+                    End If
 
                     Multiple = False
                     Correct = False
-                    If ActualInfo(Looper, 2) <> "," Then
-                        For Attempt = 1 To 2
-                            Console.Clear()
-                            Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
-                            Console.WriteLine("Meaning: " & ActualInfo(Looper, 1))
-                            Console.Write("Kun Readings: ")
-                            Answer = Console.ReadLine
-                            Answer = Answer.Replace("-", "")
-
-                            Dim CorrectAnswers() As String = ActualInfo(Looper, 2).split(",")
-                            For Check = 0 To CorrectAnswers.Length - 1
-                                If CorrectAnswers(Check).IndexOf(".") <> -1 Then
-                                    CorrectAnswers(Check) = Left(CorrectAnswers(Check), CorrectAnswers(Check).IndexOf("."))
+                    If DoKun = True Then
+                        If ActualInfo(Looper, 2) <> "," Then
+                            For Attempt = 1 To 2
+                                Console.Clear()
+                                Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                                Console.WriteLine("Meaning: " & ActualInfo(Looper, 1))
+                                Console.Write("Kun Readings: ")
+                                Answer = Console.ReadLine
+                                Answer = Answer.Replace("-", "")
+                                If WanaKana.IsKatakana(Answer) = True Or WanaKana.IsRomaji(Answer) Then
+                                    Answer = WanaKana.ToHiragana(Answer)
                                 End If
-                                CorrectAnswers(Check) = CorrectAnswers(Check).Replace("-", "")
 
-                                If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
-                                    Attempt = 2
-                                    Check = CorrectAnswers.Length - 1
-                                    Correct = True
-                                    Continue For
+                                Dim CorrectAnswers() As String = ActualInfo(Looper, 2).split(",")
+                                For Check = 0 To CorrectAnswers.Length - 1
+                                    If CorrectAnswers(Check).IndexOf(".") <> -1 Then
+                                        CorrectAnswers(Check) = Left(CorrectAnswers(Check), CorrectAnswers(Check).IndexOf("."))
+                                    End If
+                                    CorrectAnswers(Check) = CorrectAnswers(Check).Replace("-", "")
+
+                                    If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
+                                        Attempt = 2
+                                        Check = CorrectAnswers.Length - 1
+                                        Correct = True
+                                        Continue For
+                                    End If
+                                Next
+                                If Correct = False Then
+                                    Wrong += 1
                                 End If
                             Next
-                            If Correct = False Then
-                                Wrong += 1
-                            End If
-                        Next
-                    Else
-                        ActualInfo(Looper, 2) = ""
+                        Else
+                            ActualInfo(Looper, 2) = ""
+                        End If
                     End If
 
                     Correct = False
-                    If ActualInfo(Looper, 3) <> "," Then
-                        For Attempt = 1 To 2
-                            Console.Clear()
-                            Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
-                            Console.WriteLine("Meaning: " & ActualInfo(Looper, 1))
-                            Console.WriteLine("Kun Readings: " & ActualInfo(Looper, 2))
-                            Console.Write("On Readings: ")
-                            Answer = Console.ReadLine
-                            Answer = Answer.Replace("-", "")
-
-                            Dim CorrectAnswers() As String = ActualInfo(Looper, 3).split(",")
-                            For Check = 0 To CorrectAnswers.Length - 1
-                                If CorrectAnswers(Check).IndexOf(".") <> -1 Then
-                                    CorrectAnswers(Check) = Left(CorrectAnswers(Check), CorrectAnswers(Check).IndexOf("."))
+                    If DoOn = True Then
+                        If ActualInfo(Looper, 3) <> "," Then
+                            For Attempt = 1 To 2
+                                Console.Clear()
+                                Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
+                                Console.WriteLine("Meaning: " & ActualInfo(Looper, 1))
+                                Console.WriteLine("Kun Readings: " & ActualInfo(Looper, 2))
+                                Console.Write("On Readings: ")
+                                Answer = Console.ReadLine
+                                Answer = Answer.Replace("-", "")
+                                If WanaKana.IsHiragana(Answer) = True Or WanaKana.IsRomaji(Answer) Then
+                                    Answer = WanaKana.ToKatakana(Answer)
                                 End If
-                                CorrectAnswers(Check) = CorrectAnswers(Check).Replace("-", "")
 
-                                If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
-                                    Attempt = 2
-                                    Check = CorrectAnswers.Length - 1
-                                    Correct = True
-                                    Continue For
+
+                                Dim CorrectAnswers() As String = ActualInfo(Looper, 3).split(",")
+                                For Check = 0 To CorrectAnswers.Length - 1
+                                    If CorrectAnswers(Check).IndexOf(".") <> -1 Then
+                                        CorrectAnswers(Check) = Left(CorrectAnswers(Check), CorrectAnswers(Check).IndexOf("."))
+                                    End If
+                                    CorrectAnswers(Check) = CorrectAnswers(Check).Replace("-", "")
+
+                                    If Answer = CorrectAnswers(Check).Trim And CorrectAnswers(Check).Trim <> "" Then
+                                        Attempt = 2
+                                        Check = CorrectAnswers.Length - 1
+                                        Correct = True
+                                        Continue For
+                                    End If
+                                Next
+                                If Correct = False Then
+                                    Wrong += 1
                                 End If
                             Next
-                            If Correct = False Then
-                                Wrong += 1
-                            End If
-                        Next
-                    Else
-                        ActualInfo(Looper, 3) = ""
+                        Else
+                            ActualInfo(Looper, 3) = ""
+                        End If
+                    End If
+
+                    'Getting just 1 (the main) furigana for the kanji:
+                    If ActualInfo(Looper, 3) <> "" And ActualInfo(Looper, 3) <> "," Then
+                        If FirstFinder <> -1 Then
+                            MainFuri = Left(ActualInfo(Looper, 3), FirstFinder)
+                        Else
+                            MainFuri = Left(ActualInfo(Looper, 3), FirstFinder)
+                        End If
+                    ElseIf ActualInfo(Looper, 2) <> "" And ActualInfo(Looper, 2) <> "," Then
+                        FirstFinder = ActualInfo(Looper, 2).indexof(",")
+                        If FirstFinder <> -1 Then
+                            MainFuri = Left(ActualInfo(Looper, 2), FirstFinder)
+                        Else
+                            MainFuri = Left(ActualInfo(Looper, 2), FirstFinder)
+                        End If
                     End If
 
                     Array.Resize(NeedWork, NeedWork.Length + 1)
-                    NeedWork(NeedWork.Length - 2) = ActualInfo(Looper, 0) & Wrong
+                    NeedWork(NeedWork.Length - 2) = ActualInfo(Looper, 0) & " (" & MainFuri & ") - " & ActualInfo(Looper, 1) & Wrong
 
                     Console.Clear()
                     Console.WriteLine("Kanji: " & ActualInfo(Looper, 0))
@@ -3636,61 +3770,274 @@ Module Module1
                     Console.WriteLine(Wrong & " incorrect answers")
                     Console.ForegroundColor = ConsoleColor.White
                     Console.ReadLine()
+                    Console.Clear()
                 Next
             Catch
-                Console.WriteLine("...")
+                Console.WriteLine("Error")
             End Try
         Next
 
         Array.Resize(NeedWork, NeedWork.Length - 1)
-
         Console.Clear()
-        If NeedWork.Length > 0 Then
-            'Challenging
-            Console.WriteLine("Kanji you don't know:")
-            For Printer = 0 To NeedWork.Length - 1
-                Wrong = Right(NeedWork(Printer), 1)
-                If Wrong > 3 Then
-                    Console.WriteLine(Left(NeedWork(Printer), 1))
-                End If
-            Next
 
-            Console.WriteLine()
-            Console.WriteLine("Kanji that still needs work:")
-            For Printer = 0 To NeedWork.Length - 1
-                Wrong = Right(NeedWork(Printer), 1)
-                If Wrong = 2 Or Wrong = 3 Then
-                    Console.WriteLine(Left(NeedWork(Printer), 1))
-                End If
-            Next
+        For Printer = 0 To NeedWork.Length - 1
+            Console.Write(Left(NeedWork(Printer), 1) & " ")
+        Next
+        Console.WriteLine(":")
+        Console.WriteLine()
 
-            For Printer = 0 To NeedWork.Length - 1
-                Wrong = Right(NeedWork(Printer), 1)
-                If Wrong = 1 Then
-                    If Printer = 0 Then
-                        Console.WriteLine()
-                        Console.WriteLine("Almost Easy Kanji:")
-                    End If
-                    Console.WriteLine(Left(NeedWork(Printer), 1))
-                End If
-            Next
-
-            Console.WriteLine()
-            Console.WriteLine("Easy Kanji")
-            For Printer = 0 To NeedWork.Length - 1
-                Wrong = Right(NeedWork(Printer), 1)
-                If Wrong = 0 Then
-                    Console.WriteLine(Left(NeedWork(Printer), 1))
-                End If
-            Next
+        Dim NotToTest As Integer = 0
+        If DoMeaning = False Then
+            NotToTest += 1
+        End If
+        If DoKun = False Then
+            NotToTest += 1
+        End If
+        If DoOn = False Then
+            NotToTest += 1
         End If
 
-        Console.WriteLine()
-        Console.WriteLine()
-        Console.ForegroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("KanjiTest will be upgraded to be much better soon!")
-        Console.ForegroundColor = ConsoleColor.White
+
+        If NotToTest = 0 Then
+            If NeedWork.Length > 0 Then
+                Console.WriteLine("Kanji you don't know:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong > 4 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Kanji that still needs work:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 2 Or Wrong = 3 Or Wrong = 4 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Almost Easy Kanji:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 1 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Easy Kanji:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 0 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+            Else
+                Console.Clear()
+                Console.WriteLine("There didn't seem to be any kanji.")
+                Console.ReadLine()
+                Main()
+            End If
+        ElseIf NotToTest = 1 Then
+            If NeedWork.Length > 0 Then
+                Console.WriteLine("Kanji you don't know:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong > 3 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Kanji that still needs work:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 2 Or Wrong = 3 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Almost Easy Kanji:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 1 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Easy Kanji:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 0 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+            Else
+                Console.Clear()
+                Console.WriteLine("There didn't seem to be any kanji.")
+                Console.ReadLine()
+                Main()
+            End If
+        ElseIf NotToTest = 2 Then
+            If NeedWork.Length > 0 Then
+                Console.WriteLine("Kanji you don't know:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong > 1 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Kanji that still needs work:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 1 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+
+                Console.WriteLine()
+                Console.WriteLine("Easy Kanji:")
+                For Printer = 0 To NeedWork.Length - 1
+                    Wrong = Right(NeedWork(Printer), 1)
+                    If Wrong = 0 Then
+                        Console.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                    End If
+                Next
+            Else
+                Console.Clear()
+                Console.WriteLine("There didn't seem to be any kanji.")
+                Console.ReadLine()
+                Main()
+            End If
+        End If
+
         Console.ReadLine()
+        Console.Clear()
+        Randomize()
+        Console.WriteLine("Would you like these results saved in a text file?")
+        Answer = Console.ReadLine.ToLower
+        If Answer = "y" Or Answer = "yes" Or Answer = "1" Or Answer = "true" Or Answer.IndexOf("yes") <> -1 Or Answer.IndexOf("true") <> -1 Then
+            Dim RanInt As Integer = Int((1000) * Rnd())
+            File.Create(Environ$("USERPROFILE") & "\Downloads\" & "kanjitest" & RanInt & ".txt").Dispose()
+            Dim FirstWriter As System.IO.StreamWriter
+            FirstWriter = New System.IO.StreamWriter(Environ$("USERPROFILE") & "\Downloads\" & "kanjitest" & RanInt & ".txt")
+            FirstWriter.WriteLine("Test taken on " & System.DateTime.Now)
+            FirstWriter.WriteLine()
+
+            If NotToTest = 0 Then
+                If NeedWork.Length > 0 Then
+                    FirstWriter.WriteLine("Kanji you don't know:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong > 4 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Kanji that still needs work:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 2 Or Wrong = 3 Or Wrong = 4 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Almost Easy Kanji:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 1 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Easy Kanji:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 0 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+                End If
+            ElseIf NotToTest = 1 Then
+                If NeedWork.Length > 0 Then
+                    FirstWriter.WriteLine("Kanji you don't know:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong > 3 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Kanji that still needs work:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 2 Or Wrong = 3 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Almost Easy Kanji:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 1 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Easy Kanji:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 0 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+                ElseIf NotToTest = 2 Then
+                    If NeedWork.Length > 0 Then
+                        FirstWriter.WriteLine("Kanji you don't know:")
+                        For Printer = 0 To NeedWork.Length - 1
+                            Wrong = Right(NeedWork(Printer), 1)
+                            If Wrong > 1 Then
+                                FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                            End If
+                        Next
+
+                        FirstWriter.WriteLine()
+                        FirstWriter.WriteLine("Kanji that still needs work:")
+                        For Printer = 0 To NeedWork.Length - 1
+                            Wrong = Right(NeedWork(Printer), 1)
+                            If Wrong = 1 Then
+                                FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                            End If
+                        Next
+
+                        FirstWriter.WriteLine()
+                        FirstWriter.WriteLine("Easy Kanji:")
+                        For Printer = 0 To NeedWork.Length - 1
+                            Wrong = Right(NeedWork(Printer), 1)
+                            If Wrong = 0 Then
+                                FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                            End If
+                        Next
+                    End If
+                End If
+                FirstWriter.Close()
+                Console.WriteLine("The file was successfully created in the Downloads folder called 'kanjitest" & RanInt & ".txt'")
+                Console.ReadLine()
+                Main()
+            End If
+        End If
 
         Main()
     End Sub
@@ -4695,7 +5042,7 @@ Module Module1
         End If
 
 
-                Dim Choice As String = ""
+        Dim Choice As String = ""
         Console.Clear()
 
         Do Until IsNumeric(Choice) = True
