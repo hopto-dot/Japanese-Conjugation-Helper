@@ -1,6 +1,6 @@
 # Japanese Conjugation Helper
 
-## Note: When a new update adds a new conjugation, you should reset your preferences because a new conjugations change the format of how settings are stored
+## Note: When a new update adds a new conjugation, you should reset your preferences because new conjugations change the format of how settings are stored
 
 **A console application that will conjugate Japanese verbs, adjectives and nouns. The program can create example sentences for pretty much any word you throw at it. It has a few other handy features for learning Japanese**. [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)
 
