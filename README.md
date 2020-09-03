@@ -13,6 +13,7 @@ For the main functionality of bringing up conjugations of a word, simple type th
 ## **List of commands:**
 * Word Lookup - looks up any word or phrase (main feature)
 * Translate - Type "!" and then anything to translate it, (works with English and Japanese)
+* /k - enter japanese and get tested on kanji in the string you inputted
 * /p - conjugation practice (practice conjugating a word of your choice into different forms)
 * /r - reading practice (essentially a flash card creator)
 * /prefs - Lets you change program settings, these are saved for the next time you use the program.
