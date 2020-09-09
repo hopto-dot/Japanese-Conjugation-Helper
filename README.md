@@ -1,6 +1,6 @@
 # Japanese Conjugation Helper
 
-### Note: When a new update adds a new conjugation, you should reset your preferences because new conjugations change the format of how settings are stored
+### Note: When a new update adds a new conjugation, you should reset your preferences because new conjugations change the format of how settings are stored. Also uninstall the previous version so the new one will install.
 
 **A console application that will conjugate Japanese verbs, adjectives and nouns. The program can create example sentences for pretty much any word you throw at it. It has a few other handy features for learning Japanese**. [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)
 
@@ -11,13 +11,13 @@
 If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
 ## **List of commands:**
-* Word Lookup - looks up any word or phrase (main feature)
-* Translate - Type "!" and then anything to translate it, (works with English and Japanese)
-* /k - enter japanese and get tested on kanji in the string you inputted
-* /p - conjugation practice (practice conjugating a word of your choice into different forms)
-* /r - reading practice (essentially a flash card creator)
-* /prefs - Lets you change program settings, these are saved for the next time you use the program.
-* /h or /help (brings up more information about a command, not as detailed as the Wiki)
+* **Word Lookup** - looks up any word or phrase (main feature)
+* **Translate** - Type "!" and then anything to translate it, (works with English and Japanese)
+* **/k** - enter japanese and get tested on kanji in the string you inputted
+* **/p** - conjugation practice (practice conjugating a word of your choice into different forms)
+* **/r** - reading practice (essentially a flash card creator)
+* **/prefs** - Lets you change program settings, these are saved for the next time you use the program.
+* **/h** (brings up more information about a command, not as detailed as the Wiki)
 
 ***
 
