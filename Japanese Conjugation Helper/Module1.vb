@@ -41,6 +41,10 @@ Module Module1
             Main()
         End If
 
+        If Left(Word, 3) = "/e " And Word.Length > 3 Then
+            English(Word)
+        End If
+
         If Word = "/ranki" Or Word = "/revanki" Or Word = "/reverseanki" Or Word = "/reversea" Then
             ReverseAnki()
         End If
@@ -3353,7 +3357,6 @@ Module Module1
         Console.ReadLine()
         Main()
     End Sub
-
     Sub KanjiTest()
         '小週票用発表田島多摩伊
         Const QUOTE = """"
@@ -3405,7 +3408,7 @@ Module Module1
 
         If DoMeaning = False And DoKun = False And DoOn = False Then
             Console.Clear()
-            Console.WriteLine("You didn't choose anything to be tested on! (Type 'y' for something you want to tested on)")
+            Console.WriteLine("You didn't choose anything to be tested on! (Type 'y' for something you want to be tested on)")
             Console.ReadLine()
             Main()
         End If
@@ -4042,6 +4045,22 @@ Module Module1
         Main()
     End Sub
 
+    Sub English(ByVal Word)
+        Word = Word.replace("/e ", "")
+
+        Dim WordURL As String = "www.google.com/search?q=google+dictionary&rlz=1C1CHBF_en-GBGB907GB907&oq=google+dict&aqs=chrome.1.69i57j69i59j69i64j69i60l2.2089j0j7&sourceid=chrome&ie=UTF-8#dobs=" & Word
+        Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
+        Dim HTML As String = ""
+        HTML = Client.DownloadString(New Uri("http://" & WordURL))
+
+
+
+
+        Console.WriteLine("Done!")
+        Console.ReadLine()
+        Main()
+    End Sub
 
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
         'Loading the website's HTML code and storing it in a HTML as a string:
@@ -4421,6 +4440,12 @@ Module Module1
                     Snip2 = Left(HTML, SnipEnd)
                     HTML = Mid(HTML, SnipStart)
 
+                    If Snip2.IndexOf("href") <> -1 Then
+                        SnipStart = Snip2.IndexOf("<a href=")
+                        SnipEnd = Snip2.IndexOf(">")
+                        Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
+                    End If
+
                     SnipStart = HTML.IndexOf("meaning-definition-section_divider") '*again*, this will be used to get the Extra Details for the current word up to (but not including) the next
 
                     If Left(HTML, SnipStart).IndexOf("sense-tag") <> -1 Then
@@ -4446,6 +4471,7 @@ Module Module1
                     'New:
                     SnipEnd = SnipEnd
 
+
                     If Left(HTML, SnipStart).IndexOf("tag-restriction") <> -1 Then
                         SnipStart = HTML.IndexOf("tag-restriction") + 14
                         HTML = Mid(HTML, SnipStart)
@@ -4463,6 +4489,7 @@ Module Module1
                             Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
                         End If
                     End If
+                    'To do: when searching '上げる' and looking up '7. to give​' get the third info below
 
                     Snip2 = "[" & Snip2 & "]"
 
