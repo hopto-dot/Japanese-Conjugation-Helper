@@ -402,6 +402,10 @@ Module Module1
         HTML = Client.DownloadString(New Uri(WordURL))
         Dim AddingTemp As String
 
+        If HTML.IndexOf("No matches for") <> -1 Then
+            Console.WriteLine("Looking for similar words...")
+        End If
+
         If HTML.IndexOf("zen_bar") <> -1 And Anki = False Then
             TranslateSentence(Word)
         End If
@@ -434,6 +438,7 @@ Module Module1
         Dim WordChoice As Integer = 10000
         Dim ActualSearch2ndAppearance As String
         Dim Definition1 As String = ""
+
         If WordIndex <> 1 Then              'scraping of words and definitions -------------------------------------------------------------------------------------------
             For LoopIndex = 0 To Max - 1
                 Array.Resize(FoundWords, FoundWords.Length + 1)
@@ -495,6 +500,7 @@ Module Module1
 
 
             Next                                                          'end of multiple word scrapping ___________________________________________________________________________
+            Console.WriteLine("Finalizing...")
             Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
             Array.Resize(FoundWords, FoundDefinitions.Length)
             Array.Resize(FoundWordLinks, FoundDefinitions.Length)
@@ -525,7 +531,7 @@ Module Module1
                     Console.Clear()
                     Console.WriteLine("Which definition would you like details for? Type a number, 0 to cancel.")
                     Console.WriteLine()
-                    Console.WriteLine()
+
                     Dim TotalWordsFound As Integer = 0
                     For looper = 1 To FoundWords.Length
                         If IsNothing(FoundWords(looper - 1)) = False Then
@@ -611,7 +617,7 @@ Module Module1
             Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
             WordChoice = 0
         End If                                                           'end of one word scrapping and all scrapping _______________________________________________________________________________________________________________________
-
+        Console.WriteLine("Building information...")
         If WordChoice = 0 Then
             WordChoice = 1
         End If
@@ -622,8 +628,6 @@ Module Module1
         For Add = 1 To SelectedDefinition.Length
             SelectedDefinition(Add - 1) = SelectedDefinition(Add - 1).Replace("&quot;", QUOTE) & Add
         Next
-
-
 
         Dim StartingHTML As Integer
         StartingHTML = HTML.IndexOf(ActualSearchWord)
@@ -638,7 +642,7 @@ Module Module1
         End If
         Dim FullWordType As String = TypeSnip
         Dim TypeSnipEnd As Integer = TypeSnip.IndexOf(",") 'This is to check if there is more than one word type
-        Console.Clear()
+
 
 
 
@@ -740,6 +744,8 @@ Module Module1
                     NumberCheckT = Right(SelectedType(Type), 1)
                 End If
                 NumberCheckT = NumberCheckT.Replace(" ", "")
+
+                Console.Clear()
 
                 If NumberCheckT = NumberCheckD Then
                     If Definition < DefG1 + 1 Then
@@ -1354,7 +1360,6 @@ Module Module1
                 Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
                 Console.ReadLine()
 
-
             ElseIf LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Or Anki = True Then
                 If FoundTypes.IndexOf("!") = FoundTypes.Length Then
                     FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
@@ -1401,12 +1406,8 @@ Module Module1
 
                         If NumberCheckT = NumberCheckD Then
 
-                            If Definition <> 0 Then
-                                AnkiCopy = vbCrLf & AnkiCopy
-                            End If
-
                             If Definition < 10 Then
-                                AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & vbCrLf
+                                AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) 
                             ElseIf Definition > 9 And AnkiString(Type).IndexOf("aux") <> -1 Or Definition > 9 And AnkiString(Type).IndexOf("irr") Then
                                 AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
 
@@ -1421,9 +1422,9 @@ Module Module1
 
                                         AnkiCopy = AnkiCopy & vbCrLf
 
-                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                                        AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
                                     Else
-                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                        AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
                                     End If
 
                                 End If
@@ -1448,7 +1449,7 @@ Module Module1
 
                             If BArea.IndexOf("kana") = -1 Then
                                 If Definition <> 0 Then
-                                    AnkiCopy = AnkiCopy & vbCrLf
+                                    'AnkiCopy = AnkiCopy & vbCrLf
                                 End If
                                 AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
                             Else
