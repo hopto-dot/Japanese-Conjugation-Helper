@@ -41,10 +41,6 @@ Module Module1
             Main()
         End If
 
-        If Left(Word, 3) = "/e " And Word.Length > 3 Then
-            English(Word)
-        End If
-
         If Word = "/ranki" Or Word = "/revanki" Or Word = "/reverseanki" Or Word = "/reversea" Then
             ReverseAnki()
         End If
@@ -655,7 +651,7 @@ Module Module1
 
         Try
             Furigana = RetrieveClassRange(WordHTML0, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
-            If Furigana.Length < 600 And Furigana.Length <> 0 Then
+            If Furigana.Length <> 0 Then
                 FuriganaStart = Furigana.IndexOf("search for")
                 Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
                 FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
@@ -677,7 +673,9 @@ Module Module1
                     FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
                     Furigana = Left(Furigana, FuriganaStart)
                 Else
-                    Furigana = ""
+                    If FuriganaStart <> -1 Or Furigana.Length > 20 Then
+                        Furigana = ""
+                    End If
                 End If
             End If
 
@@ -698,7 +696,6 @@ Module Module1
                 Furigana = Furigana.Replace(QUOTE & ">", "")
             End If
         Catch
-            Furigana = ""
         End Try
 
         If Furigana.IndexOf(Right(Word, 1)) = -1 Then
@@ -1414,7 +1411,7 @@ Module Module1
                                 AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
 
                                 If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
-                                    AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                                    AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
                                 Else
                                     SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                                     SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
@@ -1424,9 +1421,9 @@ Module Module1
 
                                         AnkiCopy = AnkiCopy & vbCrLf
 
-                                        AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
                                     Else
-                                        AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
                                     End If
 
                                 End If
@@ -1453,7 +1450,7 @@ Module Module1
                                 If Definition <> 0 Then
                                     AnkiCopy = AnkiCopy & vbCrLf
                                 End If
-                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
                             Else
                                 AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
                             End If
@@ -1466,12 +1463,12 @@ Module Module1
 
                 AnkiCopy = AnkiCopy.Trim
 
-                AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & ActualSearchWord & vbCrLf & KanjisLine
+                AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & ActualSearchWord & vbCrLf & KanjisLine.Replace("[", "(").Replace("]", ")")
 
-                My.Computer.Clipboard.SetText(AnkiCopy)
+                My.Computer.Clipboard.SetText(AnkiCopy.Replace("[", "(").Replace("]", ")"))
 
                 Console.Clear()
-                Console.WriteLine("Copied " & QUOTE & AnkiCopy & QUOTE & " to clipboard")
+                Console.WriteLine("Copied " & QUOTE & AnkiCopy.Replace("[", "(").Replace("]", ")") & QUOTE & " to clipboard")
                 Console.ReadLine()
             End If
 
