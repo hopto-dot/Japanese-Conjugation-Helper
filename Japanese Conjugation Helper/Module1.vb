@@ -402,6 +402,10 @@ Module Module1
         HTML = Client.DownloadString(New Uri(WordURL))
         Dim AddingTemp As String
 
+        If HTML.IndexOf("No matches for") <> -1 Then
+            Console.WriteLine("Looking for similar words...")
+        End If
+
         If HTML.IndexOf("zen_bar") <> -1 And Anki = False Then
             TranslateSentence(Word)
         End If
@@ -524,7 +528,6 @@ Module Module1
                 Else
                     Console.Clear()
                     Console.WriteLine("Which definition would you like details for? Type a number, 0 to cancel.")
-                    Console.WriteLine()
                     Console.WriteLine()
                     Dim TotalWordsFound As Integer = 0
                     For looper = 1 To FoundWords.Length
