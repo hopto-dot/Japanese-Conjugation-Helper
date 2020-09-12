@@ -57,6 +57,7 @@ Module Module1
 
             Console.WriteLine(Word)
             Word = Word.Replace(QUOTE, "`")
+            Word = Word.Replace("'", "`")
             Console.WriteLine()
 
             Translated = GTranslate(Word, "ja", "en")
@@ -1147,19 +1148,37 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.ForegroundColor = ConsoleColor.White
 
+            Dim WordWordURL As String
             Try
                 'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
-                Dim WordWordURL As String = ("https://jisho.org/word/" & ActualSearchWord)
+                WordWordURL = ("https://jisho.org/word/" & ActualSearchWord)
                 WordHTML = Client.DownloadString(New Uri(WordWordURL))
 
 
 
             Catch
-                Console.WriteLine("No kanji information.")
-                Console.ReadLine()
-                Main()
+                'This happens when searching with ActualSearchWord doesn't bring up a page that exists because it is a different form of ActualSearchWord.
+                'We instead do a "search" inside of "word" page
+                Try
+                    WordWordURL = ("https://jisho.org/search/" & ActualSearchWord)
+                    WordHTML = Client.DownloadString(New Uri(WordWordURL))
+                    Dim Cut1 As Integer = WordHTML.IndexOf("jisho.org/word/")
+                    Dim WordLink2 As String
+                    WordLink2 = Mid(WordHTML, Cut1 + 16)
+                    WordWordURL = ("https://jisho.org/word/" & WordLink2)
+                    Cut1 = WordWordURL.IndexOf(QUOTE)
+                    WordWordURL = Left(WordWordURL, Cut1)
+                Catch
+                    WordWordURL = "https://" & WordLink
+                End Try
+                Try
+                    WordHTML = Client.DownloadString(New Uri(WordWordURL))
+                Catch
+                    Console.WriteLine("Couldn't generate kanji information.")
+                    Console.ReadLine()
+                    Main()
+                End Try
             End Try
-
             Dim KanjiInfo As String = ""
             Try
                 KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
@@ -3408,7 +3427,8 @@ Module Module1
 
         If DoMeaning = False And DoKun = False And DoOn = False Then
             Console.Clear()
-            Console.WriteLine("You didn't choose anything to be tested on! (Type 'y' for something you want to be tested on)")
+            Console.WriteLine("You didn't choose anything to be tested on!")
+            Console.WriteLine("Type 'y' for something you want to be tested on")
             Console.ReadLine()
             Main()
         End If
@@ -3420,18 +3440,28 @@ Module Module1
         Console.WriteLine("On Reading: " & DoOn)
         Console.ReadLine()
 
-
         Correct = False
         Client.Encoding = System.Text.Encoding.UTF8
         For Kanji = 1 To KanjisString.Length
-            Console.WriteLine(ActualSearchWord & "...")
             ActualSearchWord = Mid(KanjisString, Kanji, 1)
+            'Console.WriteLine(ActualSearchWord & "...")
+
+            If WanaKana.IsKanji(ActualSearchWord) = False Then
+                'Console.Clear()
+                Continue For
+            End If
 
             Try
                 'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
                 WordWordURL = ("https://jisho.org/word/" & ActualSearchWord)
                 WordHTML = Client.DownloadString(New Uri(WordWordURL))
             Catch
+                Try
+                    WordWordURL = ("https://jisho.org/search/" & ActualSearchWord & "%20%23kanji")
+                    'WordHTML = Client.DownloadString(New Uri(WordWordURL))
+                Catch
+
+                End Try
                 Console.Clear()
                 Continue For
             End Try
@@ -4006,40 +4036,40 @@ Module Module1
                             FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
                         End If
                     Next
-                ElseIf NotToTest = 2 Then
-                    If NeedWork.Length > 0 Then
-                        FirstWriter.WriteLine("Kanji you don't know:")
-                        For Printer = 0 To NeedWork.Length - 1
-                            Wrong = Right(NeedWork(Printer), 1)
-                            If Wrong > 1 Then
-                                FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
-                            End If
-                        Next
-
-                        FirstWriter.WriteLine()
-                        FirstWriter.WriteLine("Kanji that still needs work:")
-                        For Printer = 0 To NeedWork.Length - 1
-                            Wrong = Right(NeedWork(Printer), 1)
-                            If Wrong = 1 Then
-                                FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
-                            End If
-                        Next
-
-                        FirstWriter.WriteLine()
-                        FirstWriter.WriteLine("Easy Kanji:")
-                        For Printer = 0 To NeedWork.Length - 1
-                            Wrong = Right(NeedWork(Printer), 1)
-                            If Wrong = 0 Then
-                                FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
-                            End If
-                        Next
-                    End If
                 End If
-                FirstWriter.Close()
-                Console.WriteLine("The file was successfully created in the Downloads folder called 'kanjitest" & RanInt & ".txt'")
-                Console.ReadLine()
-                Main()
+            ElseIf NotToTest = 2 Then
+                If NeedWork.Length > 0 Then
+                    FirstWriter.WriteLine("Kanji you don't know:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong > 1 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Kanji that still needs work:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 1 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+
+                    FirstWriter.WriteLine()
+                    FirstWriter.WriteLine("Easy Kanji:")
+                    For Printer = 0 To NeedWork.Length - 1
+                        Wrong = Right(NeedWork(Printer), 1)
+                        If Wrong = 0 Then
+                            FirstWriter.WriteLine(Left(NeedWork(Printer), NeedWork(Printer).Length - 1))
+                        End If
+                    Next
+                End If
             End If
+            FirstWriter.Close()
+            Console.WriteLine("The file was successfully created in the Downloads folder called 'kanjitest" & RanInt & ".txt'")
+            Console.ReadLine()
+            Main()
         End If
 
         Main()
@@ -5149,7 +5179,7 @@ Module Module1
                 Dim InformationType As String = ""
                 Dim AmountChoice As String = ""
                 Dim CheckedAmount As String = ""
-                Do Until Line = TextString.Length
+                Do Until Line = TextString.Length Or AmountChoice = "finish"
                     Try
                         InformationType = Left(TextString(Line), TextString(Line).IndexOf(":"))
                     Catch
@@ -5163,10 +5193,11 @@ Module Module1
                     End Try
 
                     AmountChoice = "a"
-                    Do Until IsNumeric(AmountChoice) = True
+                    Do Until IsNumeric(AmountChoice) = True Or AmountChoice = "finish"
                         Console.Clear()
                         Console.WriteLine("How much information would you like for '" & InformationType & "' (" & Line + 1 & "/13)?")
                         Console.WriteLine("Type a number in the range 0-3. (0 being nothing, 3 being everything)")
+                        Console.WriteLine("Press 'f' key to save")
                         Console.WriteLine()
 
                         For SType = 0 To TextString.Length - 1
@@ -5192,6 +5223,9 @@ Module Module1
                             If Line <> TextString.Length - 1 Then
                                 Line += 1
                             End If
+                        ElseIf KeyReader.Key = ConsoleKey.F Then
+                            AmountChoice = "finish"
+                            Continue Do
                         ElseIf KeyReader.Key = ConsoleKey.Enter Then
                             Console.WriteLine()
                             Console.WriteLine("What do you want the new value to be?")
@@ -5213,12 +5247,23 @@ Module Module1
                             Main()
                         End If
 
+                        If AmountChoice.ToLower = "d" Or AmountChoice.ToLower = "f" Or AmountChoice.ToLower = "done" Or AmountChoice.ToLower.IndexOf("finish") <> -1 Then
+                            AmountChoice = "finish"
+                            Continue Do
+                        End If
+
                         If IsNumeric(AmountChoice) = False Then
                             Continue Do
                         ElseIf AmountChoice < 0 Or AmountChoice > 3 Or AmountChoice.Length > 1 Then
                             AmountChoice = "a"
                         End If
                     Loop
+
+                    'Loop exiter:
+                    If AmountChoice.ToLower = "d" Or AmountChoice.ToLower = "done" Or AmountChoice.ToLower.IndexOf("finish") <> -1 Then
+                        AmountChoice = "finish"
+                        Continue Do
+                    End If
 
                     Try
                         CheckedAmount = Mid(TextString(Line), TextString(Line).IndexOf(":") + 1)
