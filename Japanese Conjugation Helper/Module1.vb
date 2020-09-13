@@ -31,7 +31,7 @@ Module Module1
         If Int((50) * Rnd()) <> 2 Then
             Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
         Else
-            Console.WriteLine("Enter a command! ^o^")
+            Console.WriteLine("Enter a command! OwO")
         End If
 
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
@@ -47,6 +47,10 @@ Module Module1
 
         If Word = "/kt" Or Word = "/kanji" Or Word = "/kanjitest" Or Word = "/k" Then
             KanjiTest()
+        End If
+
+        If Word = "/i" Or Word = "/info" Or Word = "/information" Then
+            KanjiInfo()
         End If
 
         Dim Translated As String = ""
@@ -137,6 +141,14 @@ Module Module1
             Console.WriteLine("Syntax: [english/japanese/romaji word]")
 
             Console.WriteLine()
+            Console.WriteLine("KanjiTest: Enter Japanese text and then generate a quiz of the kanji in that text")
+            Console.WriteLine("Syntax: /k")
+
+            Console.WriteLine()
+            Console.WriteLine("Translate: Translate Japanese into English or the other way round")
+            Console.WriteLine("Syntax: ![text]")
+
+            Console.WriteLine()
             Console.WriteLine("/r: reading practice, to use this command (sentences) must be in a specific format")
             Console.WriteLine("Syntax: /r (sentences) [2]")
             Console.WriteLine("do " & QUOTE & "/help /r" & QUOTE & " to see more about this command")
@@ -198,7 +210,7 @@ Module Module1
         Command = Command.ToLower
         Console.Clear()
 
-        If Command = "wordlookup" Or Command = "word" Or Command = "lookup" Or Command = "definition" Or Command = "conjugate" Then
+        If Command = "search" Or Command = "wordlookup" Or Command = "word" Or Command = "lookup" Or Command = "definition" Or Command = "conjugate" Then
             Console.WriteLine("WordLookup: To lookup a word and bring up information and conjugation patterns, simply type and English or Japanese word, Japanese words can also be written using romaji (english transliteration), surround words in quotes to make sure the program knows that it is definitely the english word you are seaching for and not romaji. Example: " & QUOTE & "hate" & QUOTE)
             Console.WriteLine("the (number of results) parameter is how many results the program will bring up, you then choose one of these results to have details about it show up.")
             Console.WriteLine("This command is best with adjectives and verbs because they have the most conjugation patterns, but nouns work too!")
@@ -210,14 +222,15 @@ Module Module1
             Console.WriteLine("shizuka")
             Console.WriteLine("quiet 5")
             Console.WriteLine("interesting 15")
-            Console.Read()
+            Console.ReadLine()
             Main()
         End If
 
-        If Command = "/r" Or Command = "r" Then
+        If Command = "/r" Or Command = "r" Or Command.indexof("reading") <> -1 Then
             Console.WriteLine("/r: Reading practice, to use this command (sentences) must be in a specific format")
-            Console.WriteLine("@JawGBoi has another program that generates example sentences in this format, ask him and he'll give it to you. It is an AHK file.")
+            Console.WriteLine("This command is pretty useful for the average user because it requires a hotkey file to be affective")
             Console.WriteLine("This command is pretty much creating flashcards, so as long as you follow the syntax you can make it do anything")
+            Console.WriteLine()
             Console.WriteLine()
             Console.WriteLine("Syntax; /r (sentences) [2]")
             Console.WriteLine("(sentences) is a specific format of japanese sentences and its english meaning")
@@ -229,27 +242,48 @@ Module Module1
             Console.WriteLine()
             Console.WriteLine("You can paste in a whole batch like this:")
             Console.WriteLine("|(Japanese sentence)^(english meaning)" & "|(Japanese sentence)^(english meaning)" & "|(Japanese sentence)^(english meaning)")
-            Console.Read()
-            Main()
-
             Console.WriteLine()
             Console.WriteLine()
             Console.WriteLine("Examples:")
             Console.WriteLine("|そこで私たちを待っている幸福が、私たちが望むような幸福ではないかもしれない。 ^It may be that the happiness awaiting us is not at all the sort of happiness we would want.")
             Console.WriteLine()
             Console.WriteLine("|家に帰りましょうか。 ^Why don't we go home?|「少しうちに寄っていかない？」「いいの？」「うち共働きで親は遅いの」 ^" & QUOTE & "Want To drop round my place?" & QUOTE & "can I?" & QUOTE & " My parents come home late As they both work." & QUOTE & "|先ずは憧れの作家の文章の呼吸をつかむためにひたすら筆写、丸写しをする。 ^First, in order to get a feel for your favourite author's work, transcribe and copy in full.")
-            Console.Read()
+            Console.ReadLine()
             Main()
-
         End If
 
-        If Command = "/h" Or Command = "/help" Or Command = "help" Then
+        If Command = "k" Or Command = "/k" Or Command = "/kanjitest" Or Command = "kanjitest" Or Command = "/kt" Then
+            Console.WriteLine("KanjiTest: Enter Japanese text and then generate a quiz of the kanji in that text")
+            Console.WriteLine("Type '/k' and then enter Japanese text; as long as the text contains kanji it will work")
+            Console.WriteLine("Syntax: /k")
+            Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Examples:")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command = "!" Or Command.indexof("transl") <> -1 Then
+            Console.WriteLine("Translate: Translate Japanese into English or the other way round")
+            Console.WriteLine("Syntax: ![text]")
+            Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Examples:")
+            Console.WriteLine("!this will work")
+            Console.WriteLine("!これも")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command = "/h" Or Command = "/help" Or Command = "help" Or Command = "h" Then
             Console.WriteLine("/h: Brings up this help menu, if you want more help with a command then add the command parameter:")
             Console.WriteLine("Syntax: /h [command]")
+            Console.WriteLine()
+            Console.WriteLine()
             Console.WriteLine("Examples:")
             Console.WriteLine("/h /r")
             Console.WriteLine("/help WordLookup")
-            Console.Read()
+            Console.ReadLine()
             Main()
         End If
 
@@ -259,13 +293,22 @@ Module Module1
             Console.WriteLine("Syntax: /p [english/japanese/romaji word]")
             Console.WriteLine()
             Console.WriteLine("When the quiz starts it will tell you which form to change the word to, failing lowers your score.")
-            Console.Read()
+            Console.ReadLine()
             Main()
         End If
 
-        Console.WriteLine("There is no information for " & QUOTE & "/" & Command & QUOTE)
+        If Command.length < 13 And Command.indexof("pref") <> -1 Then
+            Console.WriteLine("/prefs: Lets you change settings for the program.")
+            Console.WriteLine("Settings are mostly do with with how information is displayed")
+            Console.WriteLine()
+            Console.WriteLine("Read the Wiki information on what each setting does")
+            Console.ReadLine()
+            Main()
+        End If
+
+        Console.WriteLine("There is no information for " & QUOTE & Command & QUOTE)
         Console.WriteLine(QUOTE & "/" & Command & QUOTE & " is not a command.")
-        Console.Read()
+        Console.ReadLine()
         Main()
     End Sub
 
@@ -439,11 +482,15 @@ Module Module1
         Dim WordChoice As Integer = 10000
         Dim ActualSearch2ndAppearance As String
         Dim Definition1 As String = ""
+
+        Dim CommonWord(0) As Boolean
+
         If WordIndex <> 1 Then              'scraping of words and definitions -------------------------------------------------------------------------------------------
             For LoopIndex = 0 To Max - 1
                 Array.Resize(FoundWords, FoundWords.Length + 1)
                 Array.Resize(FoundDefinitions, FoundDefinitions.Length + 1)
                 Array.Resize(FoundWordLinks, FoundWordLinks.Length + 1)
+                Array.Resize(CommonWord, CommonWord.Length + 1)
                 Try
                     'Getting the Japanese word from the search results:
                     ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
@@ -464,6 +511,13 @@ Module Module1
                     'Getting the link of the actual word:
                     ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
                     HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+
+                    'Checking if word is "common":
+                    If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
+                        CommonWord(LoopIndex) = "True"
+                    End If
+
+                    'Continuing to get the link of the actual word:
                     ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
                     HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
                     ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
@@ -503,6 +557,7 @@ Module Module1
             Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
             Array.Resize(FoundWords, FoundDefinitions.Length)
             Array.Resize(FoundWordLinks, FoundDefinitions.Length)
+            Array.Resize(CommonWord, CommonWord.Length - 1)
 
             Dim IntTest As String = ""
 
@@ -582,8 +637,16 @@ Module Module1
             Console.WriteLine()
         Else                                                              'One word scrapping ---------------------------------------------------------------------------------------------
             Try
+                'Getting word link:
                 ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
                 HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+
+                'Checking if word is "common":
+                If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
+                    CommonWord(0) = "True"
+                End If
+
+                'Continue getting word link:
                 ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
                 HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
                 ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
@@ -596,10 +659,8 @@ Module Module1
                 Main()
             End Try
 
-
             FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "")
             FoundTypes = TypeScraper(WordLink).replace("&#39;", "")
-
 
             ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
             If ActualSearchWord.Length < 2 Then
@@ -615,6 +676,11 @@ Module Module1
             Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
             WordChoice = 0
         End If                                                           'end of one word scrapping and all scrapping _______________________________________________________________________________________________________________________
+
+        Dim IsCommon As Boolean
+        If CommonWord(WordChoice - 1) = "True" Then
+            IsCommon = True
+        End If
 
         If WordChoice = 0 Then
             WordChoice = 1
@@ -858,6 +924,10 @@ Module Module1
             Console.WriteLine(ActualSearchWord & "(" & Furigana & ")")
         Else
             Console.WriteLine(ActualSearchWord)
+        End If
+
+        If IsCommon = True Then
+            Console.WriteLine("Common word")
         End If
 
 
@@ -4515,6 +4585,236 @@ Module Module1
         Console.WriteLine("Done!")
         Console.ReadLine()
         Main()
+    End Sub
+    Sub KanjiInfo()
+        Console.Clear()
+        Const QUOTE = """"
+        Console.WriteLine("Enter a string of kanji.")
+        Dim KanjisString As String = Console.ReadLine
+
+        Console.Clear()
+        Console.WriteLine("Kanji Information for 「" & WanaKana.StripOkurigana(KanjisString) & "」")
+        Console.WriteLine()
+
+        Dim ActualSearchWord As String
+        Dim WordWordURL As String
+        Dim WordHTML As String = ""
+        Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
+        For Kanji = 1 To KanjisString.Length
+            ActualSearchWord = Mid(KanjisString, Kanji, 1)
+            'Console.WriteLine(ActualSearchWord & "...")
+
+            If WanaKana.IsKanji(ActualSearchWord) = False Then
+                'Console.Clear()
+                Continue For
+            End If
+
+            Try
+                'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
+                WordWordURL = ("https://jisho.org/word/" & ActualSearchWord)
+                WordHTML = Client.DownloadString(New Uri(WordWordURL))
+            Catch
+                Try
+                    WordWordURL = ("https://jisho.org/search/" & ActualSearchWord & "%20%23kanji")
+                    'WordHTML = Client.DownloadString(New Uri(WordWordURL))
+                Catch
+
+                End Try
+                Console.Clear()
+                Continue For
+            End Try
+
+            Dim KanjiInfo As String = ""
+            Try
+                KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
+            Catch
+                Console.Clear()
+                Continue For
+            End Try
+
+            If KanjiInfo = "" Then
+                Console.Clear()
+                Continue For
+            End If
+
+            Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
+            Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
+            Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
+            Dim LastDetailsIndex As Integer = KanjiInfo.LastIndexOf("Details")
+
+            'Getting the JLPT level of the kanji:
+            Dim JLPTLvl As Integer = 0
+            Dim CutInt As Integer = WordHTML.IndexOf("JLPT N") + 7
+            JLPTLvl = Mid(WordHTML, CutInt, 1)
+
+            Try
+                KanjiInfo = Left(KanjiInfo, LastDetailsIndex)
+
+                Dim Finished As Boolean = False
+                Do Until Finished = True 'Do until no more end splitters can be found. The sentences that are pasted won't end in "|" because of how the AHK sentence grabber works
+                    I += 1
+                    Array.Resize(KanjiGroup, KanjiGroup.Length + 1)
+                    KanjiGroupEnd = KanjiInfo.IndexOf("Details") + 10
+                    If KanjiGroupEnd = 9 Then '(-1 but at add because of the above line. This means if "Details" isn't found
+                        KanjiGroup(I) = KanjiInfo
+                        Finished = True
+                        Continue Do
+                    End If
+
+                    KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
+                    KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
+                Loop
+                Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
+            Catch
+                Console.Clear()
+            End Try
+
+            Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
+
+            Try
+                'Y indexs:
+                '0 = Kanji
+                '1 = English meaning(s) (I will concatinate multiple meanings)
+                '2 = kun readings (concatentated if needed, usually so)
+                '3 = on readings (concatentated if needed, usually so)
+                Dim FirstFinder As Integer
+                Dim SecondFinder As Integer
+
+                Dim AllEng, AllKun, AllOn As Boolean
+                AllEng = False
+                AllKun = False
+                AllOn = False
+                Dim LastReadingFound As Boolean = False 'This is used to find the last reading of a kanji, it knows that it is a last because it ends in "</a>、" and not "</a>"
+                Dim JustEng As String
+                Dim KunReading, OnReading, ReadingSnip As String
+
+                KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
+
+                For Looper = 0 To KanjiGroup.Length - 1
+                    Try 'This is for if there are no kanji
+                        FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
+                    Catch
+                        Console.ReadLine()
+                        Main()
+                    End Try
+                    'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+                    ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
+
+                    FirstFinder = KanjiGroup(Looper).IndexOf("sense")
+                    KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
+
+                    FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
+
+                    JustEng = Left(KanjiGroup(Looper), FirstFinder)
+
+                    JustEng = Mid(JustEng, 18)
+                    JustEng = Left(JustEng, JustEng.Length - 14)
+                    KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
+
+                    JustEng = JustEng.Replace("           ", "")
+                    FirstFinder = JustEng.IndexOf("</span>")
+                    SecondFinder = JustEng.IndexOf("<span>")
+                    Try
+                        JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
+                    Catch
+
+                    End Try
+
+                    JustEng = JustEng.Replace(",", ", ")
+                    'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
+
+                    ActualInfo(Looper, 1) = JustEng
+
+                    'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
+                    FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
+                    KunReading = Left(KanjiGroup(Looper), FirstFinder)
+                    OnReading = Mid(KanjiGroup(Looper), FirstFinder)
+
+                    ActualInfo(Looper, 2) &= "Kun Readings: "
+                    ActualInfo(Looper, 3) &= "On Readings: "
+
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = KunReading.IndexOf("</a>、")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+
+                            KunReading = Mid(KunReading, SecondFinder + 10)
+
+                        ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = KunReading.IndexOf("</a>")
+                            FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+                    Loop
+                    LastReadingFound = False
+                    Do Until LastReadingFound = True
+                        If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
+                            SecondFinder = OnReading.IndexOf("</a>、")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
+
+                            OnReading = Mid(OnReading, SecondFinder + 10)
+
+                        ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
+                            SecondFinder = OnReading.IndexOf("</a>")
+                            FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
+                            ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
+
+                            ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
+
+                            LastReadingFound = True
+                        Else
+                            LastReadingFound = True
+                        End If
+
+                    Loop
+                    'Displaying of information:
+                    Console.BackgroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.WriteLine(ActualInfo(Looper, 2))
+                    Console.WriteLine(ActualInfo(Looper, 3))
+
+                    If JLPTLvl > 0 And JLPTLvl < 6 Then
+                        Console.WriteLine("JLPT Level: " & JLPTLvl)
+                    End If
+
+                    Dim FoundIn1, FoundIn2 As String
+                    FoundIn1 = JustResultsScraper(ActualInfo(Looper, 0), 1, ActualSearchWord)
+                    FoundIn2 = JustResultsScraper(ActualInfo(Looper, 0), 2, ActualSearchWord)
+                    If FoundIn1 = FoundIn2 Then
+                        Console.WriteLine("Found in: ")
+                        Console.WriteLine(FoundIn1)
+                    Else
+                        Console.WriteLine("Found in: ")
+                        Console.WriteLine(FoundIn1)
+                        Console.WriteLine(FoundIn2)
+                    End If
+
+                    ActualInfo(Looper, 1) = ActualInfo(Looper, 1) & ","
+                    ActualInfo(Looper, 2) = ActualInfo(Looper, 2) & ","
+                    Console.WriteLine()
+
+                Next
+            Catch
+                Console.WriteLine("Error")
+            End Try
+        Next
+        Console.WriteLine("Done!")
+        Console.ReadLine()
     End Sub
 
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
