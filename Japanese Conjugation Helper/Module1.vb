@@ -674,17 +674,16 @@ Module Module1
 
             ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
             Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
-            WordChoice = 0
+            WordChoice = 1
         End If                                                           'end of one word scrapping and all scrapping _______________________________________________________________________________________________________________________
+
+        'WordChoice = WordChoice - 1
 
         Dim IsCommon As Boolean
         If CommonWord(WordChoice - 1) = "True" Then
             IsCommon = True
         End If
 
-        If WordChoice = 0 Then
-            WordChoice = 1
-        End If
 
         'Building of the chosen Definition and Type arrays:
         Dim SelectedDefinition() As String = FoundDefinitions(0).Split("|")
