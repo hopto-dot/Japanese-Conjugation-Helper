@@ -4402,7 +4402,7 @@ Module Module1
         Console.Clear()
         Const QUOTE = """"
         Console.WriteLine("Enter a string of kanji.")
-        Dim KanjisString As String = Console.ReadLine
+        Dim KanjisString As String = Console.ReadLine.Trim.Replace(" ", "")
 
         Console.Clear()
         Console.WriteLine("Kanji Information for 「" & WanaKana.StripOkurigana(KanjisString) & "」")
@@ -4433,7 +4433,8 @@ Module Module1
                 Catch
 
                 End Try
-                Console.Clear()
+                Console.WriteLine("No info for " & ActualSearchWord)
+                Console.WriteLine
                 Continue For
             End Try
 
@@ -4441,12 +4442,12 @@ Module Module1
             Try
                 KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
             Catch
-                Console.Clear()
+                'Console.Clear()
                 Continue For
             End Try
 
             If KanjiInfo = "" Then
-                Console.Clear()
+                'Console.Clear()
                 Continue For
             End If
 
@@ -4479,7 +4480,7 @@ Module Module1
                 Loop
                 Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
             Catch
-                Console.Clear()
+                'Console.Clear()
             End Try
 
             Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
@@ -4627,6 +4628,7 @@ Module Module1
         Next
         Console.WriteLine("Done!")
         Console.ReadLine()
+        Main()
     End Sub
 
 
