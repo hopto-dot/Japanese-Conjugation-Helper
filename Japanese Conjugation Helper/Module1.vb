@@ -2955,7 +2955,7 @@ Module Module1
         ActualSearchWord = Mid(ActualSearchWord, 30)
         ActualSearchWord = ActualSearchWord.Replace("<span>", "")
         ActualSearchWord = ActualSearchWord.Replace("</span>", "")
-
+        ActualSearchWord = ActualSearchWord.Trim
 
         'Getting the link of the actual word:
         ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
@@ -2966,11 +2966,13 @@ Module Module1
         ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
         WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
 
-        ActualSearchWord = RetrieveClassRange(HTML, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
-        ActualSearchWord = RetrieveClassRange(ActualSearchWord, "text", "</span", "Actual word search")
-        ActualSearchWord = Mid(ActualSearchWord, 17)
-        ActualSearchWord = ActualSearchWord.Replace("<span>", "")
-        ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+        If ActualSearchWord.IndexOf("<") <> -1 Or ActualSearchWord.IndexOf(">") <> -1 Or ActualSearchWord.IndexOf("span") <> -1 Then
+            ActualSearchWord = RetrieveClassRange(HTML, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
+            ActualSearchWord = RetrieveClassRange(ActualSearchWord, "text", "</span", "Actual word search")
+            ActualSearchWord = Mid(ActualSearchWord, 17)
+            ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+            ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+        End If
 
         If ActualSearchWord.Length = 0 Then
             Console.WriteLine("Word wasn't found.")
@@ -3026,13 +3028,16 @@ Module Module1
         Console.WriteLine(TypeSnip)
         Console.WriteLine()
         Console.WriteLine("Press enter to start.")
-        Console.ReadLine()
+        If Console.ReadLine().IndexOf("a") <> -1 Then
+            Main()
+        End If
         Console.Clear()
 
         Dim Last As String = Right(ActualSearchWord, 1) 'This is the last Japanese character of the verb, this is used for changing forms
         Dim LastAdd As String = ""
+        Dim LastAdd2 As String = ""
         Dim Type As String = "" 'This is for making sure the verb is conjugated properly
-        Dim Forms(9, 3) As String 'This is an array that will hold various forms with the following order:
+        Dim Forms(3, 3) As String 'This is an array that will hold various forms with the following order:
 
         Dim Verb, IAdj, NaAdj As Boolean
         Verb = False
@@ -3063,164 +3068,93 @@ Module Module1
             'y2 = question
             'y3 = furigana conjugation
 
+            '0 = potential
+            '1 = passive
+            '2 = causative
+            '3 = causative passive
+            Forms(0, 2) = "potential"
+            Forms(1, 2) = "passive"
+            Forms(2, 2) = "causative"
+            Forms(3, 2) = "causative passive"
 
-            '0 = masu form (~ます)
-            '1 = te-form (~て)
-            '2 = short past (~った/っだ)
-            '3 = past te-iru form (~ていた)
-            '4 = tai/want form (~たい)
-            '5 = short negative (~ない)
-            '6 = short past negative (~なかった)
-            '7 = te-form of negative (~なくて)
-            '8 = negative te-form (~ないで)
-            '9 = negative tai/want form (~たくない)
-            Forms(0, 2) = "masu form"
-            Forms(1, 2) = "te-form"
-            Forms(2, 2) = "short past"
-            Forms(3, 2) = "past te-iru form"
-            Forms(4, 2) = "tai/want form"
-            Forms(5, 2) = "short negative"
-            Forms(6, 2) = "short past negative"
-            Forms(7, 2) = "te-form of negative"
-            Forms(8, 2) = "negative te-form"
-            Forms(9, 2) = "negative tai/want form"
-            Console.WriteLine("Type :" & Type & "|")
-            If Type = "Godan" Then
-                If Last = "む" Then
-                    LastAdd = "み"
-                End If
-                If Last = "ぶ" Then
-                    LastAdd = "び"
-                End If
-                If Last = "ぬ" Then
-                    LastAdd = "に"
-                End If
-                If Last = "す" Then
-                    LastAdd = "し"
-                End If
-                If Last = "ぐ" Then
-                    LastAdd = "ぎ"
-                End If
-                If Last = "く" Then
-                    LastAdd = "き"
-                End If
-                If Last = "る" Then
-                    LastAdd = "り"
-                End If
-                If Last = "つ" Then
-                    LastAdd = "ち"
-                End If
-                If Last = "う" Then
-                    LastAdd = "い"
-                End If
-                Forms(0, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "ます" 'masu form
-                Forms(4, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "たい" 'tai/want form
-                Forms(9, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "たくない"
 
-                Forms(0, 3) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "ます" 'furigana masu form
-                Forms(4, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "たい" 'furigana tai/want form
-                Forms(4, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "たくない" 'negative furigana tai/want form
-            Else
-                Forms(0, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "ます" 'masu form
-                Forms(4, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "たい" 'tai/want form
-                Forms(4, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "たくない" 'negative furigana tai/want form
+            'Forms(0, 2) = "masu form"
+            'Forms(1, 2) = "te-form"
+            'Forms(2, 2) = "short past"
+            'Forms(3, 2) = "past te-iru form"
+            'Forms(4, 2) = "tai/want form"
+            'Forms(5, 2) = "short negative"
+            'Forms(6, 2) = "short past negative"
+            'Forms(7, 2) = "te-form of negative"
+            'Forms(8, 2) = "negative te-form"
+            'Forms(9, 2) = "negative tai/want form"
+            Console.WriteLine("Type :" & Type)
 
-                Forms(0, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "ます" 'furigana masu form
-                Forms(4, 3) = Left(Furigana, Furigana.Length - 1) & "たい" 'furigana tai/want form
-                Forms(4, 3) = Left(Furigana, Furigana.Length - 1) & "たくない" 'furigana negative tai/want form
-            End If
-
-            'Creating te-form stems
-            If Type = "Godan" Then
-                If Last = "む" Or Last = "ぶ" Or Last = "ぬ" Then
-                    LastAdd = "んで"
-                    Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "んだ" 'ta-form
-                    Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & "んだ" 'furigana ta-form
-                End If
-                If Last = "す" Then
-                    LastAdd = "して"
-                    Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "した" 'ta-form
-                    Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & "した" 'furigana ta-form
-                End If
-                If Last = "ぐ" Then
-                    LastAdd = "いで"
-                    Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "いだ"
-                    Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & "いだ"
-                End If
-                If Last = "く" Then
-                    LastAdd = "いて"
-                    Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "いた"
-                    Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & "いた"
-                End If
-                If Last = "る" Or Last = "つ" Or Last = "う" Then
-                    LastAdd = "って"
-                    Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "った"
-                    Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & "っだ"
-                End If
-                Forms(1, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd 'te-form
-                Forms(1, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd 'furigana te-form
-
-                Forms(3, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "いた" 'past te-iru form
-                Forms(3, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "いた" 'past te-iru form
-            Else
-                Forms(1, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "て" 'te-form
-                Forms(1, 3) = Left(Furigana, Furigana.Length - 1) & "て" 'furigana te-form
-
-                Forms(3, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "ていた" 'past te-iru form
-                Forms(3, 3) = Left(Furigana, Furigana.Length - 1) & "ていた" 'furigana past te-iru form
-
-                Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "た" 'ta-form
-                Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & "た" 'furigana ta-form
-            End If
 
             'Creating negative stems
             If Type = "Godan" Then
                 If Last = "む" Then
                     LastAdd = "ま"
+                    LastAdd2 = "め"
                 End If
                 If Last = "ぶ" Then
                     LastAdd = "ば"
+                    LastAdd2 = "べ"
                 End If
                 If Last = "ぬ" Then
                     LastAdd = "な"
+                    LastAdd2 = "ね"
                 End If
                 If Last = "す" Then
                     LastAdd = "さ"
+                    LastAdd2 = "せ"
                 End If
                 If Last = "ぐ" Then
                     LastAdd = "が"
+                    LastAdd2 = "げ"
                 End If
                 If Last = "く" Then
                     LastAdd = "か"
+                    LastAdd2 = "け"
                 End If
                 If Last = "る" Then
                     LastAdd = "ら"
+                    LastAdd2 = "れ"
                 End If
                 If Last = "つ" Then
                     LastAdd = "た"
+                    LastAdd2 = "て"
                 End If
                 If Last = "う" Then
                     LastAdd = "わ"
+                    LastAdd2 = "え"
                 End If
-                Forms(5, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "ない"
-                Forms(6, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "なかった"
-                Forms(7, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "なくて"
-                Forms(8, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "ないで"
 
-                Forms(5, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "ない"
-                Forms(6, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "なかった"
-                Forms(7, 3) = Left(Furigana, ActualSearchWord.Length - 1) & LastAdd & "なくて"
-                Forms(8, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "ないで"
+                Forms(0, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd2 & "る"
+                Forms(1, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "れる"
+                Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "せる"
+                If LastAdd <> "さ" Then
+                    Forms(3, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & LastAdd & "される"
+                    Forms(3, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "される"
+                Else
+                    Forms(3, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "させられる"
+                    Forms(3, 3) = Left(Furigana, Furigana.Length - 1) & "させられる"
+                End If
+
+                Forms(0, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd2 & "る"
+                Forms(1, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "れる"
+                Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & LastAdd & "せる"
+                '(3, 3) is done in the Else above ^
             Else
-                Forms(5, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "ない"
-                Forms(6, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "なかった"
-                Forms(7, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "なくて"
-                Forms(8, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "ないで"
+                Forms(0, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "られる"
+                Forms(1, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "られる"
+                Forms(2, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "させる"
+                Forms(3, 1) = Left(ActualSearchWord, ActualSearchWord.Length - 1) & "させられる"
 
-                Forms(5, 3) = Left(Furigana, Furigana.Length - 1) & "ない"
-                Forms(6, 3) = Left(Furigana, Furigana.Length - 1) & "なかった"
-                Forms(7, 3) = Left(Furigana, Furigana.Length - 1) & "なくて"
-                Forms(9, 3) = Left(Furigana, Furigana.Length - 1) & "ないで"
+                Forms(0, 3) = Left(Furigana, Furigana.Length - 1) & "られる"
+                Forms(1, 3) = Left(Furigana, Furigana.Length - 1) & "られる"
+                Forms(2, 3) = Left(Furigana, Furigana.Length - 1) & "させる"
+                Forms(3, 3) = Left(Furigana, Furigana.Length - 1) & "させられる"
             End If
             'forms array:
             'Forms(X, Y) x = form, y = type of info
@@ -3232,142 +3166,15 @@ Module Module1
             'For i = 0 To 8
             'Console.WriteLine(i & ": " & Forms(i, 2) & "; " & Forms(i, 1))
             'Next
-        ElseIf IAdj = True Then
-            ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 1)
-            Furigana = Left(Furigana, Furigana.Length - 1)
-            'Forms(X, Y) x = form, y = type of info
-            'y1 = correct conjugation
-            'y2 = question
-            'y3 = furigana conjugation
-
-
-            'This is an array that will hold various forms with the following order:
-            '0 = it is (です)
-            '1 = it is not (くありません)
-            '2 = it was (かったです)
-            '3 = it was not (くありませんでした)
-            '4 = is ()
-            '5 = isn't (くない)
-            '6 = was (かった)
-            '7 = wasn't (くなかった)
-            '8 = te-form (くて)
-            '9 = te-form of negative (くなくて)
-            Forms(0, 2) = "it is"
-            Forms(1, 2) = "it is not"
-            Forms(2, 2) = "it was"
-            Forms(3, 2) = "it was not"
-            Forms(4, 2) = "is"
-            Forms(5, 2) = "isn't"
-            Forms(6, 2) = "was"
-            Forms(7, 2) = "wasn't"
-            Forms(8, 2) = "te-form"
-            Forms(9, 2) = "te-form of negative"
-
-
-
-            Forms(0, 1) = (ActualSearchWord & "いです") 'it is (です)
-            Forms(0, 3) = (Furigana & "いです") 'furigana
-
-            Forms(1, 1) = (ActualSearchWord & "くありません") 'it is not (くありません)
-            Forms(1, 3) = (Furigana & "くありません") 'furigana
-
-            Forms(2, 1) = (ActualSearchWord & "かったです") 'it was (かったです)
-            Forms(2, 3) = (Furigana & "かったです") 'furigana
-
-            Forms(3, 1) = (ActualSearchWord & "くありませんでした") 'it was not (くありませんでした)
-            Forms(3, 3) = (Furigana & "くありませんでした")
-
-            Forms(4, 1) = (ActualSearchWord & "い") 'is ()
-            Forms(4, 3) = (Furigana & "い") 'furigana
-
-            Forms(5, 1) = (ActualSearchWord & "くない") 'isn't (くない)
-            Forms(5, 3) = (Furigana & "くない") 'furigana
-
-            Forms(6, 1) = (ActualSearchWord & "かった") 'was (かった)
-            Forms(6, 3) = (Furigana & "かった") 'furigana
-
-            Forms(7, 1) = (ActualSearchWord & "くなかった") 'wasn't (くなかった)
-            Forms(7, 3) = (Furigana & "くなかった") 'furigana
-
-            Forms(8, 1) = (ActualSearchWord & "くて") 'te-form (くて)
-            Forms(8, 3) = (Furigana & "くて") 'furigana
-
-            Forms(9, 1) = (ActualSearchWord & "くなくて") 'te-form of negative (くなくて)
-            Forms(9, 3) = (Furigana & "くなくて") 'furigana
-
-        ElseIf NaAdj = True Then
-            'Forms(X, Y) x = form, y = type of info
-            'y1 = correct conjugation
-            'y2 = question
-            'y3 = furigana conjugation
-
-
-            'This is an array that will hold various forms with the following order:
-            '0 = it is (です)
-            '1 = it is not (じゃありません)
-            '2 = it was (でした)
-            '3 = it was not (かじゃありませんでした)
-            '4 = is (だ)
-            '5 = isn't (じゃない)
-            '6 = was (だった)
-            '7 = wasn't (じゃなかった)
-            '8 = te-form (で)
-            '9 = noun modifier (な)
-            Forms(0, 2) = "it is"
-            Forms(1, 2) = "it is not"
-            Forms(2, 2) = "it was"
-            Forms(3, 2) = "it was not"
-            Forms(4, 2) = "is"
-            Forms(5, 2) = "isn't"
-            Forms(6, 2) = "was"
-            Forms(7, 2) = "wasn't"
-            Forms(8, 2) = "te-form"
-            Forms(9, 2) = "noun modifier"
-
-
-
-            Forms(0, 1) = (ActualSearchWord & "です") 'it is (です)
-            Forms(0, 3) = (Furigana & "です") 'furigana
-
-            Forms(1, 1) = (ActualSearchWord & "じゃありません") 'it is not (くありません)
-            Forms(1, 3) = (Furigana & "じゃありません") 'furigana
-
-            Forms(2, 1) = (ActualSearchWord & "でした") 'it was (かったです)
-            Forms(2, 3) = (Furigana & "でした") 'furigana
-
-            Forms(3, 1) = (ActualSearchWord & "かじゃありませんでした") 'it was not (くありませんでした)
-            Forms(3, 3) = (Furigana & "かじゃありませんでした")
-
-            Forms(4, 1) = (ActualSearchWord & "だ") 'is ()
-            Forms(4, 3) = (Furigana & "だ") 'furigana
-
-            Forms(5, 1) = (ActualSearchWord & "じゃない") 'isn't (くない)
-            Forms(5, 3) = (Furigana & "じゃない") 'furigana
-
-            Forms(6, 1) = (ActualSearchWord & "だった") 'was (かった)
-            Forms(6, 3) = (Furigana & "だった") 'furigana
-
-            Forms(7, 1) = (ActualSearchWord & "じゃなかった") 'wasn't (くなかった)
-            Forms(7, 3) = (Furigana & "じゃなかった") 'furigana
-
-            Forms(8, 1) = (ActualSearchWord & "で") 'te-form (くて)
-            Forms(8, 3) = (Furigana & "で") 'furigana
-
-            Forms(9, 1) = (ActualSearchWord & "な") 'te-form of negative (くなくて)
-            Forms(9, 3) = (Furigana & "な") 'furigana
-
         Else
             Console.Clear()
-            Console.WriteLine("This word type isn't support, sorry!")
+            Console.WriteLine("This word type isn't supported, sorry!")
             Console.ReadLine()
             Main()
         End If
 
-
-
-
         Randomize()
-        Dim Remaining As String = "0123456789"
+        Dim Remaining As String = "0123"
         Dim Random As Integer = Int((8 + 1) * Rnd())
         Dim Read As String = ""
         Dim Completed As Integer = 1
@@ -3379,21 +3186,21 @@ Module Module1
             Input2 = ""
             Input3 = ""
 
-            Do Until Remaining.IndexOf(Random) <> -1 'Keep generating a random number until one is generated that hasn't been generator before
-                Random = Int((9 + 1) * Rnd())
-                If Remaining.IndexOf(Random) = -1 Then
-                    Random = Int((9 + 1) * Rnd())
-                End If
-            Loop
+            'Do Until Remaining.IndexOf(Random) <> -1 'Keep generating a random number until one is generated that hasn't been generator before
+            Random = Int((3 + 1) * Rnd())
+            '    If Remaining.IndexOf(Random) = -1 Then
+            'Random = Int((3 + 1) * Rnd())
+            'End If
+            'Loop
 
             Do Until Read = Forms(Random, 1) Or Read = Forms(Random, 3)
                 If Score < 0 Then
                     Score = 0
                 End If
-                Console.WriteLine(ActualSearchWord & " - " & Completed & "/10")
+                Console.WriteLine(ActualSearchWord & " - " & 4 - Remaining.Length & "/4")
                 Console.WriteLine(Forms(Random, 2) & " (attempt " & Attempts + 1 & " - score:" & Score & "):")
                 'Console.WriteLine("Cheat: " & Forms(Random, 3)) 'Use this to see the answer
-                Read = Console.ReadLine
+                Read = WanaKana.ToHiragana(Console.ReadLine)
                 If Attempts = 0 Then
                     Input1 = Read
                 ElseIf Attempts = 1 Then
@@ -3405,14 +3212,15 @@ Module Module1
                 Attempts += 1
                 Console.Clear()
                 If Read <> Forms(Random, 1) Then
+                    Remaining &= Random
 
-                    Score -= 20 * Attempts
+                    Score -= 55 * Attempts
                     If Attempts > 2 Then
                         Score -= 10
                         If Score < 0 Then
                             Score = 0
                         End If
-                        Console.WriteLine(ActualSearchWord & "(" & Furigana & ") - " & Completed & "/10" & " (score:" & Score & "):")
+                        Console.WriteLine(ActualSearchWord & "(" & Furigana & ") - " & 4 - Remaining.Length & "/4" & " (score:" & Score & "):")
                         Console.WriteLine("The answer was " & Forms(Random, 1) & " (" & Forms(Random, 3) & ")")
                         Read = Forms(Random, 1) 'This is to exit the loop
 
@@ -3435,10 +3243,17 @@ Module Module1
             Console.Clear()
             Completed += 1
             If Score < 0 Then
-                Score = 0
+                Score = 1
             End If
             Attempts = 0
         Loop
+
+
+        For Conjugation = 0 To 3
+            Console.WriteLine(Forms(Conjugation, 2) & ":")
+            Console.WriteLine(Forms(Conjugation, 1) & "(" & Forms(Conjugation, 3) & ")")
+            Console.WriteLine()
+        Next
 
         Console.WriteLine("Finished!")
         Console.WriteLine("Score: " & Score)
@@ -4816,6 +4631,7 @@ Module Module1
         Console.ReadLine()
     End Sub
 
+
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
         'Loading the website's HTML code and storing it in a HTML as a string:
 
@@ -5412,7 +5228,7 @@ Module Module1
         Dim FileReader As String = ""
         Dim TextWriter As System.IO.StreamWriter
         Try
-            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
+
         Catch
             File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt").Dispose() 'This text file will store user preferences
             TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
