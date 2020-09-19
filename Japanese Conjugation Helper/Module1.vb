@@ -2951,20 +2951,26 @@ Module Module1
         Dim Definition As String
         Dim Max As Integer = 3
 
-        ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
-        ActualSearchWord = Mid(ActualSearchWord, 30)
-        ActualSearchWord = ActualSearchWord.Replace("<span>", "")
-        ActualSearchWord = ActualSearchWord.Replace("</span>", "")
-        ActualSearchWord = ActualSearchWord.Trim
+        Try
+            ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
+            ActualSearchWord = Mid(ActualSearchWord, 30)
+            ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+            ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+            ActualSearchWord = ActualSearchWord.Trim
 
-        'Getting the link of the actual word:
-        ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
-        HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
-        ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
-        HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
-        ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
-        ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
-        WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+            'Getting the link of the actual word:
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+            ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+            WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+        Catch
+            Console.WriteLine("Word not found!")
+            Console.ReadLine()
+            Main()
+        End Try
 
         If ActualSearchWord.IndexOf("<") <> -1 Or ActualSearchWord.IndexOf(">") <> -1 Or ActualSearchWord.IndexOf("span") <> -1 Then
             ActualSearchWord = RetrieveClassRange(HTML, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
@@ -2980,8 +2986,6 @@ Module Module1
             Main()
         End If
         Definition = DefinitionScraper(WordLink)
-
-
 
         Dim StartingHTML As Integer
         StartingHTML = HTML.IndexOf(ActualSearchWord)
@@ -3023,27 +3027,10 @@ Module Module1
             Bracket1 = Definition.IndexOf("(")
         Loop
 
-        Console.Clear()
-        Console.WriteLine("Conjugation practice for " & ActualSearchWord & "(" & Furigana & "): " & Definition)
-        Console.WriteLine(TypeSnip)
-        Console.WriteLine()
-        Console.WriteLine("Press enter to start.")
-        If Console.ReadLine().IndexOf("a") <> -1 Then
-            Main()
-        End If
-        Console.Clear()
-
-        Dim Last As String = Right(ActualSearchWord, 1) 'This is the last Japanese character of the verb, this is used for changing forms
-        Dim LastAdd As String = ""
-        Dim LastAdd2 As String = ""
         Dim Type As String = "" 'This is for making sure the verb is conjugated properly
-        Dim Forms(3, 3) As String 'This is an array that will hold various forms with the following order:
-
-        Dim Verb, IAdj, NaAdj As Boolean
+        Dim Verb As Boolean
         Verb = False
-        IAdj = False
-        NaAdj = False
-        If TypeSnip.IndexOf("verb") <> -1 And (TypeSnip.ToLower).IndexOf("suru") = -1 Then 'If a verb
+        If TypeSnip.IndexOf("verb") <> -1 And (TypeSnip.ToLower).IndexOf("suru") = -1 Then 'If a verb (and not a suru verb)
             Verb = True
             If TypeSnip.IndexOf("Godan verb") <> -1 Then
                 Type = "Godan"
@@ -3055,12 +3042,28 @@ Module Module1
                 Main()
             End If
         End If
-        If TypeSnip.IndexOf("I-adjective") <> -1 Then
-            IAdj = True
+
+        If Verb = False Then
+            Console.Clear()
+            Console.WriteLine("This word type isn't supported, sorry!")
+            Console.ReadLine()
+            Main()
         End If
-        If TypeSnip.IndexOf("Na-adjective") <> -1 Or TypeSnip.IndexOf("Noun") Then
-            NaAdj = True
+
+        Console.Clear()
+        Console.WriteLine("Conjugation practice for " & ActualSearchWord & "(" & Furigana & "): " & Definition)
+        Console.WriteLine(TypeSnip)
+        Console.WriteLine()
+        Console.WriteLine("Press enter to start, or type 'back' to go back.")
+        If Console.ReadLine().IndexOf("a") <> -1 Then
+            Main()
         End If
+        Console.Clear()
+
+        Dim Last As String = Right(ActualSearchWord, 1) 'This is the last Japanese character of the verb, this is used for changing forms
+        Dim LastAdd As String = ""
+        Dim LastAdd2 As String = ""
+        Dim Forms(3, 3) As String 'This is an array that will hold various forms with the following order:
 
         If Verb = True Then
             'Forms(X, Y) x = form, y = type of info
@@ -3166,11 +3169,6 @@ Module Module1
             'For i = 0 To 8
             'Console.WriteLine(i & ": " & Forms(i, 2) & "; " & Forms(i, 1))
             'Next
-        Else
-            Console.Clear()
-            Console.WriteLine("This word type isn't supported, sorry!")
-            Console.ReadLine()
-            Main()
         End If
 
         Randomize()
