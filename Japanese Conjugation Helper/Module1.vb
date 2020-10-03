@@ -9,6 +9,7 @@ Imports WanaKanaNet
 '
 
 Module Module1
+
     Sub Main()
         Const QUOTE = """"
         Console.Clear()
@@ -37,9 +38,13 @@ Module Module1
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
         Dim Word As String = Console.ReadLine.ToLower.Trim 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
 
+
+
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
             Main()
         End If
+
+
 
         If Word = "/ranki" Or Word = "/revanki" Or Word = "/reverseanki" Or Word = "/reversea" Then
             ReverseAnki()
@@ -51,6 +56,57 @@ Module Module1
 
         If Word = "/i" Or Word = "/info" Or Word = "/information" Then
             KanjiInfo()
+        End If
+
+        If Word = "/history" Then
+            Console.Clear()
+            Console.WriteLine("Search history:")
+            Try
+                Dim HistoryFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+                Console.WriteLine(HistoryFile)
+            Catch
+                Console.WriteLine("You have no history.")
+                Console.ReadLine()
+                Main()
+            End Try
+            Console.WriteLine("do '/b' to go to your most recent search")
+            Word = Console.ReadLine.ToLower.Trim
+
+            If Word = "/b" Or Word = "/last" Or Word = "/back" Or Word = "/previous" Then
+                Console.Clear()
+                Try
+                    Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
+                    If LastSearchFile.Length < 3 Then
+                        Console.WriteLine("Error: FileWriter.Close; Short")
+                    Else
+                        Console.WriteLine(LastSearchFile)
+                    End If
+
+                Catch
+                    Console.WriteLine("Error: FileWriter.Close")
+                End Try
+                Console.ReadLine()
+                Main()
+            End If
+
+            Main()
+        End If
+
+        If Word = "/b" Or Word = "/last" Or Word = "/back" Or Word = "/previous" Then
+            Console.Clear()
+            Try
+                Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
+                If LastSearchFile.Length < 7 Then
+                    Console.WriteLine("Error: FileWriter.Close; Short")
+                Else
+                    Console.WriteLine(LastSearchFile)
+                End If
+
+            Catch
+                Console.WriteLine("Error: FileWriter.Close")
+            End Try
+            Console.ReadLine()
+            Main()
         End If
 
         Dim Translated As String = ""
@@ -140,6 +196,10 @@ Module Module1
             Console.WriteLine("WordLookup: To lookup a word and bring up information and conjugation patterns, simply type and English or Japanese word, Japanese words can also be written using romaji (english transliteration), surround words in quotes to make sure the program knows that it is definitely the english word you are seaching for and not romaji. Example: " & QUOTE & "hate" & QUOTE)
             Console.WriteLine("Syntax: [english/japanese/romaji word]")
 
+            Console.WriteLine("KanjiInfo: Bring up lots of useful information about all the kanji you input")
+            Console.WriteLine("Type /i, then enter in as many kanji as you want and press enter")
+            Console.WriteLine()
+
             Console.WriteLine()
             Console.WriteLine("KanjiTest: Enter Japanese text and then generate a quiz of the kanji in that text")
             Console.WriteLine("Syntax: /k")
@@ -147,6 +207,11 @@ Module Module1
             Console.WriteLine()
             Console.WriteLine("Translate: Translate Japanese into English or the other way round")
             Console.WriteLine("Syntax: ![text]")
+
+            Console.WriteLine("History: See a small amount of information on your recent searches.")
+            Console.WriteLine("A maximum of 20 recent results will show up.")
+            Console.WriteLine("Syntax: /history")
+            Console.WriteLine()
 
             Console.WriteLine()
             Console.WriteLine("/r: reading practice, to use this command (sentences) must be in a specific format")
@@ -321,6 +386,13 @@ Module Module1
         'Code for the "s=" parameter; only shows the more advanced forms:
         Dim AdvancedParam As Integer = 0
 
+
+        'Making a file to use as "/back" to see last search instantly:
+        Try
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt").Dispose()
+        Catch
+        End Try
+
         Dim PreferenceReader As String = ""
         Dim GeneralSettings(0) As String
         Try
@@ -365,7 +437,7 @@ Module Module1
             End If
             AdvancedParam = Mid(Word, SEquals + 4, 1)
 
-            If AdvancedParam <0 Or AdvancedParam > 4 Then 'Making sure the S parameter is 1-3
+            If AdvancedParam < 0 Or AdvancedParam > 4 Then 'Making sure the S parameter is 1-3
                 Console.WriteLine()
 
                 Do Until IsNumeric(Read) = True
@@ -373,7 +445,7 @@ Module Module1
                     Console.WriteLine("Please type a number in the range 1-4")
                     Read = Console.ReadLine
                 Loop
-                Do Until Read > -1 And Read <5
+                Do Until Read > -1 And Read < 5
                     If Read < 0 Or Read > 4 Then
                         Console.WriteLine("The 's' parameter must be in the range 1-4")
                         Console.WriteLine("Please type a number in the range 1-4")
@@ -393,6 +465,7 @@ Module Module1
                 If Console.ReadLine().ToLower = "y" Then
                     Word = Word.Replace(Mid(Word, SEquals + 5, 1), "")
                 Else
+
                     Main()
                 End If
             End If
@@ -414,6 +487,7 @@ Module Module1
             Console.WriteLine("You haven't got a custom S parameter set up.")
             Console.WriteLine("To do this, use the '/pref' command.")
             Console.ReadLine()
+
             Main()
         End Try
 
@@ -527,9 +601,11 @@ Module Module1
                 Catch 'If there are no more search results then:
                     LoopIndex = WordIndex
                     Console.WriteLine(LoopIndex + 1 & ": " & ActualSearchWord & " - " & FoundDefinitions(LoopIndex))
+
                     If ActualSearchWord = "" Then
                         Console.WriteLine("Word couldn't be found")
                         Console.ReadLine()
+
                         Main()
                     End If
                 End Try
@@ -608,11 +684,14 @@ Module Module1
                         Console.Clear()
                         Console.WriteLine("No words were found.")
                         Console.ReadLine()
+
                         Main()
+
                     End If
 
                     IntTest = Console.ReadLine
                     If IntTest = "0" Or IntTest.ToLower = "cancel" Or IntTest.ToLower = "stop" Or IntTest.ToLower = "main" Or IntTest.ToLower = "menu" Then
+
                         Main()
                     End If
                 End If
@@ -656,6 +735,7 @@ Module Module1
             Catch
                 Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
                 Console.ReadLine()
+
                 Main()
             End Try
 
@@ -666,6 +746,7 @@ Module Module1
             If ActualSearchWord.Length < 2 Then
                 Console.WriteLine("Word couldn't be found")
                 Console.ReadLine()
+
                 Main()
             End If
             ActualSearchWord = Mid(ActualSearchWord, 30)
@@ -771,6 +852,58 @@ Module Module1
 
         End If
 
+        Dim ShortDefinition As String = "~"
+        Try
+            ShortDefinition = Left(SelectedDefinition(0), SelectedDefinition(0).IndexOf(";"))
+        Catch
+            Try
+                ShortDefinition = Left(SelectedDefinition(0), SelectedDefinition(0).IndexOf("1"))
+            Catch
+                ShortDefinition = Left(SelectedDefinition(0), SelectedDefinition(0).IndexOf(" "))
+            End Try
+        End Try
+        ShortDefinition = ShortDefinition.Trim
+
+        'Adding to SearchHistory file
+        If Dir$("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt") = "" Then
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt").Dispose()
+        End If
+
+        Dim HistoryFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+        Dim SearchHistory() As String = HistoryFile.Split(vbLf)
+
+        Dim HistoryWriter As System.IO.StreamWriter
+        HistoryWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt", True)
+
+        If SearchHistory.Length < 41 Then 'Maximum that the file will hold is one less
+            If Furigana.Length > 0 Then
+                HistoryWriter.WriteLine(ShortDefinition & " - " & ActualSearchWord & " (" & Furigana & ")")
+            Else
+                HistoryWriter.WriteLine(ShortDefinition & " - " & ActualSearchWord)
+            End If
+            HistoryWriter.Close()
+        Else 'If the file has above number - 1
+            HistoryWriter.Close()
+            HistoryWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt", False)
+            Array.Resize(SearchHistory, SearchHistory.Length - 1)
+
+            For Position = 0 To SearchHistory.Length - 2
+                SearchHistory(Position) = SearchHistory(Position + 1)
+            Next
+
+            If Furigana.Length > 0 Then
+                SearchHistory(SearchHistory.Length - 1) = (ShortDefinition & " - " & ActualSearchWord & " (" & Furigana & ")")
+            Else
+                SearchHistory(SearchHistory.Length - 1) = (ShortDefinition & " - " & ActualSearchWord)
+            End If
+
+            For Writer = 0 To SearchHistory.Length - 1
+                HistoryWriter.WriteLine(SearchHistory(Writer).Trim)
+            Next
+
+            HistoryWriter.Close()
+        End If
+
         'Displaying word definitions WITH corresponding the word types: -------------------------
         DefG1 -= 1
         Dim NumberCheckD As String = ""
@@ -814,16 +947,22 @@ Module Module1
                     If Definition < DefG1 + 1 Then
                         If Definition <> 0 Then
                             Console.WriteLine()
+                            WriteToFile("", "LastSearch")
                         End If
                         Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                        WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
                     ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
                         Console.WriteLine()
                         Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
                         Console.WriteLine()
+                        WriteToFile("", "LastSearch")
+                        WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
+                        WriteToFile("", "LastSearch")
 
                         'Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
                         If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
                             Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), "LastSearch")
                         Else
                             SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                             SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
@@ -835,6 +974,9 @@ Module Module1
                                 Console.WriteLine(BArea)
                                 Console.ForegroundColor = ConsoleColor.White
                                 Console.WriteLine()
+                                WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                                WriteToFile(BArea, "LastSearch")
+                                WriteToFile("", "LastSearch")
                             Else
                                 SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                                 SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
@@ -845,6 +987,8 @@ Module Module1
                                     Console.ForegroundColor = ConsoleColor.DarkGray
                                     Console.WriteLine(BArea)
                                     Console.ForegroundColor = ConsoleColor.White
+                                    WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                                    WriteToFile(BArea, "LastSearch")
                                 Else
                                     BArea2 = BArea 'BArea is acting like a temp
 
@@ -856,8 +1000,10 @@ Module Module1
                                     If BArea2.Length > 3 Then
                                         BArea2 = BArea2.Replace("See also", "See also ")
                                         Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2)
+                                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2, "LastSearch")
                                     Else
                                         Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
                                     End If
                                 End If
                             End If
@@ -874,6 +1020,7 @@ Module Module1
             If Definition < DefG1 + 1 Then
                 If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
                     Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                    WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), "LastSearch")
                 Else
                     SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                     SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
@@ -885,6 +1032,8 @@ Module Module1
                         Console.ForegroundColor = ConsoleColor.DarkGray
                         Console.WriteLine(BArea)
                         Console.ForegroundColor = ConsoleColor.White
+                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                        WriteToFile(BArea, "LastSearch")
                     Else
                         BArea2 = BArea 'BArea is acting like a temp
 
@@ -899,8 +1048,11 @@ Module Module1
                             Console.ForegroundColor = ConsoleColor.DarkGray
                             Console.WriteLine(BArea2)
                             Console.ForegroundColor = ConsoleColor.White
+                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                            WriteToFile(BArea, "LastSearch")
                         Else
                             Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
                         End If
                     End If
                 End If
@@ -921,14 +1073,16 @@ Module Module1
 
         If Furigana.Length < 15 Then
             Console.WriteLine(ActualSearchWord & "(" & Furigana & ")")
+            WriteToFile(ActualSearchWord & "(" & Furigana & ")", "LastSearch")
         Else
             Console.WriteLine(ActualSearchWord)
+            WriteToFile(ActualSearchWord, "LastSearch")
         End If
 
         If IsCommon = True Then
             Console.WriteLine("Common word")
+            WriteToFile("Common word", "LastSearch")
         End If
-
 
         If WordChoice = 1 Then
             FoundDefinitions(0) = DefinitionScraper(FoundWordLinks(WordChoice - 1))
@@ -991,7 +1145,6 @@ Module Module1
             Console.WriteLine("Causitive:")
             Console.WriteLine("Let/make (someone) do: させる")
             Console.WriteLine("Don't let/make (someone) do: させない")
-
         End If
 
         'Preparing some variables for the word being searched
@@ -1074,15 +1227,17 @@ Module Module1
                 End If
 
                 If FullWordType.IndexOf("Godan verb") <> -1 Then
+
                     ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
                 End If
 
                 If FullWordType.IndexOf("Ichidan verb") <> -1 Then
+
                     ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam) '(Verb/Word, Very Type, Meaning, "ComparativeType")
                 End If
 
                 ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam)
-                Console.Read()
+                Console.ReadLine()
                 Main()
             End If
         End If
@@ -1217,6 +1372,12 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.ForegroundColor = ConsoleColor.White
 
+            Try
+                WriteToFile("", "LastSearch")
+                WriteToFile("Kanji:", "LastSearch")
+            Catch
+            End Try
+
             Dim WordWordURL As String
             Try
                 'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
@@ -1245,6 +1406,7 @@ Module Module1
                 Catch
                     Console.WriteLine("Couldn't generate kanji information.")
                     Console.ReadLine()
+
                     Main()
                 End Try
             End Try
@@ -1253,13 +1415,17 @@ Module Module1
                 KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
             Catch
                 Console.WriteLine("No kanji information.")
+                WriteToFile("No kanji information.", "LastSearch")
                 Console.ReadLine()
+
                 Main()
             End Try
 
             If KanjiInfo = "" Then
                 Console.WriteLine("No kanji information.")
+                WriteToFile("No kanji information.", "LastSearch")
                 Console.ReadLine()
+
                 Main()
             End If
 
@@ -1316,6 +1482,7 @@ Module Module1
                         FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
                     Catch
                         Console.ReadLine()
+
                         Main()
                     End Try
                     'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
@@ -1410,11 +1577,16 @@ Module Module1
                     Console.WriteLine(ActualInfo(Looper, 3))
                     Console.WriteLine("Found in: " & JustResultsScraper(ActualInfo(Looper, 0), 1, ActualSearchWord))
 
+                    WriteToFile(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1), "LastSearch")
+                    WriteToFile(ActualInfo(Looper, 2), "LastSearch")
+                    WriteToFile(ActualInfo(Looper, 3), "LastSearch")
+                    WriteToFile("Found in: " & JustResultsScraper(ActualInfo(Looper, 0), 1, ActualSearchWord), "LastSearch")
+                    WriteToFile("", "LastSearch")
                 Next
             Catch
                 Console.WriteLine("Couldn't generate kanji readings")
+                WriteToFile("Couldn't generate kanji readings", "LastSearch")
             End Try
-
 
             'End of Kanji information generation ________________________________________________________
 
@@ -1444,9 +1616,7 @@ Module Module1
                 Console.Clear()
                 Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
                 Console.ReadLine()
-
-
-            ElseIf LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Or Anki = True Then
+            ElseIf LastRequest.ToLower = "/anki" Or LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Or Anki = True Then
                 If FoundTypes.IndexOf("!") = FoundTypes.Length Then
                     FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
                 End If
@@ -1561,11 +1731,23 @@ Module Module1
                 Console.Clear()
                 Console.WriteLine("Copied " & QUOTE & AnkiCopy.Replace("[", "(").Replace("]", ")") & QUOTE & " to clipboard")
                 Console.ReadLine()
+            ElseIf LastRequest.ToLower = "history" Or LastRequest.ToLower = "/history" Then
+                Console.Clear()
+                Console.WriteLine("Search history:")
+                Try
+                    HistoryFile = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+                    Console.WriteLine(HistoryFile)
+                Catch
+                    Main()
+                End Try
+                Console.ReadLine()
+                Main()
             End If
 
         Else
             Console.ReadLine()
         End If
+
 
         Main()
     End Sub
@@ -1733,6 +1915,9 @@ Module Module1
     Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType, ByVal S)
         Const QUOTE = """"
         Dim Last As String = Right(PlainVerb, 1) 'This is the last Japanese character of the verb, this is used for changing forms
+
+        'Making a Streamwriter to add to the file where you use "/back" to see last search instantly:
+
 
         Dim LastAdd As String = ""
         Dim LastAdd2 As String = ""
@@ -1973,10 +2158,10 @@ Module Module1
             '   PresentMeaning = Left(PlainMeaning, PlainMeaning.Length - 1) & "ing"
         ElseIf Vowel1 = False And Vowel2 = False Then
             PresentMeaning = PlainMeaning & "ing"
-        ElseIf PlainMeaning.Length <7 And Vowel1= False Then
-            PresentMeaning= PlainMeaning & "ing"
-                                       Else
-            PresentMeaning= PlainMeaning & "ing"
+        ElseIf PlainMeaning.Length < 7 And Vowel1 = False Then
+            PresentMeaning = PlainMeaning & "ing"
+        Else
+            PresentMeaning = PlainMeaning & "ing"
         End If
 
         'Fixing a few broken "double-word" definitions
@@ -2189,7 +2374,6 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine("Let's " & PlainMeaning & " (casual): " & Volitional)
 
-
             Console.WriteLine()
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Potential (Ability):")
@@ -2276,7 +2460,7 @@ Module Module1
             'Conditional:7
             'Want:8
             'Need to:9
-            'Auxilaries:10
+            'Extras:10
             'Noun/adj:11
             'Kanji details:12
 
@@ -2567,21 +2751,62 @@ Module Module1
             End If
         End If
 
+        'Writing search history results into the PreviousSearch file:
+        WriteToFile("", "LastSearch")
+        WriteToFile("Volitional:", "LastSearch")
+        WriteToFile("Let's " & PlainMeaning & " (polite): " & masuStem & "ましょう", "LastSearch")
+        WriteToFile("Let's " & PlainMeaning & " (casual): " & Volitional, "LastSearch")
+
+        WriteToFile("", "LastSearch")
+        WriteToFile("Potential (Ability):", "LastSearch")
+        WriteToFile("Able to " & PlainMeaning & ": " & Potential, "LastSearch")
+
+        WriteToFile("", "LastSearch")
+        WriteToFile("Causative (Being made to do something or letting it be done):", "LastSearch")
+        WriteToFile("Made to/allowed to " & PlainMeaning & ": " & Causative, "LastSearch")
+        WriteToFile("Causative-passive: " & CausativePassive, "LastSearch")
+
+        WriteToFile("", "LastSearch")
+        WriteToFile("Passive:", "LastSearch")
+        WriteToFile("Plain passive: " & Passive, "LastSearch")
+        WriteToFile("Negative passive: " & Left(Passive, Passive.Length - 1) & "ない", "LastSearch")
+
+        WriteToFile("", "LastSearch")
+        WriteToFile("Conditional:", "LastSearch")
+        WriteToFile("If " & PlainMeaning & ": " & Conditional, "LastSearch")
+        WriteToFile("If don't " & PlainMeaning & ": " & NegativeStem & "なければ", "LastSearch")
+        WriteToFile("", "LastSearch")
+        WriteToFile("If " & PlainMeaning & ": " & Left(teStem, teStem.Length - 1) & ShortPastEnding & "ら", "LastSearch")
+        WriteToFile("If don't " & PlainMeaning & ": " & NegativeStem & "なかったら", "LastSearch")
+
+        WriteToFile("", "LastSearch")
+        WriteToFile("Important:", "LastSearch")
+        WriteToFile("Te-stem: " & teStem, "LastSearch")
+        WriteToFile("Negative: " & NegativeStem & "ない", "LastSearch")
+        WriteToFile("Imperative: " & Imperative, "LastSearch")
+
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
-        Dim WordURL As String = ("https://jisho.org/search/" & PlainVerb & "%20%23sentences")
-        Dim HTML As String = Client.DownloadString(New Uri(WordURL))
 
-        'Example sentence extraction -----
-        Dim Example As String = ""
-        Dim SentenceExample As String
-        SentenceExample = RetrieveClassRange(HTML, "<li class=" & QUOTE & "clearfix" & QUOTE & ">", "inline_copyright", "Sentence Example") 'Firstly extracting the whole group
-        If SentenceExample.Length > 10 Then
-            Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
-        End If
-        If Example.Length < 100 And Example.Length > 5 Then
-            Console.WriteLine(Example.Trim)
-        End If
+        Try
+            If PreferencesString(10) > 1 Then
+                Dim WordURL As String = ("https://jisho.org/search/" & PlainVerb & "%20%23sentences")
+                Dim HTML As String = Client.DownloadString(New Uri(WordURL))
+
+                'Example sentence extraction -----
+                Dim Example As String = ""
+                Dim SentenceExample As String
+                SentenceExample = RetrieveClassRange(HTML, "<li class=" & QUOTE & "clearfix" & QUOTE & ">", "inline_copyright", "Sentence Example") 'Firstly extracting the whole group
+                If SentenceExample.Length > 10 Then
+                    Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
+                End If
+                If Example.Length < 100 And Example.Length > 5 Then
+                    Console.WriteLine(Example.Trim)
+                End If
+            End If
+        Catch
+        End Try
+
 
         Dim KanjiBool As Boolean = False
         If S = 0 Then
@@ -2669,7 +2894,6 @@ Module Module1
                     KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
 
                     FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
-
 
                     JustEng = Left(KanjiGroup(Looper), FirstFinder)
 
@@ -2763,10 +2987,8 @@ Module Module1
                 Main()
             End Try
 
-
-
             Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'kanji')")
+            Console.WriteLine("Do you have a Last Request? (for example 'anki', 'kanji' or 'history')")
             Console.ForegroundColor = ConsoleColor.White
 
             Dim LastRequest As String = Console.ReadLine().ToLower
@@ -2786,17 +3008,20 @@ Module Module1
                 Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
                 Console.ReadLine()
                 Main()
-            ElseIf LastRequest.ToLower = "anki" Then
-
-                'This code used to exist here:
-                'Try
-                'Meaning = Left(Meaning, Meaning.indexof("["))
-                'Catch
-                'End Try
-
+            ElseIf LastRequest.ToLower = "anki" Or LastRequest.ToLower = "/anki" Then
                 WordConjugate(PlainVerb & " " & Meaning, 1, True)
+            ElseIf LastRequest.ToLower = "history" Or LastRequest.ToLower = "/history" Then
+                Console.Clear()
+                Console.WriteLine("Search history:")
+                Try
+                    Dim HistoryFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+                    Console.WriteLine(HistoryFile)
+                Catch
+                    Main()
+                End Try
+                Console.ReadLine()
+                Main()
             End If
-
         Else
             Console.ReadLine()
         End If
@@ -4434,7 +4659,7 @@ Module Module1
 
                 End Try
                 Console.WriteLine("No info for " & ActualSearchWord)
-                Console.WriteLine
+                Console.WriteLine()
                 Continue For
             End Try
 
@@ -5197,7 +5422,6 @@ Module Module1
             Preferences()
         End If
 
-
         Dim Choice As String = ""
         Console.Clear()
 
@@ -5210,6 +5434,7 @@ Module Module1
             Console.WriteLine("2 = General Settings")
             Console.WriteLine()
             Console.WriteLine("3 = Reset ALL settings")
+            Console.WriteLine("4 = Clear Search History")
 
             Choice = Console.ReadLine.ToLower
 
@@ -5218,17 +5443,19 @@ Module Module1
             End If
 
             If IsNumeric(Choice) = True Then
-                If Choice < 0 Or Choice > 3 Then
+                If Choice < 0 Or Choice > 4 Then
                     Choice = ""
                 End If
             End If
             Console.Clear()
         Loop
 
+ChangeS:
+
         Dim FileReader As String = ""
         Dim TextWriter As System.IO.StreamWriter
         Try
-
+            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
         Catch
             File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt").Dispose() 'This text file will store user preferences
             TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
@@ -5254,7 +5481,14 @@ Module Module1
             TextWriter.WriteLine("Kanji details:1")
 
             TextWriter.Close()
+            GoTo ChangeS
         End Try
+
+        If FileReader = "" Then
+            Console.WriteLine("Something is wrong with the files, please reset them using in /preferences")
+            Console.ReadLine()
+            Main()
+        End If
 
         Dim TextString(0) As String
         TextString = FileReader.Split(vbCrLf)
@@ -5274,7 +5508,7 @@ Module Module1
 
             If Choice = 1 Then
                 For I = 0 To TextString.Length - 1
-                    TextString(I) = TextString(I).TrimStart
+                    TextString(I) = TextString(I).Trim
                 Next
                 If TextString(TextString.Length - 1) = "" Then
                     Array.Resize(TextString, TextString.Length - 1)
@@ -5288,7 +5522,7 @@ Module Module1
                         Array.Resize(TextString, TextString.Length - 1)
                     End If
                 End If
-
+                Console.Clear()
                 'Setting your own results for the custom S=0 parameter:
                 Dim Line As Integer = 0
                 Dim InformationType As String = ""
@@ -5309,10 +5543,10 @@ Module Module1
 
                     AmountChoice = "a"
                     Do Until IsNumeric(AmountChoice) = True Or AmountChoice = "finish"
-                        Console.Clear()
+                        Console.SetCursorPosition(0, 0)
                         Console.WriteLine("How much information would you like for '" & InformationType & "' (" & Line + 1 & "/13)?")
                         Console.WriteLine("Type a number in the range 0-3. (0 being nothing, 3 being everything)")
-                        Console.WriteLine("Press 'f' key to save")
+                        Console.WriteLine("Press 'f' key to save, and arrow keys to move")
                         Console.WriteLine()
 
                         For SType = 0 To TextString.Length - 1
@@ -5732,10 +5966,44 @@ Module Module1
                 Console.ReadLine()
             End If
 
+        ElseIf Choice = "4" Then
+            Console.WriteLine("Are you sure you want clear your search history? (This is your last 40 searches)")
+            Choice = Console.ReadLine.Trim.ToLower
+            If Choice = "yes" Then
+                Try
+                    My.Computer.FileSystem.DeleteFile("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+                Catch
+                    Console.WriteLine("Something went wrong")
+                    Console.WriteLine("You probably don't have anything in your search history")
+                    Console.WriteLine("You can check by doing '/files' and checking if a file named 'SearchHistory.txt' exists")
+                    Console.ReadLine()
+                    Main()
+                End Try
+                Console.WriteLine("Your history has been cleared.")
+            Else
+                Console.WriteLine("You decided not to clear you history.")
+            End If
 
+            Console.ReadLine()
         End If
 
         Main()
+    End Sub
+
+    Sub WriteToFile(ByVal ToWrite, ByVal FileName)
+        FileName = "C:\ProgramData\Japanese Conjugation Helper\" & FileName & ".txt"
+
+        If System.IO.File.Exists(FileName) = False Then
+            Console.WriteLine("An error occurred.")
+            Console.WriteLine("Tried to write '" & ToWrite & "' -> " & "'" & FileName & "'")
+            Console.ReadLine()
+            Main()
+        End If
+
+        Using Writer As System.IO.TextWriter = System.IO.File.AppendText(FileName)
+            Writer.WriteLine(ToWrite)
+            Writer.Close()
+        End Using
     End Sub
 
 End Module
