@@ -9,7 +9,6 @@ Imports WanaKanaNet
 '
 
 Module Module1
-
     Sub Main()
         Const QUOTE = """"
         Console.Clear()
@@ -248,25 +247,34 @@ Module Module1
             Main()
         End If
 
+        'Comment Syntax:
+        '_ = space
+        '# = number
+        '< start
+        '> = end
+
+        If Word.Length > 4 And Word.IndexOf("&&") <> -1 Then
+            SearchMultiple(Word)
+        End If
+
         If Word.Length > 2 Then
-            If Mid(Word, Word.Length - 2, 1) = " " And IsNumeric(Right(Word, 2)) = True Then
+            If Mid(Word, Word.Length - 2, 1) = " " And IsNumeric(Right(Word, 2)) = True Then 'If search is '_#'>
                 Console.WriteLine("Searching for " & Right(Word, 2) & " definitions of '" & Left(Word, Word.Length - 3) & "'...")
                 WordConjugate(Left(Word, Word.Length - 2), Right(Word, 2), False)
-            ElseIf Mid(Word, Word.Length - 1, 1) = " " And IsNumeric(Right(Word, 1)) = True And Right(Word, 1) <> "1" Then
+            ElseIf Mid(Word, Word.Length - 1, 1) = " " And IsNumeric(Right(Word, 1)) = True And Right(Word, 1) <> "1" Then 'If search isn't '_1'>
                 Console.WriteLine("Searching for " & Right(Word, 1) & " definitions of '" & Left(Word, Word.Length - 2) & "'...")
                 WordConjugate(Left(Word, Word.Length - 2), Right(Word, 1), False)
-            ElseIf Mid(Word, Word.Length - 1, 1) = " " And IsNumeric(Right(Word, 1)) = True And Right(Word, 1) = "1" Then
+            ElseIf Mid(Word, Word.Length - 1, 1) = " " And IsNumeric(Right(Word, 1)) = True And Right(Word, 1) = "1" Then 'If the search is '_1'>
                 Console.WriteLine("Searching for '" & Word & "'...")
                 WordConjugate(Left(Word, Word.Length - 2), Right(Word, 1), False)
-            Else
+            Else 'If the search has no number parameter (but may have an s paramter)
                 Console.WriteLine("Searching for '" & Word & "'...")
                 WordConjugate(Word, 1, False)
             End If
-        Else
+        Else 'If the search has no number parameter (but may have an s paramter) and search length is less than 3
             Console.WriteLine("Searching for " & Word & "...")
             WordConjugate(Word, 1, False)
         End If
-
 
         Main()
     End Sub
@@ -377,6 +385,158 @@ Module Module1
         Main()
     End Sub
 
+    Sub SearchMultiple(ByVal Search)
+        Const Quote = """"
+        Search = Search.ToLower
+
+        For Clear = -1 To 10
+            Search = Search.replace(" s=" & Clear, "")
+            Search = Search.replace("s=" & Clear & " ", "")
+            Search = Search.replace("s=" & Clear, "")
+            Search = Search.replace("s=", "")
+            If Right(Search, 2) = CStr(Clear) Then
+                Search = Left(Search, Search.length - 2)
+            End If
+        Next
+
+        Dim Searches() As String = Search.split("&&")
+
+        Searches(1) = Searches(2)
+        Array.Resize(Searches, Searches.Length - 1)
+
+
+
+        Dim WordURL As String = "https://jisho.org/search/" & Searches(0)
+        Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
+
+        Dim HTML As String
+        HTML = Client.DownloadString(New Uri(WordURL))
+        Dim AddingTemp As String = ""
+
+        If HTML.IndexOf("No matches for") <> -1 Then
+            Console.WriteLine("Looking for similar words...")
+        End If
+
+        'If HTML.IndexOf("zen_bar") <> -1 And Anki = False Then
+        'TranslateSentence(Word)
+        'End If
+
+
+
+        Dim HTMLTemp As String = HTML
+
+
+        Dim ActualSearchWord As String = ""
+        Dim ActualSearch1stAppearance As Integer = 0
+        Dim WordLink As String = ""
+        Dim FoundWords(1) As String
+        Dim FoundDefinitions(1) As String
+        Dim FoundWordLinks(1) As String
+        Dim FoundTypes(1) As String
+        'Dim ScrapFull As String
+        Dim Max As Integer = 1
+        Dim WordChoice As Integer = 10000
+        Dim ActualSearch2ndAppearance As String
+        Dim Definition1 As String = ""
+
+        Dim CommonWord(1) As Boolean
+        'One word scrapping ---------------------------------------------------------------------------------------------
+        Try
+                'Getting word link:
+                ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
+                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+
+                'Checking if word is "common":
+                If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
+                    CommonWord(0) = "True"
+                End If
+
+                'Continue getting word link:
+                ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+                ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+                ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+                WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+                FoundWordLinks(0) = WordLink
+            Catch
+                Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
+            Console.ReadLine()
+            Main()
+            End Try
+
+        FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "")
+        FoundTypes(0) = TypeScraper(WordLink).replace("&#39;", "")
+
+        ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
+        If ActualSearchWord.Length < 2 Then
+            Console.WriteLine("Word couldn't be found")
+            Console.ReadLine()
+            Main()
+        End If
+        ActualSearchWord = Mid(ActualSearchWord, 30)
+        ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+        ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+
+        ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
+        Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
+        WordChoice = 1
+        'end of one word scrapping  _______________________________________________________________________________________________________________________
+
+        Dim IsCommon As Boolean
+        If CommonWord(WordChoice - 1) = "True" Then
+            IsCommon = True
+        End If
+
+
+        WordURL = "https://jisho.org/search/" & Searches(1)
+        HTML = Client.DownloadString(New Uri(WordURL))
+
+        Dim ActualSearchWord2 As String = ""
+        Try
+            'Getting word link:
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & Quote & "text" & Quote & ">")
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+
+            'Checking if word is "common":
+            If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
+                CommonWord(1) = "True"
+            End If
+
+            'Continue getting word link:
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+            ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(Quote & ">")
+            WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+            FoundWordLinks(1) = WordLink
+        Catch
+            Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
+            Console.ReadLine()
+            Main()
+        End Try
+
+        FoundDefinitions(1) = WordLinkScraper(WordLink).replace("&#39;", "")
+        FoundTypes(1) = TypeScraper(WordLink).replace("&#39;", "")
+
+        ActualSearchWord2 = RetrieveClassRange(HTML, "<span class=" & Quote & "text" & Quote & ">", "</div>", "Actual word search2nd")
+        If ActualSearchWord2.Length < 2 Then
+            Console.WriteLine("Word couldn't be found")
+            Console.ReadLine()
+            Main()
+        End If
+        ActualSearchWord2 = Mid(ActualSearchWord2, 30)
+        ActualSearchWord2 = ActualSearchWord2.Replace("<span>", "")
+        ActualSearchWord2 = ActualSearchWord2.Replace("</span>", "")
+
+        ActualSearchWord2 = Left(ActualSearchWord2, ActualSearchWord2.Length - 8)
+        Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
+        WordChoice = 1
+
+
+
+        Console.WriteLine("Done!")
+    End Sub
     Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer, ByVal Anki As Boolean)
         Const QUOTE = """"
         Dim SEquals As String = ""
