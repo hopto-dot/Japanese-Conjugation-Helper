@@ -385,6 +385,164 @@ Module Module1
         Main()
     End Sub
 
+    Sub DisplayDefinitions(ByVal SelectedDefinition, ByVal SelectedType, ByVal DefG1, ByVal DisplayType)
+        'Displaying word definitions WITH corresponding the word types: -------------------------
+        Dim NumberCheckD As String = ""
+        Dim NumberCheckT As String = ""
+        Dim Type As Integer = 0
+        Dim MatchT As Boolean = False
+        Dim Definition As Integer = 0
+        Dim SB1, SB2 As Integer
+        Dim BArea, BArea2 As String
+        Do Until Definition = SelectedDefinition.Length
+            NumberCheckD = Right(SelectedDefinition(Definition), 2)
+            If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
+                NumberCheckD = Right(NumberCheckD, 1)
+            End If
+            If IsNumeric(NumberCheckD) = False Then
+                NumberCheckD = Right(SelectedDefinition(Definition), 1)
+            End If
+            If IsNumeric(NumberCheckD) = False Then
+                Console.WriteLine("Error: Conjugate; Definition no; D")
+            End If
+            NumberCheckD = NumberCheckD.Replace(" ", "")
+
+
+            MatchT = False
+            Type = 0
+            Do Until Type = SelectedType.Length Or MatchT = True
+                MatchT = False
+                If SelectedType(Type) = "!" Then
+                    Type += 1
+                    Continue Do
+                End If
+
+
+                NumberCheckT = Right(SelectedType(Type), 2)
+                If IsNumeric(NumberCheckT) = False Then
+                    NumberCheckT = Right(SelectedType(Type), 1)
+                End If
+                NumberCheckT = NumberCheckT.Replace(" ", "")
+
+                If NumberCheckT = NumberCheckD Then
+                    If Definition < DefG1 + 1 Then
+                        If Definition <> 0 Then
+                            Console.WriteLine()
+                            WriteToFile("", "LastSearch")
+                        End If
+                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                        WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
+                    ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
+                        Console.WriteLine()
+                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                        Console.WriteLine()
+                        WriteToFile("", "LastSearch")
+                        WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
+                        WriteToFile("", "LastSearch")
+
+                        'Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                        If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                            Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), "LastSearch")
+                        Else
+                            SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                            SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                            BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                            If BArea.IndexOf("kana") = -1 Then
+                                Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                Console.ForegroundColor = ConsoleColor.DarkGray
+                                Console.WriteLine(BArea)
+                                Console.ForegroundColor = ConsoleColor.White
+                                Console.WriteLine()
+                                WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                                WriteToFile(BArea, "LastSearch")
+                                WriteToFile("", "LastSearch")
+                            Else
+                                SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                                SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                                BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                                If BArea.IndexOf("kana") = -1 Then
+                                    Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                    Console.ForegroundColor = ConsoleColor.DarkGray
+                                    Console.WriteLine(BArea)
+                                    Console.ForegroundColor = ConsoleColor.White
+                                    WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                                    WriteToFile(BArea, "LastSearch")
+                                Else
+                                    BArea2 = BArea 'BArea is acting like a temp
+
+                                    If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
+                                        BArea2 = BArea.Replace("Usually written using kana alone", "")
+                                        BArea2 = BArea2.Replace(", ", "")
+                                    End If
+
+                                    If BArea2.Length > 3 Then
+                                        BArea2 = BArea2.Replace("See also", "See also ")
+                                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2)
+                                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2, "LastSearch")
+                                    Else
+                                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                                    End If
+                                End If
+                            End If
+                        End If
+
+                    End If
+                    MatchT = True
+                    SelectedType(Type) = "!"
+                    Continue Do
+                End If
+                Type += 1
+            Loop
+
+            If Definition < DefG1 + 1 Then
+                If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                    Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                    WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), "LastSearch")
+                Else
+                    SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                    SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                    BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                    If BArea.IndexOf("kana") = -1 Then
+                        Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                        BArea = BArea.Replace("See also", "See also ")
+                        Console.ForegroundColor = ConsoleColor.DarkGray
+                        Console.WriteLine(BArea)
+                        Console.ForegroundColor = ConsoleColor.White
+                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                        WriteToFile(BArea, "LastSearch")
+                    Else
+                        BArea2 = BArea 'BArea is acting like a temp
+
+                        If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
+                            BArea2 = BArea.Replace("Usually written using kana alone", "")
+                            BArea2 = BArea2.Replace(", ", "")
+                        End If
+
+                        If BArea2.Length > 3 Then
+                            BArea2 = BArea2.Replace("See also", "See also ")
+                            Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                            Console.ForegroundColor = ConsoleColor.DarkGray
+                            Console.WriteLine(BArea2)
+                            Console.ForegroundColor = ConsoleColor.White
+                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                            WriteToFile(BArea, "LastSearch")
+                        Else
+                            Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
+                        End If
+                    End If
+                End If
+            End If
+            Definition += 1
+        Loop
+
+        'Continue where you were the the last sub
+    End Sub
     Sub SearchMultiple(ByVal Search)
         Const Quote = """"
         Search = Search.ToLower
@@ -676,9 +834,16 @@ Module Module1
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
 
-        Dim HTML As String
-        HTML = Client.DownloadString(New Uri(WordURL))
-        Dim AddingTemp As String
+        Dim HTML As String = ""
+        Try
+            HTML = Client.DownloadString(New Uri(WordURL))
+        Catch
+            Console.WriteLine("You have no internet connection")
+            Console.ReadLine()
+            Main()
+        End Try
+
+        Dim AddingTemp As String = ""
 
         If HTML.IndexOf("No matches for") <> -1 Then
             Console.WriteLine("Looking for similar words...")
@@ -785,9 +950,6 @@ Module Module1
                 Else
                     Console.WriteLine(LoopIndex + 1 & ": " & ActualSearchWord & " - " & FoundDefinitions(LoopIndex))
                 End If
-
-
-
 
             Next                                                          'end of multiple word scrapping ___________________________________________________________________________
             Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
@@ -1066,161 +1228,7 @@ Module Module1
 
         'Displaying word definitions WITH corresponding the word types: -------------------------
         DefG1 -= 1
-        Dim NumberCheckD As String = ""
-        Dim NumberCheckT As String = ""
-        Dim Type As Integer = 0
-        Dim Definition As Integer = 0
-        Dim MatchT As Boolean = False
-        Dim SB1, SB2 As Integer
-        Dim BArea, BArea2 As String
-        Do Until Definition = SelectedDefinition.Length
-            NumberCheckD = Right(SelectedDefinition(Definition), 2)
-            If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
-                NumberCheckD = Right(NumberCheckD, 1)
-            End If
-            If IsNumeric(NumberCheckD) = False Then
-                NumberCheckD = Right(SelectedDefinition(Definition), 1)
-            End If
-            If IsNumeric(NumberCheckD) = False Then
-                Console.WriteLine("Error: Conjugate; Definition no; D")
-            End If
-            NumberCheckD = NumberCheckD.Replace(" ", "")
-
-
-            MatchT = False
-            Type = 0
-            Do Until Type = SelectedType.Length Or MatchT = True
-                MatchT = False
-                If SelectedType(Type) = "!" Then
-                    Type += 1
-                    Continue Do
-                End If
-
-
-                NumberCheckT = Right(SelectedType(Type), 2)
-                If IsNumeric(NumberCheckT) = False Then
-                    NumberCheckT = Right(SelectedType(Type), 1)
-                End If
-                NumberCheckT = NumberCheckT.Replace(" ", "")
-
-                If NumberCheckT = NumberCheckD Then
-                    If Definition < DefG1 + 1 Then
-                        If Definition <> 0 Then
-                            Console.WriteLine()
-                            WriteToFile("", "LastSearch")
-                        End If
-                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                        WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
-                    ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
-                        Console.WriteLine()
-                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                        Console.WriteLine()
-                        WriteToFile("", "LastSearch")
-                        WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
-                        WriteToFile("", "LastSearch")
-
-                        'Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
-                        If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
-                            Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
-                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), "LastSearch")
-                        Else
-                            SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
-                            SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
-                            BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
-
-                            If BArea.IndexOf("kana") = -1 Then
-                                Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                                Console.ForegroundColor = ConsoleColor.DarkGray
-                                Console.WriteLine(BArea)
-                                Console.ForegroundColor = ConsoleColor.White
-                                Console.WriteLine()
-                                WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
-                                WriteToFile(BArea, "LastSearch")
-                                WriteToFile("", "LastSearch")
-                            Else
-                                SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
-                                SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
-                                BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
-
-                                If BArea.IndexOf("kana") = -1 Then
-                                    Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                                    Console.ForegroundColor = ConsoleColor.DarkGray
-                                    Console.WriteLine(BArea)
-                                    Console.ForegroundColor = ConsoleColor.White
-                                    WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
-                                    WriteToFile(BArea, "LastSearch")
-                                Else
-                                    BArea2 = BArea 'BArea is acting like a temp
-
-                                    If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
-                                        BArea2 = BArea.Replace("Usually written using kana alone", "")
-                                        BArea2 = BArea2.Replace(", ", "")
-                                    End If
-
-                                    If BArea2.Length > 3 Then
-                                        BArea2 = BArea2.Replace("See also", "See also ")
-                                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2)
-                                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2, "LastSearch")
-                                    Else
-                                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
-                                    End If
-                                End If
-                            End If
-                        End If
-
-                    End If
-                    MatchT = True
-                    SelectedType(Type) = "!"
-                    Continue Do
-                End If
-                Type += 1
-            Loop
-
-            If Definition < DefG1 + 1 Then
-                If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
-                    Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
-                    WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), "LastSearch")
-                Else
-                    SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
-                    SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
-                    BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
-
-                    If BArea.IndexOf("kana") = -1 Then
-                        Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                        BArea = BArea.Replace("See also", "See also ")
-                        Console.ForegroundColor = ConsoleColor.DarkGray
-                        Console.WriteLine(BArea)
-                        Console.ForegroundColor = ConsoleColor.White
-                        WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
-                        WriteToFile(BArea, "LastSearch")
-                    Else
-                        BArea2 = BArea 'BArea is acting like a temp
-
-                        If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
-                            BArea2 = BArea.Replace("Usually written using kana alone", "")
-                            BArea2 = BArea2.Replace(", ", "")
-                        End If
-
-                        If BArea2.Length > 3 Then
-                            BArea2 = BArea2.Replace("See also", "See also ")
-                            Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                            Console.ForegroundColor = ConsoleColor.DarkGray
-                            Console.WriteLine(BArea2)
-                            Console.ForegroundColor = ConsoleColor.White
-                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
-                            WriteToFile(BArea, "LastSearch")
-                        Else
-                            Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                            WriteToFile(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""), "LastSearch")
-                        End If
-                    End If
-                End If
-            End If
-
-
-            Definition += 1
-        Loop
+        DisplayDefinitions(SelectedDefinition, SelectedType, DefG1, 1)
 
         If SelectedDefinition.Length > DefG1 Then
             Console.WriteLine()
@@ -1759,7 +1767,13 @@ Module Module1
                 End If
             Next
 
-
+            Dim Definition As Integer
+            Dim MatchT As Boolean
+            Dim NumberCheckD As String = ""
+            Dim NumberCheckT As String = ""
+            Dim Type As Integer = 0
+            Dim SB1, SB2 As Integer
+            Dim BArea As String
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
             Dim LastRequest As String = ""
             If Anki = False Then
