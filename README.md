@@ -15,7 +15,7 @@ If you want to give feedback, request features or report bugs, you may do so [he
 
 The next update should be out around 16-17th October
 
-## **List of commands:**
+## **List of [commands](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
 * **Word Lookup** - looks up any word or phrase (main feature)
 * **Translate** - Type "!" and then anything to translate it, (works with English and Japanese)
 * **/k** - enter japanese and get tested on kanji in the string you inputted
