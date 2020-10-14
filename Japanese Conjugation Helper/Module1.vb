@@ -541,6 +541,12 @@ Module Module1
             Definition += 1
         Loop
 
+        If SelectedDefinition.Length > DefG1 Then
+            Console.ForegroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("[this word has a total of " & SelectedDefinition.Length & " definitions]")
+            Console.ForegroundColor = ConsoleColor.White
+        End If
+
         'Continue where you were the the last sub
     End Sub
     Sub SearchMultiple(ByVal Search)
@@ -562,8 +568,6 @@ Module Module1
         Searches(1) = Searches(2)
         Array.Resize(Searches, Searches.Length - 1)
 
-
-
         Dim WordURL As String = "https://jisho.org/search/" & Searches(0)
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
@@ -580,11 +584,7 @@ Module Module1
         'TranslateSentence(Word)
         'End If
 
-
-
         Dim HTMLTemp As String = HTML
-
-
         Dim ActualSearchWord As String = ""
         Dim ActualSearch1stAppearance As Integer = 0
         Dim WordLink As String = ""
@@ -593,62 +593,124 @@ Module Module1
         Dim FoundWordLinks(1) As String
         Dim FoundTypes(1) As String
         'Dim ScrapFull As String
-        Dim Max As Integer = 1
-        Dim WordChoice As Integer = 10000
         Dim ActualSearch2ndAppearance As String
         Dim Definition1 As String = ""
 
         Dim CommonWord(1) As Boolean
         'One word scrapping ---------------------------------------------------------------------------------------------
         Try
-                'Getting word link:
-                ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
-                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            'Getting word link:
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
 
-                'Checking if word is "common":
-                If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
-                    CommonWord(0) = "True"
-                End If
+            'Checking if word is "common":
+            If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
+                CommonWord(0) = "True"
+            End If
 
-                'Continue getting word link:
-                ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
-                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
-                ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
-                ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
-                WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
-                FoundWordLinks(0) = WordLink
-            Catch
-                Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
+            'Continue getting word link:
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+            ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+            WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+            FoundWordLinks(0) = WordLink
+        Catch
+            Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
             Console.ReadLine()
             Main()
-            End Try
+        End Try
 
-        FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "")
-        FoundTypes(0) = TypeScraper(WordLink).replace("&#39;", "")
-
-        ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
-        If ActualSearchWord.Length < 2 Then
-            Console.WriteLine("Word couldn't be found")
-            Console.ReadLine()
-            Main()
-        End If
+        ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & Quote & "text" & Quote & ">", "</div>", "Actual word search")
         ActualSearchWord = Mid(ActualSearchWord, 30)
         ActualSearchWord = ActualSearchWord.Replace("<span>", "")
         ActualSearchWord = ActualSearchWord.Replace("</span>", "")
 
         ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
-        Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
-        WordChoice = 1
-        'end of one word scrapping  _______________________________________________________________________________________________________________________
 
-        Dim IsCommon As Boolean
-        If CommonWord(WordChoice - 1) = "True" Then
-            IsCommon = True
+        FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "")
+        FoundTypes(0) = TypeScraper(WordLink).replace("&#39;", "")
+
+        Dim Furigana As String = ""
+        Dim FuriganaStart As Integer
+        Try
+            Furigana = RetrieveClassRange(HTML, "</a></li><li><a", "</a></li><li><a href=" & Quote & "//jisho.org", "Furigana")
+            If Furigana.Length <> 0 Then
+                FuriganaStart = Furigana.IndexOf("search for")
+                Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                If FuriganaStart <> -1 Then 'if </a></li><li> Is found Then it will be removed as well as everything after it
+                    Furigana = Left(Furigana, FuriganaStart)
+                End If
+            Else
+                Furigana = ""
+            End If
+
+            If Furigana = ActualSearchWord Or Furigana = "" Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
+                Furigana = RetrieveClassRange(HTML, "</a></li><li><a", "</a></li><li><a href=" & Quote & "//jisho.org", "Furigana")
+                If Furigana.Length > 30 And Furigana.Length <> 0 Then
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Mid(Furigana, FuriganaStart + 5)
+
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                    FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                    Furigana = Left(Furigana, FuriganaStart)
+                Else
+                    If FuriganaStart <> -1 Or Furigana.Length > 20 Then
+                        Furigana = ""
+                    End If
+                End If
+            End If
+
+            If Furigana = ActualSearchWord Or Furigana = "" Or Furigana.Length > 20 Then 'Another try
+                Furigana = RetrieveClassRange(HTML, "kanji-3-up kanji", "</span><span></span>", "Furigana")
+                If Furigana.Length < 30 And Furigana.Length <> 0 Then
+                    Furigana = Mid(Furigana, Furigana.LastIndexOf(">") + 2)
+                Else
+                    Furigana = ""
+                End If
+
+            End If
+
+            If Furigana.Length < 1 Or IsNothing(Furigana) Then
+                Furigana = RetrieveClassRange(HTML, "audio id=" & Quote & "audio_" & ActualSearchWord, "<source src=", "Furigana2")
+                Furigana = Furigana.Replace("<", "")
+                Furigana = Furigana.Replace("audio id=" & Quote & "audio_" & ActualSearchWord & ":", "")
+                Furigana = Furigana.Replace(Quote & ">", "")
+            End If
+        Catch
+        End Try
+
+        Dim Furiganas(1) As String
+        If Furigana <> "" Then
+            Furiganas(0) = Furigana
         End If
 
+        Dim Defintions1() As String = FoundDefinitions(0).Split("|")
+        Dim Types1() As String = FoundTypes(0).Split("|")
+
+        For Add = 1 To Defintions1.Length
+            Defintions1(Add - 1) = Defintions1(Add - 1).Replace("&quot;", Quote) & Add
+        Next
+
+        Console.Clear()
+        DisplayDefinitions(Defintions1, Types1, 9, 2)
+        Console.BackgroundColor = ConsoleColor.DarkGray
+        If Furigana(0) <> "" Then
+            Console.WriteLine(ActualSearchWord & " (" & Furiganas(0) & ")")
+        Else
+            Console.WriteLine(ActualSearchWord)
+        End If
+        Console.BackgroundColor = ConsoleColor.Black
+        Console.WriteLine()
+        Console.WriteLine()
+
+        'end of one word scrapping  _______________________________________________________________________________________________________________________
 
         WordURL = "https://jisho.org/search/" & Searches(1)
         HTML = Client.DownloadString(New Uri(WordURL))
+        HTMLTemp = HTML
 
         Dim ActualSearchWord2 As String = ""
         Try
@@ -688,12 +750,78 @@ Module Module1
         ActualSearchWord2 = ActualSearchWord2.Replace("</span>", "")
 
         ActualSearchWord2 = Left(ActualSearchWord2, ActualSearchWord2.Length - 8)
-        Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
-        WordChoice = 1
 
+        Try
+            Furigana = RetrieveClassRange(HTML, "</a></li><li><a", "</a></li><li><a href=" & Quote & "//jisho.org", "Furigana")
+            If Furigana.Length <> 0 Then
+                FuriganaStart = Furigana.IndexOf("search for")
+                Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                If FuriganaStart <> -1 Then 'if </a></li><li> Is found Then it will be removed as well as everything after it
+                    Furigana = Left(Furigana, FuriganaStart)
+                End If
+            Else
+                Furigana = ""
+            End If
 
+            If Furigana = ActualSearchWord Or Furigana = "" Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
+                Furigana = RetrieveClassRange(HTML, "</a></li><li><a", "</a></li><li><a href=" & Quote & "//jisho.org", "Furigana")
+                If Furigana.Length > 30 And Furigana.Length <> 0 Then
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Mid(Furigana, FuriganaStart + 5)
 
-        Console.WriteLine("Done!")
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                    FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                    Furigana = Left(Furigana, FuriganaStart)
+                Else
+                    If FuriganaStart <> -1 Or Furigana.Length > 20 Then
+                        Furigana = ""
+                    End If
+                End If
+            End If
+
+            If Furigana = ActualSearchWord Or Furigana = "" Or Furigana.Length > 20 Then 'Another try
+                Furigana = RetrieveClassRange(HTML, "kanji-3-up kanji", "</span><span></span>", "Furigana")
+                If Furigana.Length < 30 And Furigana.Length <> 0 Then
+                    Furigana = Mid(Furigana, Furigana.LastIndexOf(">") + 2)
+                Else
+                    Furigana = ""
+                End If
+
+            End If
+
+            If Furigana.Length < 1 Or IsNothing(Furigana) Then
+                Furigana = RetrieveClassRange(HTML, "audio id=" & Quote & "audio_" & ActualSearchWord, "<source src=", "Furigana2")
+                Furigana = Furigana.Replace("<", "")
+                Furigana = Furigana.Replace("audio id=" & Quote & "audio_" & ActualSearchWord & ":", "")
+                Furigana = Furigana.Replace(Quote & ">", "")
+            End If
+        Catch
+        End Try
+
+        If Furigana <> "" Then
+            Furiganas(1) = Furigana
+        End If
+
+        Dim Defintions2() As String = FoundDefinitions(1).Split("|")
+        Dim Types2() As String = FoundTypes(1).Split("|")
+
+        For Add = 1 To Defintions2.Length
+            Defintions2(Add - 1) = Defintions2(Add - 1).Replace("&quot;", Quote) & Add
+        Next
+
+        DisplayDefinitions(Defintions2, Types2, 9, 2)
+        Console.BackgroundColor = ConsoleColor.DarkGray
+        If Furigana(0) <> "" Then
+            Console.WriteLine(ActualSearchWord2 & " (" & Furiganas(1) & ")")
+        Else
+            Console.WriteLine(ActualSearchWord2)
+        End If
+        Console.BackgroundColor = ConsoleColor.Black
+
+        Console.ReadLine()
+        Main()
     End Sub
     Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer, ByVal Anki As Boolean)
         Const QUOTE = """"
@@ -1229,13 +1357,6 @@ Module Module1
         'Displaying word definitions WITH corresponding the word types: -------------------------
         DefG1 -= 1
         DisplayDefinitions(SelectedDefinition, SelectedType, DefG1, 1)
-
-        If SelectedDefinition.Length > DefG1 Then
-            Console.WriteLine()
-            Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("[this word has a total of " & SelectedDefinition.Length & " definitions]")
-            Console.ForegroundColor = ConsoleColor.White
-        End If
 
         'finished the writing of definitions and types____________________
 
