@@ -13,7 +13,7 @@ If you want to give feedback, request features or report bugs, you may do so [he
 ### I am currently working on:
 * Making the program more efficient
 
-The next update should be out around 16-17th October
+The next update should be out around 17-19th October
 
 ## **List of [commands](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
 * **Word Lookup** - looks up any word or phrase (main feature)
