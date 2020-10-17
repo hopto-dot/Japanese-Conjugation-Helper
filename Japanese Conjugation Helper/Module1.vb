@@ -54,7 +54,9 @@ Module Module1
         End If
 
         If Word = "/i" Or Word = "/info" Or Word = "/information" Then
-            KanjiInfo()
+            Console.WriteLine("Enter kanji string")
+            Word = Console.ReadLine
+            KanjiInfo(Word, 1)
         End If
 
         If Word = "/history" Then
@@ -4715,250 +4717,347 @@ Module Module1
         Console.ReadLine()
         Main()
     End Sub
-    Sub KanjiInfo()
-        Console.Clear()
+
+    Sub KanjiInfo(ByVal ActualSearch, ByVal Mode)
+        'Mode:
+        '1 = Just KanjiInfo
+        '2 = Display
         Const QUOTE = """"
-        Console.WriteLine("Enter a string of kanji.")
-        Dim KanjisString As String = Console.ReadLine.Trim.Replace(" ", "")
-
-        Console.Clear()
-        Console.WriteLine("Kanji Information for 「" & WanaKana.StripOkurigana(KanjisString) & "」")
-        Console.WriteLine()
-
-        Dim ActualSearchWord As String
-        Dim Client As New WebClient
-        Dim Fails As Integer = 0
-
-        For Kanji = 1 To KanjisString.Length
-            ActualSearchWord = Mid(KanjisString, Kanji, 1)
-            'Console.WriteLine(ActualSearchWord & "...")
-
-            If WanaKana.IsKanji(ActualSearchWord) = False Then
-                Fails += 1
-                Continue For
-            End If
-
-            KanjiDeepInfo(ActualSearchWord)
-        Next
-        If Fails = KanjisString.Length Then
-            Console.Clear()
-            Console.WriteLine("No kanji were found")
-        Else
-            Console.WriteLine("Done!")
-        End If
-        Console.ReadLine()
-        Main()
-    End Sub
-
-    Sub KanjiDeepInfo(ByVal ActualSearchWord)
-        Const QUOTE = """"
-        Dim WordWordURL As String = ""
-        Dim WordHTML As String = ""
+        Dim WordURL, WordHTML, CurrentKanji As String
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
+
+        For Checker = 1 To ActualSearch.length
+            If WanaKana.IsKanji(Mid(ActualSearch, Checker, 1)) = False Then
+                If Checker > ActualSearch.length Then
+                    Continue For
+                End If
+                Try
+                    ActualSearch = ActualSearch.replace(Mid(ActualSearch, Checker, 1), "")
+                Catch
+                    Continue For
+                End Try
+                Checker -= 1
+                If Checker = 0 Then
+                    Checker = 1
+                End If
+            End If
+        Next
+        If WanaKana.IsKanji(Mid(ActualSearch, 1, 1)) = False Then
+            ActualSearch = Mid(ActualSearch, 2)
+        End If
+
         Try
             'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
-            WordWordURL = ("https://jisho.org/word/" & ActualSearchWord)
-            WordHTML = Client.DownloadString(New Uri(WordWordURL))
+            WordURL = ("https://jisho.org/search/" & ActualSearch & "%20%23kanji")
+            WordHTML = Client.DownloadString(New Uri(WordURL))
         Catch
+            Exit Sub
+        End Try
+
+        Dim Snip1, Snip2 As Integer
+
+        Snip1 = WordHTML.IndexOf("data-area-name=" & QUOTE & "print" & QUOTE)
+        WordHTML = Mid(WordHTML, Snip1 + 10)
+
+        Dim KanjiString As String = ""
+        Snip1 = WordHTML.IndexOf("main_results")
+        KanjiString = Mid(WordHTML, Snip1 + 10)
+        Snip2 = WordHTML.IndexOf("Jisho.org is lovingly crafted by")
+        KanjiString = Left(WordHTML, Snip2 + 25)
+
+        Dim Kanjis() As String
+        Kanjis = KanjiString.Split(New String() {"kanji details"}, StringSplitOptions.RemoveEmptyEntries)
+
+        Dim ReadingsGroup, DefinitionsGroup, JLPT, FoundInGroup As String
+        Dim KanjiInfo(ActualSearch.length - 1, 5)
+        'Readings:
+        '(X, Y)
+        'X = Kanji
+        '0Y = Kun    1Y = On    2Y = Meaning    3Y = JLPT    4Y = On Found in    5Y = Kun Found in
+        Dim StringTemp, StringTemp2, StringTemp3 As String
+        Dim CountInput As String
+        Dim ToCount As String = ","
+        Dim Occurrences As Integer = 0
+
+        For KanjiLoop = 0 To ActualSearch.length - 1
+            CurrentKanji = Mid(ActualSearch, KanjiLoop + 1, 1)
+
+            'Getting the section that is just readings for each kanji
             Try
-                WordWordURL = ("https://jisho.org/search/" & ActualSearchWord & "%20%23kanji")
-                'WordHTML = Client.DownloadString(New Uri(WordWordURL))
+                Snip1 = Kanjis(KanjiLoop).IndexOf("anji-details__main-readings") 'Getting the position just before the snip for the readings group
             Catch
-
+                Continue For
             End Try
-            Console.WriteLine("No info for " & ActualSearchWord)
+            If Snip1 = -1 Then
+                Continue For
+            End If
+            ReadingsGroup = Mid(Kanjis(KanjiLoop), Snip1)
+            Snip2 = ReadingsGroup.IndexOf("small-12 large-5 columns") 'Getting the position just after the snip for the readings group
+            ReadingsGroup = Left(ReadingsGroup, Snip2)
+            StringTemp3 = ReadingsGroup 'Holds both Kun and On (if both are included)
+
+            'TEMP
+            KanjiInfo(KanjiLoop, 0) = CurrentKanji
+
+            If ReadingsGroup.IndexOf("Kun:") <> -1 Then 'If the kanji has at least one kun reading
+                'Making StringTemp a string holding just kun readings
+                StringTemp = ReadingsGroup
+                Snip2 = StringTemp.IndexOf("On:")
+                If Snip2 <> -1 Then 'If there is a Kun reading and On reading
+                    StringTemp = Left(StringTemp, Snip2) 'This is holding just Kun readings
+                End If
+
+                Do Until StringTemp.IndexOf("<a href=") = -1 'Do until no more Kun readings
+                    'Finding the start and end of a reading including the link (which won't be used but is needed to trim the reading):
+                    Snip1 = StringTemp.IndexOf("<a href=")
+                    Snip2 = StringTemp.IndexOf("</a>") + 4
+
+                    If Snip1 = -1 Or Snip2 = 3 Then
+                        Continue Do
+                    End If
+
+                    StringTemp2 = Mid(StringTemp, Snip1, Snip2 + 1 - Snip1)
+
+                    StringTemp = StringTemp.Replace(StringTemp2, "") 'Getting rid of the reading from the group
+
+                    'Getting the actual reading:
+                    StringTemp2 = Mid(StringTemp2, 5) 'Getting rid of the < at the start of the whole link trim
+                    Snip1 = StringTemp2.IndexOf(">")
+                    Snip2 = StringTemp2.IndexOf("<")
+                    StringTemp2 = Mid(StringTemp2, Snip1 + 2, Snip2 - 1 - Snip1)
+
+                    KanjiInfo(KanjiLoop, 1) &= StringTemp2 & "、"
+                Loop
+                KanjiInfo(KanjiLoop, 1) = "Kun: " & KanjiInfo(KanjiLoop, 1)
+            Else 'If the kanji doesn't have at least one kun reading
+                KanjiInfo(KanjiLoop, 1) = "Kun:"
+            End If
+
+            'On scraps
+            If ReadingsGroup.IndexOf("On:") <> -1 Then 'If there is an on reading
+                StringTemp = StringTemp3
+                Snip2 = StringTemp.IndexOf("On:")
+                StringTemp = Mid(StringTemp, Snip2)
+                Do Until StringTemp.IndexOf("<a href=") = -1 'Do until no more On readings
+                    'Finding the start and end of a reading including the link (which won't be used but is needed to trim the reading):
+                    Snip1 = StringTemp.IndexOf("<a href=")
+                    Snip2 = StringTemp.IndexOf("</a>") + 4
+
+                    If Snip1 = -1 Or Snip2 = 3 Then
+                        Continue Do
+                    End If
+
+                    StringTemp2 = Mid(StringTemp, Snip1, Snip2 + 1 - Snip1)
+
+                    StringTemp = StringTemp.Replace(StringTemp2, "") 'Getting rid of the reading from the group
+
+                    'Getting the actual reading:
+                    StringTemp2 = Mid(StringTemp2, 5) 'Getting rid of the < at the start of the whole link trim
+                    Snip1 = StringTemp2.IndexOf(">")
+                    Snip2 = StringTemp2.IndexOf("<")
+                    StringTemp2 = Mid(StringTemp2, Snip1 + 2, Snip2 - 1 - Snip1)
+
+                    KanjiInfo(KanjiLoop, 2) &= StringTemp2 & "、"
+                Loop
+                KanjiInfo(KanjiLoop, 2) = "On: " & KanjiInfo(KanjiLoop, 2)
+            Else 'If the kanji doesn't have at least one kun reading
+                KanjiInfo(KanjiLoop, 2) = "On:"
+            End If
+
+            'Scraping the definition(s) of the kanjis:
+            DefinitionsGroup = Kanjis(KanjiLoop)
+
+            'Making a small snip that contains mostly the definitions (the definitions are in a comma list with no separators)
+            Snip1 = DefinitionsGroup.IndexOf("kanji-details__main-meanings") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+            DefinitionsGroup = Mid(DefinitionsGroup, Snip1)
+            Snip2 = DefinitionsGroup.IndexOf("kanji-details__main-readings") 'Getting the position just after the snip for the readings group
+            DefinitionsGroup = Left(DefinitionsGroup, Snip2)
+
+            'Getting just the comma list of definitions:
+            Snip1 = DefinitionsGroup.IndexOf(vbLf) + 8 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+            DefinitionsGroup = Mid(DefinitionsGroup, Snip1)
+            Snip2 = DefinitionsGroup.IndexOf(vbLf) 'Getting the position just after the snip for the readings group
+            DefinitionsGroup = Left(DefinitionsGroup, Snip2)
+            Try 'Making the definition of the Kanji not have an overly long bracket
+                Snip1 = DefinitionsGroup.IndexOf("(")
+                Snip2 = DefinitionsGroup.IndexOf(")")
+                StringTemp = "(" & Mid(DefinitionsGroup, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                If StringTemp.Length > 25 Then
+                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "")
+                End If
+            Catch
+            End Try
+            KanjiInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup 'Adding definitions list to the definition part of the array
+
+
+            'Getting the JLPT level:
+            Try
+                JLPT = Kanjis(KanjiLoop)
+                Snip1 = JLPT.IndexOf("JLPT level") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+                JLPT = Mid(JLPT, Snip1)
+                Snip2 = JLPT.IndexOf("</strong>") 'Getting the position just after the snip for the readings group
+                JLPT = Left(JLPT, Snip2)
+                Snip1 = JLPT.IndexOf("<strong>") + 9 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+                JLPT = Mid(JLPT, Snip1)
+                JLPT = "JLPT Level: " & JLPT
+            Catch
+                JLPT = "JLPT Level:"
+            End Try
+            KanjiInfo(KanjiLoop, 3) = JLPT 'Adding JLPT information to the information array
+
+            'Getting "found in" words:
+            'StringTemp = On
+            'StringTemp2 = Kun
+            'Getting just the Reading Compounds section of the HTML
+            FoundInGroup = Kanjis(KanjiLoop)
+
+            Snip1 = FoundInGroup.IndexOf("row compounds") + 1
+            FoundInGroup = Mid(FoundInGroup, Snip1)
+            Snip2 = FoundInGroup.IndexOf("row kanji-details--section")
+            FoundInGroup = Left(FoundInGroup, Snip2)
+
+
+            'Getting On compounds
+            If FoundInGroup.IndexOf("On reading compounds") <> -1 Then 'If the kanji has at least one On compound
+                'Making StringTemp a string holding just On compounds:
+                StringTemp = FoundInGroup
+                Snip2 = StringTemp.IndexOf("Kun reading compounds")
+                If Snip2 <> -1 Then 'If there is a Kun compound (and On)
+                    StringTemp = Left(StringTemp, Snip2) 'This is holding just Kun compounds
+                End If 'If there isn't an Kun reading we don't need to snip (we wouldn't be able to anyway)
+                'We now have just the On compounds
+
+                Snip1 = StringTemp.IndexOf("<li>")
+                StringTemp = Mid(StringTemp, Snip1 + 8)
+
+                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                Snip2 = StringTemp.IndexOf("</li>")
+                StringTemp3 = Left(StringTemp, Snip2 - 1)
+                StringTemp3 = StringTemp3.Replace(vbLf, "")
+                StringTemp3 = StringTemp3.Replace("  【", "【")
+                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'")
+
+                Try
+                    Snip1 = StringTemp3.IndexOf("(")
+                    Snip2 = StringTemp3.IndexOf(")")
+                    StringTemp2 = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                    If StringTemp2.Length > 25 Then
+                        StringTemp3 = StringTemp3.Replace(StringTemp2, "")
+                    End If
+                Catch
+                End Try
+
+                CountInput = StringTemp3
+                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                If Occurrences > 5 Then
+                    Do Until Occurrences = 5
+                        Snip2 = StringTemp3.LastIndexOf(",")
+                        StringTemp3 = Left(StringTemp3, Snip2)
+                        Occurrences -= 1
+                    Loop
+                ElseIf StringTemp3.Length > 50 And Occurrences > 2 Then
+                    Try
+                        Do Until StringTemp3.Length < 50 Or Occurrences = 2
+                            Snip2 = StringTemp3.LastIndexOf(",")
+                            StringTemp3 = Left(StringTemp3, Snip2)
+                            Occurrences -= 1
+                        Loop
+                    Catch
+                    End Try
+                End If
+
+                KanjiInfo(KanjiLoop, 4) = "On Reading Compound: " & StringTemp3
+            Else 'If the kanji doesn't have at least one kun reading
+                StringTemp = ""
+                KanjiInfo(KanjiLoop, 4) = "No Onyomi compounds"
+            End If
+
+            If FoundInGroup.IndexOf("Kun reading compounds") <> -1 Then 'If the kanji has at least one Kun compound
+                StringTemp2 = FoundInGroup
+                If FoundInGroup.IndexOf("Kun reading compounds") <> -1 Then 'If the kanji also has an On compound
+                    Snip2 = StringTemp2.IndexOf("Kun reading compounds")
+                    StringTemp2 = Mid(StringTemp2, Snip2)
+                End If
+                'We now have just the Kun compounds
+
+                Snip1 = StringTemp2.IndexOf("<li>")
+                StringTemp2 = Mid(StringTemp2, Snip1 + 8)
+
+                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                Snip2 = StringTemp2.IndexOf("</li>")
+                StringTemp3 = Left(StringTemp2, Snip2 - 1)
+                StringTemp3 = StringTemp3.Replace(vbLf, "")
+                StringTemp3 = StringTemp3.Replace("  【", "【")
+                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'")
+
+                'Getting rid of overly long brackets
+                Try
+                    Snip1 = StringTemp3.IndexOf("(")
+                    Snip2 = StringTemp3.IndexOf(")")
+                    StringTemp = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                    If StringTemp.Length > 25 Then
+                        StringTemp3 = StringTemp3.Replace(StringTemp, "")
+                    End If
+                Catch
+                End Try
+
+                CountInput = StringTemp3
+                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                If Occurrences > 5 Then
+                    Do Until Occurrences = 5
+                        Snip2 = StringTemp3.LastIndexOf(",")
+                        StringTemp3 = Left(StringTemp3, Snip2)
+                        Occurrences -= 1
+                    Loop
+                ElseIf StringTemp3.Length > 50 And Occurrences > 2 Then
+                    Try
+                        Do Until StringTemp3.Length < 50 Or Occurrences = 2
+                            Snip2 = StringTemp3.LastIndexOf(",")
+                            StringTemp3 = Left(StringTemp3, Snip2)
+                            Occurrences -= 1
+                        Loop
+                    Catch
+                    End Try
+                End If
+
+                KanjiInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3
+            Else
+                StringTemp2 = ""
+                KanjiInfo(KanjiLoop, 5) = "No Kunyomi compounds"
+            End If
+        Next
+
+        'Printing the infomation
+        If Mode = 1 Then
+            Console.Clear()
+            Console.WriteLine("Kanji information for 「 " & ActualSearch & "」")
+        End If
+
+        For Printer = 0 To ActualSearch.length - 1
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine(KanjiInfo(Printer, 0))
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.WriteLine(KanjiInfo(Printer, 1))
+            Console.WriteLine(KanjiInfo(Printer, 2))
+            Console.WriteLine(KanjiInfo(Printer, 3))
+            Console.WriteLine(KanjiInfo(Printer, 4))
+            Console.WriteLine(KanjiInfo(Printer, 5))
             Console.WriteLine()
-            Exit Sub
-        End Try
-
-        Dim KanjiInfo As String = ""
-        Try
-            KanjiInfo = RetrieveClassRange(WordHTML, "<span class=" & QUOTE & "character literal japanese_gothic", "</aside>", "KanjiInfo")
-        Catch
-            'Console.Clear()
-            Exit Sub
-        End Try
-
-        If KanjiInfo = "" Then
-            'Console.Clear()
+        Next
+        If Mode = 2 Then
             Exit Sub
         End If
 
-        Dim KanjiGroupEnd As Integer 'This is going to detect "Details" (the end of a group of kanji info for one kanji)
-        Dim KanjiGroup(0) As String 'This will store each Kanji group in an array
-        Dim I As Integer = -1 'This will store the index of which kanji group the loop is on, indexing starts at 0, thus " = 0"
-        Dim LastDetailsIndex As Integer = KanjiInfo.LastIndexOf("Details")
 
-        'Getting the JLPT level of the kanji:
-        Dim JLPTLvl As Integer = 0
-        Dim CutInt As Integer = WordHTML.IndexOf("JLPT N") + 7
-        JLPTLvl = Mid(WordHTML, CutInt, 1)
-
-        Try
-            KanjiInfo = Left(KanjiInfo, LastDetailsIndex)
-
-            Dim Finished As Boolean = False
-            Do Until Finished = True 'Do until no more end splitters can be found. The sentences that are pasted won't end in "|" because of how the AHK sentence grabber works
-                I += 1
-                Array.Resize(KanjiGroup, KanjiGroup.Length + 1)
-                KanjiGroupEnd = KanjiInfo.IndexOf("Details") + 10
-                If KanjiGroupEnd = 9 Then '(-1 but at add because of the above line. This means if "Details" isn't found
-                    KanjiGroup(I) = KanjiInfo
-                    Finished = True
-                    Continue Do
-                End If
-
-                KanjiGroup(I) = Mid(KanjiInfo, 6, KanjiGroupEnd - 5)
-                KanjiInfo = Mid(KanjiInfo, KanjiGroupEnd)
-            Loop
-            Array.Resize(KanjiGroup, KanjiGroup.Length - 1)
-        Catch
-            'Console.Clear()
-        End Try
-
-        Dim ActualInfo(KanjiGroup.Length - 1, 3) 'X = Kanji (group), Y = Info type.
-
-        Try
-            'Y indexs:
-            '0 = Kanji
-            '1 = English meaning(s) (I will concatinate multiple meanings)
-            '2 = kun readings (concatentated if needed, usually so)
-            '3 = on readings (concatentated if needed, usually so)
-            Dim FirstFinder As Integer
-            Dim SecondFinder As Integer
-
-            Dim AllEng, AllKun, AllOn As Boolean
-            AllEng = False
-            AllKun = False
-            AllOn = False
-            Dim LastReadingFound As Boolean = False 'This is used to find the last reading of a kanji, it knows that it is a last because it ends in "</a>、" and not "</a>"
-            Dim JustEng As String
-            Dim KunReading, OnReading, ReadingSnip As String
-
-            KanjiGroup(KanjiGroup.Length - 1) = Mid(KanjiGroup(KanjiGroup.Length - 1), 5) 'This lets the last group work
-
-            For Looper = 0 To KanjiGroup.Length - 1
-                Try 'This is for if there are no kanji
-                    FirstFinder = KanjiGroup(Looper).IndexOf("</a>")
-                Catch
-                    Console.ReadLine()
-                    Main()
-                End Try
-                'KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
-                ActualInfo(Looper, 0) = Mid(KanjiGroup(Looper), FirstFinder, 1)
-
-                FirstFinder = KanjiGroup(Looper).IndexOf("sense")
-                KanjiGroup(Looper) = Mid(KanjiGroup(Looper), FirstFinder + 10)
-
-                FirstFinder = KanjiGroup(Looper).IndexOf("</div>")
-
-                JustEng = Left(KanjiGroup(Looper), FirstFinder)
-
-                JustEng = Mid(JustEng, 18)
-                JustEng = Left(JustEng, JustEng.Length - 14)
-                KanjiGroup(Looper) = KanjiGroup(Looper).Replace(JustEng, "")
-
-                JustEng = JustEng.Replace("           ", "")
-                FirstFinder = JustEng.IndexOf("</span>")
-                SecondFinder = JustEng.IndexOf("<span>")
-                Try
-                    JustEng = JustEng.Replace(Mid(JustEng, FirstFinder, SecondFinder + 7 - FirstFinder), "")
-                Catch
-
-                End Try
-
-                JustEng = JustEng.Replace(",", ", ")
-                'JustEng = Left(JustEng, 1).ToUpper & Mid(JustEng, 2)
-
-                ActualInfo(Looper, 1) = JustEng
-
-                'Splitting the rest of the HTML (KanjiGroup) into Kun and On readings:
-                FirstFinder = KanjiGroup(Looper).IndexOf("on readings") - 12
-                KunReading = Left(KanjiGroup(Looper), FirstFinder)
-                OnReading = Mid(KanjiGroup(Looper), FirstFinder)
-
-                ActualInfo(Looper, 2) &= "Kun Readings: "
-                ActualInfo(Looper, 3) &= "On Readings: "
-
-                LastReadingFound = False
-                Do Until LastReadingFound = True
-                    If KunReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
-                        SecondFinder = KunReading.IndexOf("</a>、")
-                        FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
-
-                        KunReading = Mid(KunReading, SecondFinder + 10)
-
-                    ElseIf KunReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
-                        SecondFinder = KunReading.IndexOf("</a>")
-                        FirstFinder = Left(KunReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(KunReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 2) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
-
-                        LastReadingFound = True
-                    Else
-                        LastReadingFound = True
-                    End If
-                Loop
-                LastReadingFound = False
-                Do Until LastReadingFound = True
-                    If OnReading.IndexOf("</a>、") <> -1 Then 'If the reading that is about to be snipped isn't the last
-                        SecondFinder = OnReading.IndexOf("</a>、")
-                        FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower & ", " 'Adding the reading to the Actual info array
-
-                        OnReading = Mid(OnReading, SecondFinder + 10)
-
-                    ElseIf OnReading.IndexOf("</a><") <> -1 Then 'If it is the last, "<" is just the beginning of "</span>"
-                        SecondFinder = OnReading.IndexOf("</a>")
-                        FirstFinder = Left(OnReading, SecondFinder).LastIndexOf(">")
-                        ReadingSnip = Mid(OnReading, FirstFinder + 2, SecondFinder - 1 - FirstFinder)
-
-                        ActualInfo(Looper, 3) &= ReadingSnip.ToLower 'Adding the reading to the Actual info array
-
-                        LastReadingFound = True
-                    Else
-                        LastReadingFound = True
-                    End If
-
-                Loop
-                'Displaying of information:
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.WriteLine(ActualInfo(Looper, 0) & " - " & ActualInfo(Looper, 1))
-                Console.BackgroundColor = ConsoleColor.Black
-                Console.WriteLine(ActualInfo(Looper, 2))
-                Console.WriteLine(ActualInfo(Looper, 3))
-
-                If JLPTLvl > 0 And JLPTLvl < 6 Then
-                    Console.WriteLine("JLPT Level: " & JLPTLvl)
-                End If
-
-                Dim FoundIn1, FoundIn2 As String
-                FoundIn1 = JustResultsScraper(ActualInfo(Looper, 0), 1, ActualSearchWord)
-                FoundIn2 = JustResultsScraper(ActualInfo(Looper, 0), 2, ActualSearchWord)
-                If FoundIn1 = FoundIn2 Then
-                    Console.WriteLine("Found in: ")
-                    Console.WriteLine(FoundIn1)
-                Else
-                    Console.WriteLine("Found in: ")
-                    Console.WriteLine(FoundIn1)
-                    Console.WriteLine(FoundIn2)
-                End If
-
-                ActualInfo(Looper, 1) = ActualInfo(Looper, 1) & ","
-                ActualInfo(Looper, 2) = ActualInfo(Looper, 2) & ","
-                Console.WriteLine()
-
-            Next
-        Catch
-            Console.WriteLine("Error")
-        End Try
+        Console.WriteLine("Done!")
+        Console.ReadLine()
+        Main()
     End Sub
 
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
