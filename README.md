@@ -10,7 +10,12 @@
 
 If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
-## **List of commands:**
+### I am currently working on:
+* Making the program more efficient
+
+The next update should be out around 17-19th October
+
+## **List of [commands](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
 * **Word Lookup** - looks up any word or phrase (main feature)
 * **Translate** - Type "!" and then anything to translate it, (works with English and Japanese)
 * **/k** - enter japanese and get tested on kanji in the string you inputted
@@ -27,10 +32,4 @@ If you want to give feedback, request features or report bugs, you may do so [he
 3. Lastly, make sure you are on the "Font" tab and select the "MS Mincho" font, there are a few other fonts that work too.
 ![Japanese Characters](https://i.imgur.com/x7gDhB9.png)
 
-***
-## Features that might come soon
-* Search for example sentences containing a word
-* New parameters
-* Search for grammar
-* Listen to/watch a clip from a random movie that contains the word you search
 ***
