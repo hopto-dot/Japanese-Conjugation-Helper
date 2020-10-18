@@ -697,7 +697,7 @@ Module Module1
         Next
 
         Console.Clear()
-        DisplayDefinitions(Defintions1, Types1, 9, 2)
+        DisplayDefinitions(Defintions1, Types1, 5, 2)
         Console.BackgroundColor = ConsoleColor.DarkGray
         If Furigana(0) <> "" Then
             Console.WriteLine(ActualSearchWord & " (" & Furiganas(0) & ")")
@@ -708,7 +708,7 @@ Module Module1
         Console.WriteLine()
         Console.WriteLine()
 
-        'end of one word scrapping  _______________________________________________________________________________________________________________________
+        'end of first word scrapping  _______________________________________________________________________________________________________________________
 
         WordURL = "https://jisho.org/search/" & Searches(1)
         HTML = Client.DownloadString(New Uri(WordURL))
@@ -813,7 +813,7 @@ Module Module1
             Defintions2(Add - 1) = Defintions2(Add - 1).Replace("&quot;", Quote) & Add
         Next
 
-        DisplayDefinitions(Defintions2, Types2, 9, 2)
+        DisplayDefinitions(Defintions2, Types2, 5, 2)
         Console.BackgroundColor = ConsoleColor.DarkGray
         If Furigana(0) <> "" Then
             Console.WriteLine(ActualSearchWord2 & " (" & Furiganas(1) & ")")
@@ -1396,9 +1396,6 @@ Module Module1
             Scrap = SelectedDefinition(0)
         End Try
 
-
-
-
         Scrap = Left(Scrap, 1).ToLower & Right(Scrap, Scrap.Length - 1)
 
 
@@ -1419,9 +1416,9 @@ Module Module1
             Console.WriteLine("Te-forms:")
             Console.WriteLine("Te-stem: して")
             Console.WriteLine("Negative: しなくて")
+            Console.WriteLine("Negative te-form: しないで")
             Console.WriteLine("Is doing: しています")
-            Console.WriteLine("Am doing: していいる")
-
+            Console.WriteLine("Am doing: している")
             Console.WriteLine()
             Console.WriteLine("Want to do: したい")
             Console.WriteLine()
@@ -1432,16 +1429,31 @@ Module Module1
             Console.WriteLine("Causitive:")
             Console.WriteLine("Let/make (someone) do: させる")
             Console.WriteLine("Don't let/make (someone) do: させない")
+            Console.WriteLine("Passive:")
+            Console.WriteLine("Was done: される")
+            Console.WriteLine("Wasn't done: されない")
             Console.WriteLine()
-            Console.WriteLine("Causitive:")
-            Console.WriteLine("Let/make (someone) do: させる")
-            Console.WriteLine("Don't let/make (someone) do: させない")
+            Console.WriteLine("Conditional:")
+            Console.WriteLine("If do: すれば")
+            Console.WriteLine("If don't do: しなければ")
+            Console.WriteLine("しなくちゃ (informal)")
+            Console.WriteLine("しなきゃ (informal)")
+            Console.WriteLine()
+            Console.WriteLine("Volitional: しよう")
         End If
 
         'Preparing some variables for the word being searched
-        Dim Iadjective, NaAdjective, NoAdjective, Noun, Suru, Verb As Boolean 'Word Types Checker varibles
-        'If the S=0 parameter allows it
-        If TypeSnipEnd <> -1 Then 'Meaning: If the word has more than one type. The way I implemented the word type checker is kind of weird with the Else block. I could change this at a later date to make it more efficient.
+        Dim Iadjective, NaAdjective, NoAdjective, Noun, Suru, Verb, Irregular As Boolean 'Word Types Checker varibles
+
+        'Checking if it's a word with any irregularities
+        If FullWordType.ToLower.IndexOf("verb") <> -1 And FullWordType.ToLower.IndexOf("adverb") = -1 Then
+            Verb = True
+            If FullWordType.ToLower.IndexOf("irregular") <> -1 Or FullWordType.ToLower.IndexOf("special") <> -1 Then
+                Irregular = True
+            End If
+        End If
+
+        If TypeSnipEnd <> -1 Then 'If the word has more than one type. The way I implemented the word type checker is kind of weird with the Else block. I could change this at a later date to make it more efficient.
 
             'These are checks for each type of word
             If FullWordType.IndexOf("I-adjective") <> -1 Then 'Meaning: if "I-adjective Is found in the list of word types
@@ -1461,13 +1473,12 @@ Module Module1
             End If
 
             'Because "Adverbial" contains verb we need to make sure the program doesn't think that it is a verb
-
             If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
                 Verb = True
             End If
         End If
 
-        If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
+        If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True And Irregular = False Then
             Dim ComparativeType As String = ""
             If FullWordType.IndexOf("Transitive") <> -1 Then
                 ComparativeType = "t"
@@ -1489,41 +1500,42 @@ Module Module1
             'Main()
 
         Else 'If there is only one word type, the if statement can look at the whole variable "TypeSnip" instead of use .index to determine if a Word Type is part of the whole string
-            If TypeSnip = "I-adjective" Then
-                Iadjective = True
-            ElseIf TypeSnip = "Na-adjective" Then
-                NaAdjective = True
-            ElseIf TypeSnip = "Noun" Then
-                Noun = True
-            End If
-
-            'For verbs:
-            If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
-                Verb = True
-            End If
-
-            If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
-                Dim ComparativeType As String = ""
-                If FullWordType.IndexOf("Transitive") <> -1 Then
-                    ComparativeType = "t"
-                End If
-                If FullWordType.IndexOf("intransitive") <> -1 Then
-                    ComparativeType = "i"
+            If Irregular = False Then
+                If TypeSnip = "I-adjective" Then
+                    Iadjective = True
+                ElseIf TypeSnip = "Na-adjective" Then
+                    NaAdjective = True
+                ElseIf TypeSnip = "Noun" Then
+                    Noun = True
                 End If
 
-                If FullWordType.IndexOf("Godan verb") <> -1 Then
-
-                    ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                'For verbs:
+                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Adverb") = -1 Then
+                    Verb = True
                 End If
 
-                If FullWordType.IndexOf("Ichidan verb") <> -1 Then
+                If FullWordType.IndexOf("verb") <> -1 And FullWordType.IndexOf("Suru verb") = -1 And Verb = True Then
+                    Dim ComparativeType As String = ""
+                    If FullWordType.IndexOf("Transitive") <> -1 Then
+                        ComparativeType = "t"
+                    End If
+                    If FullWordType.IndexOf("intransitive") <> -1 Then
+                        ComparativeType = "i"
+                    End If
 
-                    ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                    If FullWordType.IndexOf("Godan verb") <> -1 Then
+                        ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                    End If
+
+                    If FullWordType.IndexOf("Ichidan verb") <> -1 Then
+
+                        ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                    End If
+
+                    ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes)
+                    Console.ReadLine()
+                    Main()
                 End If
-
-                ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes)
-                Console.ReadLine()
-                Main()
             End If
         End If
 
@@ -1985,14 +1997,17 @@ Module Module1
         End If
 
         For Printer = 0 To ActualSearchWord.length - 1
+            For Replacer = 0 To 5
+                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """")
+            Next
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(ActualInfo(Printer, 0))
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine(ActualInfo(Printer, 1))
             Console.WriteLine(ActualInfo(Printer, 2))
             Console.WriteLine(ActualInfo(Printer, 3))
-            Console.WriteLine(ActualInfo(Printer, 4))
             Console.WriteLine(ActualInfo(Printer, 5))
+            Console.WriteLine(ActualInfo(Printer, 4))
             Console.WriteLine()
         Next
 
@@ -5151,14 +5166,17 @@ Module Module1
         End If
 
         For Printer = 0 To ActualSearch.length - 1
+            For Replacer = 0 To 5
+                KanjiInfo(Printer, Replacer) = KanjiInfo(Printer, Replacer).replace("&quot;", """")
+            Next
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(KanjiInfo(Printer, 0))
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine(KanjiInfo(Printer, 1))
             Console.WriteLine(KanjiInfo(Printer, 2))
             Console.WriteLine(KanjiInfo(Printer, 3))
-            Console.WriteLine(KanjiInfo(Printer, 4))
             Console.WriteLine(KanjiInfo(Printer, 5))
+            Console.WriteLine(KanjiInfo(Printer, 4))
             Console.WriteLine()
         Next
         If Mode = 2 Then
