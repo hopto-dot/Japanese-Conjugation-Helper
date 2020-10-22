@@ -11,7 +11,7 @@
 If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
 ## **List of [commands](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
-### *Most useful commands are in bold*
+### *Useful commands are in bold*
 * **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence
 * **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English
 * **[Kanji Information](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji
