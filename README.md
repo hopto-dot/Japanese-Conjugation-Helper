@@ -11,13 +11,21 @@
 If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
 ## **List of [commands](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
-* **Word Lookup** - looks up any word or phrase (main feature)
-* **Translate** - Type "!" and then anything to translate it, (works with English and Japanese)
-* **/k** - enter japanese and get tested on kanji in the string you inputted
-* **/p** - conjugation practice (practice conjugating a word of your choice into different forms)
-* **/r** - reading practice (essentially a flash card creator)
-* **/prefs** - Lets you change program settings, these are saved for the next time you use the program.
-* **/h** (brings up more information about a command, not as detailed as the Wiki)
+### *Useful commands are in bold*
+* **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence
+* **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English
+* **[Kanji Information](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji
+* **Audio** - Downloads audio of various conjugations of a verb (documentation coming soon)
+* **[Kanji Test](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test)** - Enter Japanese text and get tested on all the kanji
+* **/history** - See you last 40 searches
+* **/b (back)** - Instantly go back to your last search (no internet connection needed)
+* **[/prefs](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
+* [**Conjugator Practice**](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
+* **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word
+* **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** - A parameter that determines how much information about a word is displayed
+* [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (essentially a flash card creator)
+* [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
+* /ranki - Reverse Anki: Generate reverse anki cards (no documentation yet)
 
 ***
 
