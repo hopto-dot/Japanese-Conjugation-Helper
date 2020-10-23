@@ -2026,6 +2026,7 @@ Module Module1
         Dim WordChoice As Integer = 10000
         Dim ActualSearch2ndAppearance As String
         Dim Definition1 As String = ""
+        Dim Snip1 As Integer = 0
 
         Dim CommonWord(0) As Boolean
 
@@ -6112,39 +6113,23 @@ Module Module1
                     StringTemp3 = StringTemp3.Replace("  【", "【")
                     StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                     StringTemp3 = StringTemp3.Replace("&#39;", "'")
-                End If
+                    If StringTemp.IndexOf("<li>") <> -1 Then 'if there is another On reading compound
+                        StringTemp3 &= "|"
+                        Snip1 = StringTemp.IndexOf("<li>")
+                        StringTemp = Mid(StringTemp, Snip1 + 8)
 
-                Try
-                    Snip1 = StringTemp3.IndexOf("(")
-                    Snip2 = StringTemp3.IndexOf(")")
-                    StringTemp2 = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
-
-                    If StringTemp2.Length > 25 Then
-                        StringTemp3 = StringTemp3.Replace(StringTemp2, "")
+                        'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                        Snip2 = StringTemp.IndexOf("</li>")
+                        StringTemp3 &= Left(StringTemp, Snip2 - 1)
+                        StringTemp3 = StringTemp3.Replace(vbLf, "")
+                        StringTemp3 = StringTemp3.Replace("  【", "【")
+                        StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                        StringTemp3 = StringTemp3.Replace("&#39;", "'")
                     End If
-                Catch
-                End Try
+                End If
 
-                CountInput = StringTemp3
-                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                If Occurrences > 5 Then
-                    Do Until Occurrences = 5
-                        Snip2 = StringTemp3.LastIndexOf(",")
-                        StringTemp3 = Left(StringTemp3, Snip2)
-                        Occurrences -= 1
-                    Loop
-                End If
-                If StringTemp3.Length > 48 And Occurrences > 2 Then
-                    Try
-                        Do Until StringTemp3.Length < 48 Or Occurrences = 2
-                            Snip2 = StringTemp3.LastIndexOf(",")
-                            StringTemp3 = Left(StringTemp3, Snip2)
-                            Occurrences -= 1
-                        Loop
-                    Catch
-                    End Try
-                End If
                 KanjiInfo(KanjiLoop, 4) = "On Reading Compound: " & StringTemp3
+
             Else 'If the kanji doesn't have at least one kun reading
                 StringTemp = ""
                 KanjiInfo(KanjiLoop, 4) = "No Onyomi compounds"
@@ -6170,39 +6155,36 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                 StringTemp3 = StringTemp3.Replace("&#39;", "'")
 
-                'Getting rid of overly long brackets
-                Try
-                    Snip1 = StringTemp3.IndexOf("(")
-                    Snip2 = StringTemp3.IndexOf(")")
-                    StringTemp = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+                If StringTemp2.IndexOf("<li>") <> -1 Then
+                    StringTemp3 &= "|"
+                    Snip1 = StringTemp2.IndexOf("<li>")
+                    StringTemp2 = Mid(StringTemp2, Snip1 + 8)
 
-                    If StringTemp.Length > 50 Then
-                        StringTemp3 = StringTemp3.Replace(StringTemp, "")
+                    'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                    Snip2 = StringTemp2.IndexOf("</li>")
+                    StringTemp3 &= Left(StringTemp2, Snip2 - 1)
+                    StringTemp3 = StringTemp3.Replace(vbLf, "")
+                    StringTemp3 = StringTemp3.Replace("  【", "【")
+                    StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                    StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                    If StringTemp2.IndexOf("<li>") <> -1 Then
+                        StringTemp3 &= "|"
+                        Snip1 = StringTemp2.IndexOf("<li>")
+                        StringTemp2 = Mid(StringTemp2, Snip1 + 8)
+
+                        'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                        Snip2 = StringTemp2.IndexOf("</li>")
+                        StringTemp3 &= Left(StringTemp2, Snip2 - 1)
+                        StringTemp3 = StringTemp3.Replace(vbLf, "")
+                        StringTemp3 = StringTemp3.Replace("  【", "【")
+                        StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                        StringTemp3 = StringTemp3.Replace("&#39;", "'")
                     End If
-                Catch
-                End Try
+                End If
 
-                CountInput = StringTemp3
-                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                If Occurrences > 5 Then
-                    Do Until Occurrences = 5
-                        Snip2 = StringTemp3.LastIndexOf(",")
-                        StringTemp3 = Left(StringTemp3, Snip2)
-                        Occurrences -= 1
-                    Loop
-                End If
-                If StringTemp3.Length > 50 And Occurrences > 2 Then
-                    Try
-                        Do Until StringTemp3.Length < 51 Or Occurrences = 2
-                            Snip2 = StringTemp3.LastIndexOf(",")
-                            StringTemp3 = Left(StringTemp3, Snip2)
-                            Occurrences -= 1
-                        Loop
-                    Catch
-                    End Try
-                End If
 
                 KanjiInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3
+
             Else
                 StringTemp2 = ""
                 KanjiInfo(KanjiLoop, 5) = "No Kunyomi compounds"
@@ -6216,6 +6198,7 @@ Module Module1
             Console.WriteLine()
         End If
 
+        Dim ArrayPrint() As String
         For Printer = 0 To ActualSearch.length - 1
             For Replacer = 0 To 5
                 KanjiInfo(Printer, Replacer) = KanjiInfo(Printer, Replacer).replace("&quot;", """")
@@ -6226,8 +6209,102 @@ Module Module1
             Console.WriteLine(KanjiInfo(Printer, 1))
             Console.WriteLine(KanjiInfo(Printer, 2))
             Console.WriteLine(KanjiInfo(Printer, 3))
-            Console.WriteLine(KanjiInfo(Printer, 5))
-            Console.WriteLine(KanjiInfo(Printer, 4))
+
+            If KanjiInfo(Printer, 5).indexof("|") = -1 Then
+                Console.WriteLine(KanjiInfo(Printer, 5))
+            Else
+                ArrayPrint = KanjiInfo(Printer, 5).split("|")
+                ArrayPrint(0) = ArrayPrint(0).Replace("Kun Reading Compound: ", "")
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("Kun Reading Compounds:")
+                Console.BackgroundColor = ConsoleColor.Black
+                For Compound = 0 To ArrayPrint.Length - 1
+
+                    ''Shortening info''''''''''''''''''''
+                    Try
+                        Snip1 = ArrayPrint(Compound).IndexOf("(")
+                        Snip2 = ArrayPrint(Compound).IndexOf(")")
+                        StringTemp = "(" & Mid(ArrayPrint(Compound), Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                        If StringTemp.Length > 50 Then
+                            ArrayPrint(Compound) = ArrayPrint(Compound).Replace(StringTemp, "")
+                        End If
+                    Catch
+                    End Try
+
+                    CountInput = ArrayPrint(Compound)
+                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                    If Occurrences > 5 Then
+                        Do Until Occurrences = 5
+                            Snip2 = ArrayPrint(Compound).LastIndexOf(",")
+                            ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
+                            Occurrences -= 1
+                        Loop
+                    End If
+                    If ArrayPrint(Compound).Length > 50 And Occurrences > 2 Then
+                        Try
+                            Do Until ArrayPrint(Compound).Length < 51 Or Occurrences = 2
+                                Snip2 = ArrayPrint(Compound).LastIndexOf(",")
+                                ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
+                                Occurrences -= 1
+                            Loop
+                        Catch
+                        End Try
+                    End If
+                    ''''''''''''''''''''end of shortening info
+
+                    Console.WriteLine(ArrayPrint(Compound))
+                Next
+            End If
+
+            If KanjiInfo(Printer, 4).indexof("|") = -1 Then
+                Console.WriteLine(KanjiInfo(Printer, 4))
+            Else
+                ArrayPrint = KanjiInfo(Printer, 4).split("|")
+                ArrayPrint(0) = ArrayPrint(0).Replace("On Reading Compound: ", "")
+
+                Console.BackgroundColor = ConsoleColor.DarkGray
+                Console.WriteLine("On Reading Compounds:")
+                Console.BackgroundColor = ConsoleColor.Black
+
+                For Compound = 0 To ArrayPrint.Length - 1
+                    ''Shortening info''''''''''''''''''''
+                    Try
+                        Snip1 = ArrayPrint(Compound).IndexOf("(")
+                        Snip2 = ArrayPrint(Compound).IndexOf(")")
+                        StringTemp = "(" & Mid(ArrayPrint(Compound), Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                        If StringTemp.Length > 50 Then
+                            ArrayPrint(Compound) = ArrayPrint(Compound).Replace(StringTemp, "")
+                        End If
+                    Catch
+                    End Try
+
+                    CountInput = ArrayPrint(Compound)
+                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                    If Occurrences > 5 Then
+                        Do Until Occurrences = 5
+                            Snip2 = ArrayPrint(Compound).LastIndexOf(",")
+                            ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
+                            Occurrences -= 1
+                        Loop
+                    End If
+                    If ArrayPrint(Compound).Length > 50 And Occurrences > 2 Then
+                        Try
+                            Do Until ArrayPrint(Compound).Length < 51 Or Occurrences = 2
+                                Snip2 = ArrayPrint(Compound).LastIndexOf(",")
+                                ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
+                                Occurrences -= 1
+                            Loop
+                        Catch
+                        End Try
+                    End If
+                    ''''''''''''''''''''end of shortening info
+
+                    Console.WriteLine(ArrayPrint(Compound))
+                Next
+            End If
+
             Console.WriteLine()
         Next
         If Mode = 2 Then
@@ -6280,7 +6357,7 @@ Module Module1
         If SnipIndex = -1 Then
             Return ("Error: |" & "class=" & QUOTE & ClassToRetrieve & "| Not Found")
         End If
-        Dim Snip As String = Mid(HTML, SnipIndex + 10 + ClassToRetrieve.length, 50)
+        Dim Snip As String = Mid(HTML, SnipIndex + 10 + ClassToRetrieve.length, 85)
         SnipIndex = Snip.IndexOf("<")
 
         If SnipIndex = -1 Then
@@ -6288,7 +6365,10 @@ Module Module1
             If SnipIndex = -1 Then
                 SnipIndex = Snip.IndexOf(",")
                 If SnipIndex = -1 Then
+                    Console.ForegroundColor = ConsoleColor.Red
                     Console.WriteLine("Error: RetrieveClass; " & ErrorMessage & "; SnipIndex could not find")
+                    Console.ForegroundColor = ConsoleColor.White
+
                     Console.ReadLine()
                     Main()
                 End If
@@ -6472,9 +6552,12 @@ Module Module1
         Try
             JapaneseSentence = Mid(SentenceExample, 2, JPSentEnd - 1)
         Catch
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Error: ExampleSentence; JapaneseSentence")
             Console.WriteLine("Catch: 1")
             Console.WriteLine("JPSentEnd: " & JPSentEnd)
+            Console.ForegroundColor = ConsoleColor.White
+
             Console.ReadLine()
             Main()
         End Try
