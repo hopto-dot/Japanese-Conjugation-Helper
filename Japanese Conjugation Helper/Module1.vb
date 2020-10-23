@@ -13,7 +13,13 @@ Module Module1
         Const QUOTE = """"
         Console.Clear()
         'For the input of Japanese Chaaracters
-        Console.Title() = "Conjugator"
+        If Int((100) * Rnd()) = 2 Then
+            Console.Title() = "本当に動詞を活用するんだよ"
+        ElseIf Int((50) * Rnd()) <> 2 Then
+            Console.Title() = "Conjugator"
+        Else
+            Console.Title() = "コンジュゲーター"
+        End If
         Console.InputEncoding = System.Text.Encoding.Unicode
         Console.OutputEncoding = System.Text.Encoding.Unicode
         Randomize()
@@ -24,26 +30,42 @@ Module Module1
             Dim localTime As DateTimeOffset = TimeZoneInfo.ConvertTime(localServerTime, info)
             Dim TimeInJapan As String = localTime.ToString
             TimeInJapan = Left(localTime.DateTime, (localTime.DateTime).ToString.IndexOf("M") + 1)
-            Console.WriteLine("Japan: " & TimeInJapan)
+            If Int((75) * Rnd()) <> 2 Then
+                Console.WriteLine("Japan: " & TimeInJapan)
+            Else
+                Console.WriteLine("日本: " & TimeInJapan)
+            End If
         Catch
         End Try
 
-        If Int((50) * Rnd()) <> 2 Then
+        If Int((100) * Rnd()) <> 2 Then
             Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
         Else
-            Console.WriteLine("Enter a command! OwO")
+            Console.WriteLine("コマンドを入力したらどう？ OwO")
         End If
 
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
         Dim Word As String = Console.ReadLine.ToLower.Trim 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
 
-
-
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
             Main()
         End If
 
+        If Word.IndexOf("/audio ") <> -1 Then
+            VerbAudioGen(Right(Word, Word.Length - 7))
+        ElseIf Word = "/audio" Then
+            Console.WriteLine("What word would you like audio for?")
+            Word = Console.ReadLine.ToLower.Trim
+            VerbAudioGen(Word)
+        End If
 
+        If Word.IndexOf("/listening ") <> -1 Then
+            ListeningPractice(Right(Word, Word.Length - 11))
+        ElseIf Word = "/listening" Then
+            Console.WriteLine("What word would you like listening practice on?")
+            Word = Console.ReadLine.ToLower.Trim
+            ListeningPractice(Word)
+        End If
 
         If Word = "/ranki" Or Word = "/revanki" Or Word = "/reverseanki" Or Word = "/reversea" Then
             ReverseAnki()
@@ -78,13 +100,16 @@ Module Module1
                 Try
                     Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
                     If LastSearchFile.Length < 3 Then
-                        Console.WriteLine("Error: FileWriter.Close; Short")
+                        Console.ForegroundColor = ConsoleColor.Red
+                        Console.WriteLine("Error: FileWriter.Close")
+                        Console.ForegroundColor = ConsoleColor.White
                     Else
                         Console.WriteLine(LastSearchFile)
                     End If
-
                 Catch
+                    Console.ForegroundColor = ConsoleColor.Red
                     Console.WriteLine("Error: FileWriter.Close")
+                    Console.ForegroundColor = ConsoleColor.White
                 End Try
                 Console.ReadLine()
                 Main()
@@ -98,13 +123,17 @@ Module Module1
             Try
                 Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
                 If LastSearchFile.Length < 7 Then
+                    Console.ForegroundColor = ConsoleColor.Red
                     Console.WriteLine("Error: FileWriter.Close; Short")
+                    Console.ForegroundColor = ConsoleColor.White
                 Else
                     Console.WriteLine(LastSearchFile)
                 End If
 
             Catch
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("Error: FileWriter.Close")
+                Console.ForegroundColor = ConsoleColor.White
             End Try
             Console.ReadLine()
             Main()
@@ -147,11 +176,14 @@ Module Module1
                 Process.Start("C:\ProgramData\Japanese Conjugation Helper")
             Catch
                 Console.Clear()
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("No program files have been created yet.")
                 Console.WriteLine("Type '/prefs' to get started.")
-                Console.ReadLine()
+                Console.ForegroundColor = ConsoleColor.White
+                If Console.ReadLine.ToLower = "/prefs" Then
+                    Preferences()
+                End If
             End Try
-
             Main()
         End If
 
@@ -160,7 +192,9 @@ Module Module1
         End If
 
         If Word = "/" Then
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("This is not a command")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End If
@@ -169,7 +203,9 @@ Module Module1
             ReadingPractice(Right(Word, Word.Length - 3))
         End If
         If Left(Word, 2) = "/r" Then
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Wrong format.")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End If
@@ -244,7 +280,9 @@ Module Module1
         End If
 
         If Left(Word, 1) = "/" Then
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("This is not a command")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End If
@@ -381,12 +419,980 @@ Module Module1
             Main()
         End If
 
+        If Command.length < 10 And Command.indexof("audio") <> -1 Then
+            Console.WriteLine("Download audio of various conjugations of a verb")
+            Console.WriteLine("Only works with verbs (doesn't work with suru-verbs)")
+            Console.WriteLine()
+            Console.WriteLine("Syntax: /audio [verb] (!s/f)")
+            Console.WriteLine("Add !f if you want female audio")
+            Console.WriteLine("Add !m if you want female audio")
+            Console.WriteLine()
+            Console.WriteLine("If you don't specify gender of pronunciations, it will be male by default")
+            Console.WriteLine("Example: /audio odoru !f")
+            Console.ReadLine()
+            Main()
+        End If
+
+        Console.ForegroundColor = ConsoleColor.Yellow
         Console.WriteLine("There is no information for " & QUOTE & Command & QUOTE)
-        Console.WriteLine(QUOTE & "/" & Command & QUOTE & " is not a command.")
+        Console.WriteLine(QUOTE & Command & QUOTE & " is not a command.")
+        Console.ForegroundColor = ConsoleColor.White
         Console.ReadLine()
         Main()
     End Sub
 
+    Sub ListeningPractice(Word)
+        Const QUOTE = """"
+        Dim Gender As String = "male"
+        If Word.indexOf("!f") <> -1 Then
+            Word = Word.replace("!f", "")
+            Gender = "female"
+        ElseIf Word.indexOf("!m") <> -1 Then
+            Word = Word.replace("!m", "")
+            Gender = "male"
+        End If
+        Word = Word.Replace(" ", "")
+
+        Console.Clear()
+        Console.WriteLine("Searching " & QUOTE & Word & QUOTE)
+        Dim WordURL As String
+        Dim Client As New WebClient
+        Dim HTML As String = ""
+        Client.Encoding = System.Text.Encoding.UTF8
+        Try
+            WordURL = ("https://jisho.org/search/" & Word)
+            HTML = Client.DownloadString(New Uri(WordURL))
+        Catch
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Search failed")
+            Console.WriteLine("Check you are connected to the internet")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+        Dim HTMLTemp As String = HTML
+
+        Dim ActualSearchWord As String = ""
+        Dim ActualSearch1stAppearance As Integer = 0
+        Dim ActualSearch2ndAppearance As Integer = 0
+        Dim WordLink As String = ""
+        Dim Max As Integer = 3
+        Dim Types As String = ""
+
+        Console.WriteLine("Trying to get information for " & QUOTE & Word & QUOTE)
+        Try
+            ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
+            ActualSearchWord = Mid(ActualSearchWord, 30)
+            ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+            ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+            ActualSearchWord = ActualSearchWord.Trim
+
+            'Getting the link of the actual word:
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+            ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+            WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+        Catch
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Word not found!")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+
+        If ActualSearchWord.IndexOf("<") <> -1 Or ActualSearchWord.IndexOf(">") <> -1 Or ActualSearchWord.IndexOf("span") <> -1 Then
+            ActualSearchWord = RetrieveClassRange(HTML, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
+            ActualSearchWord = RetrieveClassRange(ActualSearchWord, "text", "</span", "Actual word search")
+            ActualSearchWord = Mid(ActualSearchWord, 17)
+            ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+            ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+        End If
+
+        If ActualSearchWord.Length = 0 Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Word not found!")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End If
+
+        Types = TypeScraper("jisho.org/search/" & ActualSearchWord).replace("&#39;", "").tolower
+
+        If Types.IndexOf("verb") = -1 Or Types.IndexOf("suru") <> -1 Or Types.IndexOf("noun") <> -1 Then
+            If Types.IndexOf("i-adjective") = -1 Then
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("You can only download audio files for verbs.")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End If
+        End If
+        Dim Verb, IAdj As Boolean
+        If Types.IndexOf("verb") <> -1 Then
+            Verb = True
+        ElseIf Types.IndexOf("i-adj") <> -1 Then
+            IAdj = True
+        End If
+
+        Dim Furigana As String = ""
+        Dim FuriganaStart As Integer
+        If Verb = True Then
+            Try
+                Furigana = RetrieveClassRange(HTML, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
+                If Furigana.Length <> 0 Then
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                    FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                    If FuriganaStart <> -1 Then 'if </a></li><li> Is found Then it will be removed as well as everything after it
+                        Furigana = Left(Furigana, FuriganaStart)
+                    End If
+                Else
+                    Furigana = ""
+                End If
+
+                If Furigana = ActualSearchWord Or Furigana = "" Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
+                    Furigana = RetrieveClassRange(HTML, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
+                    If Furigana.Length > 30 And Furigana.Length <> 0 Then
+                        FuriganaStart = Furigana.IndexOf("search for")
+                        Furigana = Mid(Furigana, FuriganaStart + 5)
+
+                        FuriganaStart = Furigana.IndexOf("search for")
+                        Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                        FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                        Furigana = Left(Furigana, FuriganaStart)
+                    Else
+                        If FuriganaStart <> -1 Or Furigana.Length > 20 Then
+                            Furigana = ""
+                        End If
+                    End If
+                End If
+
+                If Furigana = ActualSearchWord Or Furigana = "" Or Furigana.Length > 20 Then 'Another try
+                    Furigana = RetrieveClassRange(HTML, "kanji-3-up kanji", "</span><span></span>", "Furigana")
+                    If Furigana.Length < 30 And Furigana.Length <> 0 Then
+                        Furigana = Mid(Furigana, Furigana.LastIndexOf(">") + 2)
+                    Else
+                        Furigana = ""
+                    End If
+
+                End If
+
+                If Furigana.Length < 1 Or IsNothing(Furigana) Then
+                    Furigana = RetrieveClassRange(HTML, "audio id=" & QUOTE & "audio_" & ActualSearchWord, "<source src=", "Furigana2")
+                    Furigana = Furigana.Replace("<", "")
+                    Furigana = Furigana.Replace("audio id=" & QUOTE & "audio_" & ActualSearchWord & ":", "")
+                    Furigana = Furigana.Replace(QUOTE & ">", "")
+                End If
+            Catch
+            End Try
+        End If
+
+
+        Console.WriteLine("Searching for " & QUOTE & Gender & "_" & ActualSearchWord & QUOTE & " on OJAD")
+        Dim Snip1, Snip2 As Integer
+        Dim WordID As String = ""
+        WordURL = "http://www.gavo.t.u-tokyo.ac.jp/ojad/search/index/sortprefix:difficulty/narabi1:difficulty_asc/narabi2:mola_asc/narabi3:proc_asc/yure:visible/curve:fujisaki/details:visible/limit:100/word:" & ActualSearchWord
+        Try
+            HTML = Client.DownloadString(New Uri(WordURL))
+        Catch ex As Exception
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine(QUOTE & ActualSearchWord & QUOTE & " wasn't found on OJAD")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+
+        Try
+            WordID = HTML
+            Snip1 = WordID.IndexOf("<tr id=" & QUOTE & "word_")
+            If Snip1 = -1 Then
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine(QUOTE & ActualSearchWord & QUOTE & " wasn't found on OJAD")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End If
+            Snip1 += 14
+            WordID = Mid(WordID, Snip1)
+            Snip2 = WordID.IndexOf(QUOTE & ">")
+            WordID = Left(WordID, Snip2)
+        Catch
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine(QUOTE & ActualSearchWord & QUOTE & " wasn't found on OJAD")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+
+        Console.WriteLine("Getting word ID")
+        HTML = Client.DownloadString(New Uri(WordURL))
+        Dim AudioBase As String = "http://www.gavo.t.u-tokyo.ac.jp/ojad/app/webroot/sound4/wav/male/"
+        Dim Key As String = ""
+        Console.Clear()
+        For ID = 0 To 36
+            Console.SetCursorPosition(0, 0)
+            Console.WriteLine("Getting audio ID")
+            Console.WriteLine("Testing ID " & ID & "/36")
+            Key = ID
+            If Key.Length = 1 Then
+                Key = "00" & Key
+            ElseIf Key.Length = 2 Then
+                Key = "0" & Key
+            End If
+            Try
+                WordURL = AudioBase & Key & "/" & WordID & "_1_1_male.wav"
+                HTML = Client.DownloadString(New Uri(WordURL))
+            Catch
+                WordURL = ""
+            End Try
+
+            If HTML.IndexOf("<!DOCTYPE html>") <> -1 Then
+                Continue For
+            End If
+            If Word <> "" Then
+                ID = 999
+                Continue For
+            End If
+        Next
+
+        If Key > 35 Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("It seems that you didn't enter a verb. Only verbs work, sorry!")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End If
+
+        Console.Clear()
+        Console.WriteLine("Downloading audio:")
+        AudioBase &= Key & "/" & WordID
+        Try
+            System.IO.Directory.Delete("C:\ProgramData\Japanese Conjugation Helper\Audio", True)
+        Catch
+        End Try
+        My.Computer.FileSystem.CreateDirectory("C:\ProgramData\Japanese Conjugation Helper\Audio")
+        Dim Conjugation As String = ""
+        Dim Tries As Integer = 0
+        Dim MaxAudio As Integer = 12
+        If IAdj = True Then
+            MaxAudio = 9
+        End If
+        For AudioID = 1 To MaxAudio
+            If IAdj = True Then
+                If AudioID = 1 Then
+                    WordURL = AudioBase & "_" & AudioID & "_1_male.wav"
+                Else
+                    WordURL = AudioBase & "_" & AudioID + 1 & "_1_male.wav"
+                End If
+            Else
+                WordURL = AudioBase & "_" & AudioID & "_1_male.wav"
+            End If
+
+            If Gender = "female" Then
+                WordURL = WordURL.Replace("male", "female")
+            End If
+            If Verb = True Then
+                Select Case AudioID
+                    Case 1
+                        Conjugation = "dictionary"
+                    Case 2
+                        Conjugation = "masu"
+                    Case 3
+                        Conjugation = "te"
+                    Case 4
+                        Conjugation = "past"
+                    Case 5
+                        Conjugation = "negative"
+                    Case 6
+                        Conjugation = "negative_past"
+                    Case 7
+                        Conjugation = "ba_conditional"
+                    Case 8
+                        Conjugation = "causative"
+                    Case 9
+                        Conjugation = "passive"
+                    Case 10
+                        Conjugation = "imperative"
+                    Case 11
+                        Conjugation = "potential"
+                    Case 12
+                        Conjugation = "volitional"
+                End Select
+            Else
+                Select Case AudioID
+                    Case 1
+                        Conjugation = "dictionary"
+                    Case 2
+                        Conjugation = "polite"
+                    Case 3
+                        Conjugation = "adverb"
+                    Case 4
+                        Conjugation = "te"
+                    Case 5
+                        Conjugation = "past"
+                    Case 6
+                        Conjugation = "negative"
+                    Case 7
+                        Conjugation = "negative_past"
+                    Case 8
+                        Conjugation = "ba-conditional"
+                End Select
+            End If
+            Tries = 0
+            Do Until Tries = -1 Or Tries = 2
+                Try
+                    Client.DownloadFile(WordURL, "C:\ProgramData\Japanese Conjugation Helper\Audio\" & AudioID & ".wav")
+                    Tries = -1
+                Catch
+                    Tries += 1
+                End Try
+            Loop
+        Next
+
+        Dim AudioLeft As String = ""
+        For ToAdd = 1 To MaxAudio
+            AudioLeft &= ToAdd
+        Next
+        Dim AudioLeft2 As String = AudioLeft
+
+        If MaxAudio = 9 Then
+            MaxAudio = 8
+        End If
+
+        Dim Ichidan, Godan As Boolean
+        If Verb = True Then
+            If Types.IndexOf("ichidan") <> -1 Then
+                Ichidan = True
+            Else
+                Godan = True
+            End If
+        End If
+
+        Dim Last As String = Right(Furigana, 1)
+        Dim LastAdd As String = ""
+        Dim LastAdd2 As String = ""
+        Dim LastAddPot As String = ""
+
+        Dim PlainVerb As String = ""
+        Dim masuStem As String = ""
+        Dim NegativeStem As String = ""
+        Dim Potential As String = ""
+        Dim Causative As String = ""
+        Dim Conditional As String = ""
+        Dim teStem As String = ""
+        Dim Volitional As String = ""
+        Dim Passive As String = ""
+        Dim Imperative As String = ""
+        Dim ShortPastEnding As String = ""
+        If Verb = True Then
+            PlainVerb = Furigana
+            If Godan = True Then
+                If Last = "む" Then
+                    LastAdd = "み"
+                    LastAdd2 = "もう"
+                End If
+                If Last = "ぶ" Then
+                    LastAdd = "び"
+                    LastAdd2 = "ぼう"
+                End If
+                If Last = "ぬ" Then
+                    LastAdd = "に"
+                    LastAdd2 = "のう"
+                End If
+                If Last = "す" Then
+                    LastAdd = "し"
+                    LastAdd2 = "そう"
+                End If
+                If Last = "ぐ" Then
+                    LastAdd = "ぎ"
+                    LastAdd2 = "ごう"
+                End If
+                If Last = "く" Then
+                    LastAdd = "き"
+                    LastAdd2 = "こう"
+                End If
+                If Last = "る" Then
+                    LastAdd = "り"
+                    LastAdd2 = "ろう"
+                End If
+                If Last = "つ" Then
+                    LastAdd = "ち"
+                    LastAdd2 = "とう"
+                End If
+                If Last = "う" Then
+                    LastAdd = "い"
+                    LastAdd2 = "おう"
+                End If
+                masuStem = Left(PlainVerb, PlainVerb.Length - 1) & LastAdd
+                Volitional = Left(PlainVerb, PlainVerb.Length - 1) & LastAdd2
+            Else
+                masuStem = Left(PlainVerb, PlainVerb.Length - 1)
+                Volitional = Left(PlainVerb, PlainVerb.Length - 1) & "よう"
+            End If
+
+            'Creating negative stems (Last add) and Potential forms
+            If Godan = True Then
+                If Last = "む" Then
+                    LastAdd = "ま"
+                    LastAddPot = "める"
+                End If
+                If Last = "ぶ" Then
+                    LastAdd = "ば"
+                    LastAddPot = "べる"
+                End If
+                If Last = "ぬ" Then
+                    LastAdd = "な"
+                    LastAddPot = "ねる"
+                End If
+                If Last = "す" Then
+                    LastAdd = "さ"
+                    LastAddPot = "せる"
+                End If
+                If Last = "ぐ" Then
+                    LastAdd = "が"
+                    LastAddPot = "げる"
+                End If
+                If Last = "く" Then
+                    LastAdd = "か"
+                    LastAddPot = "ける"
+                End If
+                If Last = "る" Then
+                    LastAdd = "ら"
+                    LastAddPot = "れる"
+                End If
+                If Last = "つ" Then
+                    LastAdd = "た"
+                    LastAddPot = "てる"
+                End If
+                If Last = "う" Then
+                    LastAdd = "わ"
+                    LastAddPot = "える"
+                End If
+                NegativeStem = Left(PlainVerb, PlainVerb.Length - 1) & LastAdd
+                Potential = Left(PlainVerb, PlainVerb.Length - 1) & LastAddPot
+                Causative = Left(PlainVerb, PlainVerb.Length - 1) & LastAdd & "せる"
+                Conditional = Left(Potential, Potential.Length - 1) & "ば"
+                Passive = Left(PlainVerb, PlainVerb.Length - 1) & LastAdd & "れる"
+                Imperative = Left(Potential, Potential.Length - 1)
+            Else
+                NegativeStem = Left(PlainVerb, PlainVerb.Length - 1)
+                Potential = Left(PlainVerb, PlainVerb.Length - 1) & "られる"
+                Causative = Left(PlainVerb, PlainVerb.Length - 1) & "させる"
+                Conditional = Left(PlainVerb, PlainVerb.Length - 1) & "れば"
+                Passive = masuStem & "られる"
+                Imperative = masuStem + "ろ"
+            End If
+
+            'Creating te-form stem of searched word
+            If Godan = True Then
+                If Last = "む" Or Last = "ぶ" Or Last = "ぬ" Then
+                    LastAdd = "んで"
+                End If
+                If Last = "す" Then
+                    LastAdd = "して"
+                End If
+                If Last = "ぐ" Then
+                    LastAdd = "いで"
+                End If
+                If Last = "く" Then
+                    LastAdd = "いて"
+                End If
+                If Last = "る" Or Last = "つ" Or Last = "う" Then
+                    LastAdd = "って"
+                End If
+                teStem = Left(PlainVerb, PlainVerb.Length - 1) & LastAdd
+            Else
+                teStem = Left(PlainVerb, PlainVerb.Length - 1) & "て"
+            End If
+
+            If PlainVerb = "来る" Then
+                Imperative = "来い"
+            ElseIf PlainVerb = "する" Then
+                Imperative = "しろ"
+            End If
+
+            'For ShortPastForm:
+            ShortPastEnding = Right(teStem, 1)
+            If ShortPastEnding = "て" Then
+                ShortPastEnding = "た"
+            ElseIf ShortPastEnding = "で" Then
+                ShortPastEnding = "だ"
+            ElseIf Ichidan = True Then
+                ShortPastEnding = "た"
+            Else
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("Error: Short past tense")
+                Console.ForegroundColor = ConsoleColor.White
+            End If
+        End If
+
+
+        Randomize()
+        Dim AudioPlay As Integer = 0
+        Dim AudioPlay2 As Integer = 0
+
+        Dim Response As String = ""
+        Dim NumberResponse As Integer = 0
+        Dim IsNumber As Boolean = False
+        Dim CorrectConjugation As String = ""
+        Do Until AudioLeft.Length = 0
+            IsNumber = False
+            If AudioLeft = "0" Then
+                AudioLeft = "10"
+            End If
+            Do Until IsNumber = True 'Generating a suitable random number
+                AudioPlay = Int((MaxAudio) * Rnd() + 1)
+                If AudioLeft.Contains(AudioPlay) Then
+                    IsNumber = True
+                End If
+            Loop
+
+            If Verb = True Then
+                IsNumber = False
+                Tries = 0
+                Do Until IsNumber = True
+                    Select Case AudioPlay
+                        Case 1
+                            Conjugation = "dictionary"
+                            CorrectConjugation = PlainVerb
+                        Case 2
+                            Conjugation = "masu"
+                            CorrectConjugation = masuStem + "ます"
+                        Case 3
+                            Conjugation = "te"
+                            CorrectConjugation = teStem
+                        Case 4
+                            Conjugation = "past"
+                            CorrectConjugation = Left(teStem, teStem.Length - 1) & ShortPastEnding
+                        Case 5
+                            Conjugation = "negative"
+                            CorrectConjugation = NegativeStem + "ない"
+                        Case 6
+                            Conjugation = "negative_past"
+                            CorrectConjugation = NegativeStem + "なかった"
+                        Case 7
+                            Conjugation = "ba_conditional"
+                            CorrectConjugation = Conditional
+                        Case 8
+                            Conjugation = "causative"
+                            CorrectConjugation = Causative
+                        Case 9
+                            Conjugation = "passive"
+                            CorrectConjugation = Passive
+                        Case 10
+                            Conjugation = "imperative"
+                            CorrectConjugation = Imperative
+                        Case 11
+                            Conjugation = "potential"
+                            CorrectConjugation = Potential
+                        Case 12
+                            Conjugation = "volitional"
+                            CorrectConjugation = Volitional
+                    End Select
+
+                    Console.Clear()
+                    Select Case Tries
+                        Case 1
+                            Console.ForegroundColor = ConsoleColor.Yellow
+                        Case 2
+                            Console.ForegroundColor = ConsoleColor.DarkYellow
+                        Case 3
+                            Console.ForegroundColor = ConsoleColor.Red
+                        Case 4, 5
+                            Console.ForegroundColor = ConsoleColor.DarkRed
+                    End Select
+                    Console.WriteLine("Type " & ActualSearchWord & "'s " & Conjugation & " form.")
+                    Console.ForegroundColor = ConsoleColor.White
+
+                    Response = WanaKana.ToHiragana(Console.ReadLine.Trim)
+                    If Response = CorrectConjugation Then
+                        IsNumber = True
+                    End If
+                    If Tries = 5 Then
+                        IsNumber = True
+                        Console.WriteLine("The answer was " & CorrectConjugation)
+                        My.Computer.Audio.Play("C:\ProgramData\Japanese Conjugation Helper\Audio\" & AudioPlay & ".wav", AudioPlayMode.WaitToComplete)
+                        Console.Clear()
+                    End If
+                    Tries += 1
+                Loop
+            End If
+            AudioLeft = AudioLeft.Replace(AudioPlay, "")
+
+            IsNumber = False
+            If AudioLeft2 = "0" Then
+                AudioLeft2 = "10"
+            End If
+            Do Until IsNumber = True 'Generating a suitable random number
+                AudioPlay2 = Int((MaxAudio) * Rnd() + 1)
+                If AudioLeft2.Contains(AudioPlay2) Then
+                    IsNumber = True
+                End If
+            Loop
+            Tries = 0
+            If Verb = False Then
+                Select Case AudioPlay2
+                    Case 1
+                        Conjugation = "dictionary"
+                    Case 2
+                        Conjugation = "polite"
+                    Case 3
+                        Conjugation = "adverb"
+                    Case 4
+                        Conjugation = "te"
+                    Case 5
+                        Conjugation = "past"
+                    Case 6
+                        Conjugation = "negative"
+                    Case 7
+                        Conjugation = "negative_past"
+                    Case 8
+                        Conjugation = "ba-conditional"
+                End Select
+            End If
+
+            IsNumber = False
+            Do Until IsNumber = True
+                My.Computer.Audio.Play("C:\ProgramData\Japanese Conjugation Helper\Audio\" & AudioPlay2 & ".wav", AudioPlayMode.Background)
+                Console.Clear()
+                Console.WriteLine("What form is the audio in?")
+                Console.WriteLine()
+                Select Case Tries
+                    Case 1
+                        Console.ForegroundColor = ConsoleColor.Yellow
+                    Case 2
+                        Console.ForegroundColor = ConsoleColor.DarkYellow
+                    Case 3, 4, 5
+                        Console.ForegroundColor = ConsoleColor.Red
+                    Case Is > 5
+                        Console.ForegroundColor = ConsoleColor.DarkRed
+                End Select
+                If Verb = True Then
+                    Console.WriteLine("1 = dictionary")
+                    Console.WriteLine("2 = masu ")
+                    Console.WriteLine("3 = te-form")
+                    Console.WriteLine("4 = past")
+                    Console.WriteLine("5 = negative")
+                    Console.WriteLine("6 = negative past")
+                    Console.WriteLine("7 = ba-conditional")
+                    Console.WriteLine("8 = causative")
+                    Console.WriteLine("9 = passive")
+                    Console.WriteLine("10 = imperative")
+                    Console.WriteLine("11 = potential")
+                    Console.WriteLine("12 = volitional")
+                Else
+                    Console.WriteLine("1 = dictionary form")
+                    Console.WriteLine("2 = polite")
+                    Console.WriteLine("3 = adverb")
+                    Console.WriteLine("4 = te-form")
+                    Console.WriteLine("5 = past")
+                    Console.WriteLine("6 = negative")
+                    Console.WriteLine("7 = negative past")
+                    Console.WriteLine("8 = ba-conditional")
+                End If
+                Console.ForegroundColor = ConsoleColor.White
+                Response = Console.ReadLine
+                If IsNumeric(Response) = True Then
+                    NumberResponse = CInt(Response)
+                    If NumberResponse > 0 And NumberResponse <= MaxAudio Then
+                        IsNumber = True
+                    End If
+                End If
+
+                If IsNumber = True Then
+                    IsNumber = False
+                    If AudioPlay2 = NumberResponse Then
+                        IsNumber = True
+                        AudioLeft = AudioLeft.Replace(AudioPlay2, "")
+                    ElseIf Ichidan = True Then
+                        If AudioPlay2 = 9 Or AudioPlay2 = 11 Then
+                            If NumberResponse = 9 Or NumberResponse = 11 Then
+                                IsNumber = True
+                                AudioLeft2 = AudioLeft2.Replace(AudioPlay2, "")
+                            End If
+                        End If
+                    Else
+                        Tries += 1
+                    End If
+                End If
+                If AudioLeft2.Length = 0 Then
+                    IsNumber = False
+                End If
+            Loop
+
+        Loop
+
+        Console.WriteLine()
+        Console.WriteLine("Done!")
+        Console.ReadLine()
+        Main()
+    End Sub
+    Sub VerbAudioGen(ByVal Word)
+        Const QUOTE = """"
+        Dim Gender As String = "male"
+        If Word.indexOf("!f") <> -1 Then
+            Word = Word.replace("!f", "")
+            Gender = "female"
+        ElseIf Word.indexOf("!m") <> -1 Then
+            Word = Word.replace("!m", "")
+            Gender = "male"
+        End If
+        Word = Word.Replace(" ", "")
+
+        Console.Clear()
+        Console.WriteLine("Searching " & QUOTE & Word & QUOTE)
+        Dim WordURL As String
+        Dim Client As New WebClient
+        Dim HTML As String = ""
+        Client.Encoding = System.Text.Encoding.UTF8
+        Try
+            WordURL = ("https://jisho.org/search/" & Word)
+            HTML = Client.DownloadString(New Uri(WordURL))
+        Catch
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Search failed")
+            Console.WriteLine("Check you are connected to the internet")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+        Dim HTMLTemp As String = HTML
+
+        Dim ActualSearchWord As String = ""
+        Dim ActualSearch1stAppearance As Integer = 0
+        Dim ActualSearch2ndAppearance As Integer = 0
+        Dim WordLink As String = ""
+        Dim Max As Integer = 3
+        Dim Types As String = ""
+
+        Console.WriteLine("Trying to get information for " & QUOTE & Word & QUOTE)
+        Try
+            ActualSearchWord = RetrieveClassRange(HTMLTemp, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
+            ActualSearchWord = Mid(ActualSearchWord, 30)
+            ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+            ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+            ActualSearchWord = ActualSearchWord.Trim
+
+            'Getting the link of the actual word:
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+            HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+            ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+            ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+            WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+        Catch
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Word not found!")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+
+        If ActualSearchWord.IndexOf("<") <> -1 Or ActualSearchWord.IndexOf(">") <> -1 Or ActualSearchWord.IndexOf("span") <> -1 Then
+            ActualSearchWord = RetrieveClassRange(HTML, "<div class=" & QUOTE & "concept_light clearfix" & QUOTE & ">", "</div>", "Actual word search")
+            ActualSearchWord = RetrieveClassRange(ActualSearchWord, "text", "</span", "Actual word search")
+            ActualSearchWord = Mid(ActualSearchWord, 17)
+            ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+            ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+        End If
+
+        If ActualSearchWord.Length = 0 Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Word not found!")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End If
+
+        Types = TypeScraper("jisho.org/search/" & ActualSearchWord).replace("&#39;", "").tolower
+
+        If Types.IndexOf("verb") = -1 Or Types.IndexOf("suru") <> -1 Or Types.IndexOf("noun") <> -1 Then
+            If Types.IndexOf("i-adjective") = -1 Then
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("You can only download audio files for verbs.")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End If
+        End If
+        Dim Verb, IAdj As Boolean
+        If Types.IndexOf("verb") <> -1 Then
+            Verb = True
+        ElseIf Types.IndexOf("i-adj") <> -1 Then
+            IAdj = True
+        End If
+
+        Console.WriteLine("Searching for " & QUOTE & Gender & "_" & ActualSearchWord & QUOTE & " on OJAD")
+        Dim Snip1, Snip2 As Integer
+        Dim WordID As String = ""
+        WordURL = "http://www.gavo.t.u-tokyo.ac.jp/ojad/search/index/sortprefix:difficulty/narabi1:difficulty_asc/narabi2:mola_asc/narabi3:proc_asc/yure:visible/curve:fujisaki/details:visible/limit:100/word:" & ActualSearchWord
+        Try
+            HTML = Client.DownloadString(New Uri(WordURL))
+        Catch ex As Exception
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine(QUOTE & ActualSearchWord & QUOTE & " wasn't found on OJAD")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+
+        Try
+            WordID = HTML
+            Snip1 = WordID.IndexOf("<tr id=" & QUOTE & "word_")
+            If Snip1 = -1 Then
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine(QUOTE & ActualSearchWord & QUOTE & " wasn't found on OJAD")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End If
+            Snip1 += 14
+            WordID = Mid(WordID, Snip1)
+            Snip2 = WordID.IndexOf(QUOTE & ">")
+            WordID = Left(WordID, Snip2)
+        Catch
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine(QUOTE & ActualSearchWord & QUOTE & " wasn't found on OJAD")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End Try
+
+        Console.WriteLine("Getting word ID")
+        HTML = Client.DownloadString(New Uri(WordURL))
+        Dim AudioBase As String = "http://www.gavo.t.u-tokyo.ac.jp/ojad/sound4/mp3/male/"
+        Dim Key As String = ""
+        Console.Clear()
+        For ID = 0 To 36
+            Console.SetCursorPosition(0, 0)
+            Console.WriteLine("Getting audio ID")
+            Console.WriteLine("Testing ID " & ID & "/36")
+            Key = ID
+            If Key.Length = 1 Then
+                Key = "00" & Key
+            ElseIf Key.Length = 2 Then
+                Key = "0" & Key
+            End If
+            Try
+                WordURL = AudioBase & Key & "/" & WordID & "_1_1_male.mp3"
+                HTML = Client.DownloadString(New Uri(WordURL))
+            Catch
+                WordURL = ""
+            End Try
+
+            If HTML.IndexOf("<!DOCTYPE html>") <> -1 Then
+                Continue For
+            End If
+            If Word <> "" Then
+                ID = 999
+                Continue For
+            End If
+        Next
+
+        If Key > 35 Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("It seems that you didn't enter a verb. Only verbs work, sorry!")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End If
+
+        Console.Clear()
+        Console.WriteLine("Downloading audio:")
+        AudioBase &= Key & "/" & WordID
+        My.Computer.FileSystem.CreateDirectory(Environ$("USERPROFILE") & "\Downloads\Conjugation Audio\" & ActualSearchWord & " Conjugations")
+        Dim Conjugation As String = ""
+        Dim Tries As Integer = 0
+        Dim MaxAudio As Integer = 12
+        If IAdj = True Then
+            MaxAudio = 9
+        End If
+        For AudioID = 1 To MaxAudio
+            WordURL = AudioBase & "_" & AudioID & "_1_male.mp3?"
+            If Gender = "female" Then
+                WordURL = WordURL.Replace("male", "female")
+            End If
+            If Verb = True Then
+                Select Case AudioID
+                    Case 1
+                        Conjugation = "dictionary"
+                    Case 2
+                        Conjugation = "masu"
+                    Case 3
+                        Conjugation = "te"
+                    Case 4
+                        Conjugation = "past"
+                    Case 5
+                        Conjugation = "negative"
+                    Case 6
+                        Conjugation = "negative_past"
+                    Case 7
+                        Conjugation = "ba_conditional"
+                    Case 8
+                        Conjugation = "causative"
+                    Case 9
+                        Conjugation = "passive"
+                    Case 10
+                        Conjugation = "imperative"
+                    Case 11
+                        Conjugation = "potential"
+                    Case 12
+                        Conjugation = "volitional"
+                End Select
+            Else
+                Select Case AudioID
+                    Case 1
+                        Conjugation = "dictionary"
+                    Case 2
+                        Conjugation = "dictionary2"
+                    Case 3
+                        Conjugation = "polite"
+                    Case 4
+                        Conjugation = "adverb"
+                    Case 5
+                        Conjugation = "te"
+                    Case 6
+                        Conjugation = "past"
+                    Case 7
+                        Conjugation = "negative"
+                    Case 8
+                        Conjugation = "negative_past"
+                    Case 9
+                        Conjugation = "ba-conditional"
+                End Select
+            End If
+            Tries = 0
+            Do Until Tries = -1 Or Tries = 2
+                Try
+                    Client.DownloadFile(WordURL, Environ$("USERPROFILE") & "\Downloads\Conjugation Audio\" & ActualSearchWord & " Conjugations\" & Conjugation & "_" & Gender & ".mp3")
+                    Console.ForegroundColor = ConsoleColor.Green
+                    Console.WriteLine("Downloaded " & Conjugation & "_" & Gender & ".mp3")
+                    Console.ForegroundColor = ConsoleColor.White
+                    Tries = -1
+                Catch
+                    Tries += 1
+                End Try
+            Loop
+            If Tries = 2 Then
+                Console.ForegroundColor = ConsoleColor.Yellow
+                Console.WriteLine("It seems there isn't an audio file for " & Conjugation & " form")
+                Console.ForegroundColor = ConsoleColor.White
+            End If
+        Next
+
+        Console.ForegroundColor = ConsoleColor.Blue
+        Console.WriteLine("Audio is in Downloads in a folder called " & QUOTE & "Conjugation Audio" & QUOTE)
+        Console.WriteLine("Type 'yes' to be taken there.")
+        Console.ForegroundColor = ConsoleColor.White
+        If Console.ReadLine().ToLower.IndexOf("yes") <> -1 Then
+            Process.Start("explorer.exe", Environ$("USERPROFILE") & "\Downloads\Conjugation Audio\" & ActualSearchWord & " Conjugations")
+        End If
+        Main()
+    End Sub
     Sub DisplayDefinitions(ByVal SelectedDefinition, ByVal SelectedType, ByVal DefG1, ByVal DisplayType)
         'Displaying word definitions WITH corresponding the word types: -------------------------
         Dim NumberCheckD As String = ""
@@ -618,7 +1624,9 @@ Module Module1
             WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
             FoundWordLinks(0) = WordLink
         Catch
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End Try
@@ -733,7 +1741,9 @@ Module Module1
             WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
             FoundWordLinks(1) = WordLink
         Catch
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End Try
@@ -743,7 +1753,9 @@ Module Module1
 
         ActualSearchWord2 = RetrieveClassRange(HTML, "<span class=" & Quote & "text" & Quote & ">", "</div>", "Actual word search2nd")
         If ActualSearchWord2.Length < 2 Then
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Word couldn't be found")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End If
@@ -968,7 +1980,10 @@ Module Module1
         Try
             HTML = Client.DownloadString(New Uri(WordURL))
         Catch
-            Console.WriteLine("You have no internet connection")
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Search failed")
+            Console.WriteLine("Check you are connected to the internet")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End Try
@@ -1134,11 +2149,12 @@ Module Module1
                     Next
                     If TotalWordsFound = 0 Then
                         Console.Clear()
+                        Console.ForegroundColor = ConsoleColor.Red
                         Console.WriteLine("No words were found.")
+                        Console.ForegroundColor = ConsoleColor.White
                         Console.ReadLine()
 
                         Main()
-
                     End If
 
                     IntTest = Console.ReadLine
@@ -1185,7 +2201,9 @@ Module Module1
                 WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
                 FoundWordLinks(0) = WordLink
             Catch
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("That word doesn't exist... Atleast, it seems that way :O")
+                Console.ForegroundColor = ConsoleColor.White
                 Console.ReadLine()
 
                 Main()
@@ -1196,7 +2214,9 @@ Module Module1
 
             ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
             If ActualSearchWord.Length < 2 Then
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("Word couldn't be found")
+                Console.ForegroundColor = ConsoleColor.White
                 Console.ReadLine()
 
                 Main()
@@ -2032,9 +3052,10 @@ Module Module1
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
             Dim LastRequest As String = ""
             Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Do you have a Last Request? (for example 'anki' or 'kanji')")
+            Console.WriteLine("Do you have a Last Request? (for example 'anki', 'kanji' or 'audio')")
             Console.ForegroundColor = ConsoleColor.White
-            LastRequest = Console.ReadLine().ToLower()
+            LastRequest = Console.ReadLine().ToLower().Trim
+            LastRequest = LastRequest.Replace("/", "").Replace("!", "")
 
             Dim Types As String = FoundTypes(0)
             If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
@@ -2169,9 +3190,12 @@ Module Module1
                 End Try
                 Console.ReadLine()
                 Main()
+            ElseIf LastRequest = "audio" Then
+                VerbAudioGen(ActualSearchWord)
+            ElseIf LastRequest = "history" Then
+
             End If
         End If
-
     End Sub
     Sub TranslateSentence(ByVal Sentence)
         Const QUOTE = """"
@@ -2379,7 +3403,9 @@ Module Module1
         Do Until Bracket1 = -1
             If Bracket1 <> -1 Then
                 Bracket2 = PlainMeaning.IndexOf(")")
-
+                If Bracket2 = -1 Then
+                    Bracket2 = PlainMeaning.Length
+                End If
                 If Bracket1 <> -1 Or Bracket2 <> -1 Then
                     PlainMeaning = PlainMeaning.Replace(Mid(PlainMeaning, Bracket1 + 1, Bracket2 - Bracket1 + 1), "")
                 End If
@@ -2525,7 +3551,9 @@ Module Module1
         ElseIf Type = "Ichidan" Then
             ShortPastEnding = "た"
         Else
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Error: Short past tense")
+            Console.ForegroundColor = ConsoleColor.White
         End If
 
         Dim Vowel1 As Boolean = False
@@ -2846,8 +3874,10 @@ Module Module1
                 PreferenceReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
             Catch
                 Console.Clear()
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("You haven't got a custom S parameter set up.")
                 Console.WriteLine("To do this, use the '/pref' command.")
+                Console.ForegroundColor = ConsoleColor.White
                 Console.ReadLine()
                 Main()
             End Try
@@ -3228,7 +4258,6 @@ Module Module1
         Catch
         End Try
 
-
         Dim KanjiBool As Boolean = False
         If S = 0 Then
             If PreferencesString(12) <> 0 Then
@@ -3408,7 +4437,9 @@ Module Module1
             ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
             WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
         Catch
-            Console.WriteLine("Word not found!")
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Word couldn't be found")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End Try
@@ -3422,7 +4453,9 @@ Module Module1
         End If
 
         If ActualSearchWord.Length = 0 Then
-            Console.WriteLine("Word wasn't found.")
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Word couldn't be found")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End If
@@ -3478,7 +4511,9 @@ Module Module1
             ElseIf TypeSnip.IndexOf("Ichidan verb") <> -1 Then
                 Type = "Ichidan"
             Else
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("Error: Couldn't identify verb")
+                Console.ForegroundColor = ConsoleColor.White
                 Console.ReadLine()
                 Main()
             End If
@@ -3486,7 +4521,9 @@ Module Module1
 
         If Verb = False Then
             Console.Clear()
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("This word type isn't supported, sorry!")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End If
@@ -3750,7 +4787,7 @@ Module Module1
 
         If DoMeaning = False And DoKun = False And DoOn = False Then
             Console.Clear()
-            Console.WriteLine("You didn't choose anything to be tested on!")
+            Console.WriteLine("You didn't choose anything to be tested on")
             Console.WriteLine("Type 'y' for something you want to be tested on")
             Console.ReadLine()
             Main()
@@ -5183,7 +6220,6 @@ Module Module1
             Exit Sub
         End If
 
-
         Console.WriteLine("Done!")
         Console.ReadLine()
         Main()
@@ -5289,14 +6325,11 @@ Module Module1
         'Console.WriteLine(HTML)
         'Console.WriteLine("URL: " & URL)
 
-
         'Cutting text out of the HTML code:
         SnipStart = HTML.IndexOf("meaning-meaning") 'The start of the first group, groups are just kanji, this is so that you extract the right information for the right kanji
         SnipStart += 18
 
         SnipEnd = HTML.IndexOf("</span><span>&#") + 1 'This will make sure that I can get ALL meaning from 1 kanji because I won't have to worry about accidentally extracting information about the next kanji
-
-
 
         'Console.WriteLine(SnipEnd)
 
@@ -5306,42 +6339,6 @@ Module Module1
         End If
 
         Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
-
-
-
-        'Catch
-        '   Try
-        '  Console.Clear()
-        ' Console.WriteLine("Oh noes, something bad happened :O")
-        'Console.WriteLine()
-        'Console.WriteLine("Error: DefinitionScraper")
-        'Console.WriteLine("{Snip Beginning}: |meaning-meaning|")
-        'Console.WriteLine("{Snip Ending}: |</span><span>&#|")
-        'Console.WriteLine("Catch: 1")
-        'Console.WriteLine("URL: " & URL)
-        'Console.WriteLine("Read: |" & Read & "|")
-        'Console.WriteLine("SnipStart: " & SnipStart)
-        'Console.WriteLine("[SnipStart - 18]: " & SnipStart - 18)
-        'Console.WriteLine("SnipEnd: " & SnipEnd)
-        'Console.WriteLine("[HTML.length]: " & HTML.Length)
-        'Console.WriteLine("Snip: " & Snip)
-        ''Console.WriteLine("First fail: " & FirstFail)
-        'Console.WriteLine("FoundMeanings.Length:" & FoundMeanings.Length)
-        'Console.ReadLine()
-        'Main()
-        'Catch
-        '   Console.WriteLine()
-        '  Console.WriteLine("Error: DefinitionScraper; FirstError.NotCaught")
-        ' Console.WriteLine("Catch: 2")
-        'Console.WriteLine("Read: " & Read)
-        'Console.WriteLine("URL: " & URL)
-        'Console.WriteLine("This was caused by another error")
-        'Console.ReadLine()
-        'Main()
-        'End Try
-
-        'End Try
-
 
         Return (Snip)
     End Function
@@ -5424,7 +6421,9 @@ Module Module1
             End If
 
         Catch
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Error: Definition; Snip")
+            Console.ForegroundColor = ConsoleColor.White
         End Try
 
         Return (Snip)
@@ -5494,6 +6493,8 @@ Module Module1
         Dim HTML As String = ""
         HTML = Client.DownloadString(New Uri("https://" & URL))
 
+        Dim Temp As String
+        Dim TempIndex As Integer
         Dim SnipStart As Integer
         Dim SnipEnd As Integer
         Dim Snip As String = "NOTHING"
@@ -5551,10 +6552,10 @@ Module Module1
             HTML = Mid(HTML, SnipEnd + 10)
 
 
-
             SnipStart = HTML.IndexOf("meaning-definition-section_divider") 'This will be used to get the Extra Details for the current word up to (but not including) the next
-
+            TempIndex = SnipStart
             Try
+                Temp = Left(HTML, TempIndex)
                 If Left(HTML, SnipStart).IndexOf("sense-tag") <> -1 Then
                     'Snipping up to the sense tag:
                     SnipStart = Left(HTML, SnipStart).IndexOf("sense-tag")
@@ -5590,10 +6591,6 @@ Module Module1
                             SnipEnd = Snip2.IndexOf(">")
                             Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
                         End If
-
-
-                        ''''''''''''''''''''Want to add the grabbing of more info
-
                     End If
                     'New:
                     SnipEnd = SnipEnd
@@ -5619,11 +6616,12 @@ Module Module1
                     'To do: when searching '上げる' and looking up '7. to give​' get the third info below
 
                     Snip2 = "[" & Snip2 & "]"
-
                 End If
 
             Catch
             End Try
+
+
 
             FoundMeanings(FoundMeanings.Length - 1) = Snip & " " & Snip2
 
@@ -6059,7 +7057,7 @@ ChangeS:
                 TextWriter.Close()
 
                 Console.Clear()
-                Console.WriteLine("Your preferences have been reset!")
+                Console.WriteLine("Your preferences have been reset")
                 Console.ReadLine()
                 Preferences()
             Else
