@@ -2057,7 +2057,7 @@ Module Module1
                     HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
 
                     'Checking if word is "common":
-                    If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
+                    If Left(HTMLTemp, 350).LastIndexOf("Common word") <> -1 Then
                         CommonWord(LoopIndex) = "True"
                     End If
 
@@ -2189,7 +2189,7 @@ Module Module1
                 HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
 
                 'Checking if word is "common":
-                If Left(HTMLTemp, 300).LastIndexOf("Common word") <> -1 Then
+                If Left(HTMLTemp, 350).LastIndexOf("Common word") <> -1 Then
                     CommonWord(0) = "True"
                 End If
 
@@ -6100,6 +6100,20 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                 StringTemp3 = StringTemp3.Replace("&#39;", "'")
 
+                If StringTemp.IndexOf("<li>") <> -1 Then 'if there is another On reading compound
+                    StringTemp3 &= "|"
+                    Snip1 = StringTemp.IndexOf("<li>")
+                    StringTemp = Mid(StringTemp, Snip1 + 8)
+
+                    'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                    Snip2 = StringTemp.IndexOf("</li>")
+                    StringTemp3 &= Left(StringTemp, Snip2 - 1)
+                    StringTemp3 = StringTemp3.Replace(vbLf, "")
+                    StringTemp3 = StringTemp3.Replace("  【", "【")
+                    StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                    StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                End If
+
                 Try
                     Snip1 = StringTemp3.IndexOf("(")
                     Snip2 = StringTemp3.IndexOf(")")
@@ -6554,74 +6568,78 @@ Module Module1
 
             SnipStart = HTML.IndexOf("meaning-definition-section_divider") 'This will be used to get the Extra Details for the current word up to (but not including) the next
             TempIndex = SnipStart
+            Temp = HTML
             Try
-                Temp = Left(HTML, TempIndex)
-                If Left(HTML, SnipStart).IndexOf("sense-tag") <> -1 Then
+                Try
+                    Temp = Left(Temp, TempIndex)
+                Catch
+                End Try
+
+                If Temp.Contains("sense-tag") = True Then
                     'Snipping up to the sense tag:
-                    SnipStart = Left(HTML, SnipStart).IndexOf("sense-tag")
-                    HTML = Mid(HTML, SnipStart)
+                    If SnipStart = -1 Then
+                        SnipStart = 1
+                    End If
+                    SnipStart = Temp.IndexOf("sense-tag")
+                    Temp = Mid(Temp, SnipStart)
 
-                    SnipStart = HTML.IndexOf(">") + 2
-                    HTML = Mid(HTML, SnipStart)
+                    SnipStart = Temp.IndexOf(">") + 2
+                    Temp = Mid(Temp, SnipStart)
 
-                    SnipEnd = HTML.IndexOf("</")
-                    Snip2 = Left(HTML, SnipEnd)
-                    HTML = Mid(HTML, SnipStart)
+                    SnipEnd = Temp.IndexOf("</")
+                    Snip2 = Left(Temp, SnipEnd)
+                    Temp = Mid(Temp, SnipStart)
 
                     If Snip2.IndexOf("href") <> -1 Then
                         SnipStart = Snip2.IndexOf("<a href=")
                         SnipEnd = Snip2.IndexOf(">")
                         Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
                     End If
-
-                    SnipStart = HTML.IndexOf("meaning-definition-section_divider") '*again*, this will be used to get the Extra Details for the current word up to (but not including) the next
-
-                    If Left(HTML, SnipStart).IndexOf("sense-tag") <> -1 Then
-                        SnipStart = HTML.IndexOf("sense-tag")
-                        HTML = Mid(HTML, SnipStart)
-
-                        SnipStart = HTML.IndexOf(">") + 2
-                        HTML = Mid(HTML, SnipStart)
-
-                        SnipEnd = HTML.IndexOf("</")
-                        Snip2 = Snip2 & ", " & Left(HTML, SnipEnd)
-
-                        If Snip2.IndexOf("href") <> -1 Then
-                            SnipStart = Snip2.IndexOf("<a href=")
-                            SnipEnd = Snip2.IndexOf(">")
-                            Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
-                        End If
-                    End If
-                    'New:
-                    SnipEnd = SnipEnd
-
-
-                    If Left(HTML, SnipStart).IndexOf("tag-restriction") <> -1 Then
-                        SnipStart = HTML.IndexOf("tag-restriction") + 14
-                        HTML = Mid(HTML, SnipStart)
-
-                        SnipStart = HTML.IndexOf(">") + 2
-                        HTML = Mid(HTML, SnipStart)
-
-                        SnipEnd = HTML.IndexOf("</")
-                        Snip2 = Snip2 & ", " & Left(HTML, SnipEnd)
-
-
-                        If Snip2.IndexOf("href") <> -1 Then
-                            SnipStart = Snip2.IndexOf("<a href=")
-                            SnipEnd = Snip2.IndexOf(">")
-                            Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
-                        End If
-                    End If
-                    'To do: when searching '上げる' and looking up '7. to give​' get the third info below
-
-                    Snip2 = "[" & Snip2 & "]"
                 End If
+
+                If Temp.IndexOf("sense-tag") <> -1 Then
+                    SnipStart = Temp.IndexOf("sense-tag")
+                    Temp = Mid(Temp, SnipStart)
+
+                    SnipStart = Temp.IndexOf(">") + 2
+                    Temp = Mid(Temp, SnipStart)
+
+                    SnipEnd = Temp.IndexOf("</")
+                    Snip2 = Snip2 & ", " & Left(Temp, SnipEnd)
+
+                    If Snip2.IndexOf("href") <> -1 Then
+                        SnipStart = Snip2.IndexOf("<a href=")
+                        SnipEnd = Snip2.IndexOf(">")
+                        Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
+                    End If
+                End If
+
+                If Temp.IndexOf("tag-restriction") <> -1 Then
+                    SnipStart = Temp.IndexOf("tag-restriction") + 14
+                    Temp = Mid(Temp, SnipStart)
+
+                    SnipStart = Temp.IndexOf(">") + 2
+                    Temp = Mid(HTML, SnipStart)
+
+                    SnipEnd = Temp.IndexOf("</")
+                    Snip2 = Snip2 & ", " & Left(Temp, SnipEnd)
+
+
+                    If Snip2.IndexOf("href") <> -1 Then
+                        SnipStart = Snip2.IndexOf("<a href=")
+                        SnipEnd = Snip2.IndexOf(">")
+                        Snip2 = Snip2.Replace(Mid(Snip2, SnipStart, SnipEnd + 2 - SnipStart), "")
+                    End If
+                End If
+                'To do: when searching '上げる' and looking up '7. to give​' get the third info below
 
             Catch
             End Try
 
-
+            Snip2 = Snip2.Replace("#8203;", "")
+            If Snip2 <> "" Then
+                Snip2 = "[" & Snip2 & "]"
+            End If
 
             FoundMeanings(FoundMeanings.Length - 1) = Snip & " " & Snip2
 
