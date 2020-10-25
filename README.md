@@ -26,8 +26,7 @@
 * /ranki - Reverse Anki: Generate reverse anki cards (no documentation yet)
 
 ***
-
-**If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
+# **If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
 1. Click the ConjugationHelper icon in the very top left of the console window
 2. Then click "properties" at the bottom
 3. Lastly, make sure you are on the "Font" tab and select the "MS Mincho" font, there are a few other fonts that work too.
