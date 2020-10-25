@@ -2,7 +2,7 @@
 
 ### Note: When a new update adds a new conjugation, you should reset your preferences because new conjugations change the format of how settings are stored. Also uninstall the previous version so the new one will install.
 
-**A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & word breakdown and more!**. [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)
+**A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & sentence breakdown and more!**. [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)
 
 **Download the program [here](https://github.com/hopto-dot/Japanese-Conjugation-Helper/releases).** The interval that I release a new version will be bigger now because I am back to being a student with lots of other work I need to be focused on, not to fear though, the project isn't dead.
 
