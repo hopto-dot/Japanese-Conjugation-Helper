@@ -10,6 +10,7 @@ Imports WanaKanaNet
 
 Module Module1
     Sub Main()
+        Console.ForegroundColor = ConsoleColor.White
         Const QUOTE = """"
         Console.Clear()
         'For the input of Japanese Chaaracters
@@ -57,6 +58,14 @@ Module Module1
             Console.WriteLine("What word would you like audio for?")
             Word = Console.ReadLine.ToLower.Trim
             VerbAudioGen(Word)
+        End If
+
+        If Left(Word, 9) = "/heylingo" Then
+            If Word.Length > 12 Then
+                HeyLingoDownload(Mid(Word, 11))
+            Else
+                HeyLingoDownload("japanese")
+            End If
         End If
 
         If Word.IndexOf("/listening ") <> -1 Then
@@ -280,10 +289,6 @@ Module Module1
         End If
 
         If Left(Word, 1) = "/" Then
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine("This is not a command")
-            Console.ForegroundColor = ConsoleColor.White
-            Console.ReadLine()
             Main()
         End If
 
@@ -1714,6 +1719,9 @@ Module Module1
         End If
         Console.BackgroundColor = ConsoleColor.Black
         Console.WriteLine()
+        KanjiInfo(ActualSearchWord, 2)
+        Console.WriteLine()
+        Console.WriteLine("-------------------------------------------------------------------------------")
         Console.WriteLine()
 
         'end of first word scrapping  _______________________________________________________________________________________________________________________
@@ -1833,6 +1841,8 @@ Module Module1
             Console.WriteLine(ActualSearchWord2)
         End If
         Console.BackgroundColor = ConsoleColor.Black
+        Console.WriteLine()
+        KanjiInfo(ActualSearchWord, 2)
 
         Console.ReadLine()
         Main()
@@ -2081,7 +2091,7 @@ Module Module1
                     End If
                 End Try
 
-                FoundDefinitions(LoopIndex) = DefinitionScraper(WordLink).replace("&#39;", "")
+                FoundDefinitions(LoopIndex) = DefinitionScraper(WordLink).replace("&#39;", "").replace("&quot;", QUOTE)
                 FoundWordLinks(LoopIndex) = WordLink
                 If ActualSearchWord = Nothing Then
                     Array.Resize(FoundDefinitions, FoundDefinitions.Length - 1)
@@ -2210,8 +2220,8 @@ Module Module1
                 Main()
             End Try
 
-            FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "")
-            FoundTypes = TypeScraper(WordLink).replace("&#39;", "")
+            FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "").replace("&quot;", QUOTE)
+            FoundTypes = TypeScraper(WordLink).replace("&#39;", "").replace("&quot;", QUOTE)
 
             ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
             If ActualSearchWord.Length < 2 Then
@@ -2377,7 +2387,7 @@ Module Module1
             HistoryWriter.Close()
         End If
 
-        'Displaying word definitions WITH corresponding the word types: -------------------------
+        'Displaying word definitions WITH corresponding the word types: ------------------------
         DefG1 -= 1
         DisplayDefinitions(SelectedDefinition, SelectedType, DefG1, 1)
 
@@ -5878,6 +5888,250 @@ Module Module1
         Main()
     End Sub
 
+    Sub HeyLingoDownload(Language)
+        Console.Clear()
+        Dim UserInput As String = ""
+        Language = Language.trim.tolower
+
+        For Clear = 0 To 9
+            Language = Language.replace(Clear, "")
+            Language = Language.replace(Clear, "")
+        Next
+
+        If Language = "clear" Or Language = "delete" Then
+            Console.WriteLine("Are you sure you want to delete ALL of you HeyLingo downloads?")
+            UserInput = Console.ReadLine.Trim.ToLower
+            If UserInput = "yes" Then
+                Try
+                    System.IO.Directory.Delete(Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio", True)
+                    Console.ForegroundColor = ConsoleColor.Green
+                    Console.WriteLine("All files have been deleted")
+                    Console.ForegroundColor = ConsoleColor.White
+                Catch
+                    Console.ForegroundColor = ConsoleColor.Yellow
+                    Console.WriteLine("There was nothing to delete")
+                    Console.ForegroundColor = ConsoleColor.White
+                End Try
+            Else
+                Console.WriteLine("You chose not delete the HeyLingo folder")
+            End If
+
+            Console.ReadLine()
+            Main()
+        ElseIf Language = "files" Or Language = "file" Or Language = "audio" Or Language = "folder" Then
+            Try
+                Process.Start("explorer.exe", Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio")
+                Main()
+            Catch ex As Exception
+                Main()
+            End Try
+        End If
+
+        Language = Language.replace("-", "")
+        Const QUOTE = """"
+        Dim StartPage As Integer
+        Dim EndPage As Integer
+        Dim Failed As Integer = 0
+        Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
+        Dim WordHTML As String = ""
+        Dim Correct As Boolean = False
+        Dim TwoDigits(1) As String
+
+
+        If Language = "" Then
+            Language = "japanese"
+        End If
+
+        Language = Language.trim.tolower
+        Do Until Correct = True
+            Console.Clear()
+            Console.WriteLine("Which page(s) from Hey Lingo do you want to download from (1-40)?")
+            UserInput = Console.ReadLine
+            If UserInput = "0" Or UserInput = "menu" Or UserInput = "back" Or UserInput = "stop" Or UserInput = "main menu" Or UserInput = "finish" Then
+                Main()
+            End If
+            If UserInput.Contains("-") Then
+                TwoDigits = UserInput.Split("-")
+                If IsNumeric(TwoDigits(0)) = True And IsNumeric(TwoDigits(1)) Then
+                    Correct = True
+                End If
+            ElseIf IsNumeric(UserInput) = True Then
+                TwoDigits(0) = UserInput
+                TwoDigits(1) = UserInput
+                Correct = True
+            End If
+
+            If Correct = True Then
+                Correct = False
+                If TwoDigits(1) >= TwoDigits(0) Then
+                    If TwoDigits(0) > 0 And TwoDigits(0) < 41 And TwoDigits(1) > 0 And TwoDigits(1) Then
+                        Correct = True
+                    End If
+                End If
+            End If
+        Loop
+        Console.Clear()
+
+        StartPage = TwoDigits(0)
+        EndPage = TwoDigits(1)
+
+        If StartPage = EndPage Then
+            Console.WriteLine("Downloading audio for " & Language & " from course " & StartPage)
+        Else
+            Console.WriteLine("Downloading audio for " & Language & " from courses " & StartPage & " to " & EndPage)
+        End If
+
+        My.Computer.FileSystem.CreateDirectory(Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio")
+        Dim SnipStart, SnipEnd, DownloadID As Integer
+        Dim Temp, Temp2, Temp3, JPMeaning As String
+        Dim URL As String = ""
+        Dim Total, Success As Integer
+        DownloadID = 0
+        For Page = StartPage To EndPage
+            Console.WriteLine("------[course " & Page & "]------")
+            My.Computer.FileSystem.CreateDirectory(Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language & "\Course " & Page)
+            Try
+                URL = "https://www.heylingo.com/courses/" & Language & "/" & Language & "-" & Page
+                WordHTML = Client.DownloadString(New Uri(URL))
+            Catch
+                Console.ForegroundColor = ConsoleColor.DarkRed
+                Console.WriteLine("Reconnect to the internet and try again.")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End Try
+
+            If WordHTML.Length < 500 Then
+                Console.ForegroundColor = ConsoleColor.DarkRed
+                Console.WriteLine("Something went wrong")
+                Console.WriteLine("Either '" & Language & "' isn't a language that is available on Hey Lingo")
+                Console.WriteLine("Or course '" & Page & "' doesn't exist")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End If
+
+            For Audio = 1 To 40
+                SnipEnd = WordHTML.IndexOf("hey_playaudio_id") 'End' because it has info behind it
+                SnipEnd += 18
+                Temp = WordHTML
+                Temp = Mid(Temp, SnipEnd)
+
+                SnipStart = WordHTML.IndexOf("onmouseout=" & QUOTE & "hide_translation()")
+                Try
+                    Temp2 = Mid(WordHTML, SnipStart, SnipEnd - SnipStart)
+                    Correct = False
+                    JPMeaning = ""
+                Catch ex As Exception 'If it isn't the first audio
+                    Correct = True
+                    JPMeaning = "2_" & JPMeaning
+                End Try
+
+                WordHTML = Temp
+
+                Do Until Correct = True
+                    SnipStart = Temp2.IndexOf("();" & QUOTE & ">")
+                    SnipStart += 6
+                    Temp2 = Mid(Temp2, SnipStart)
+
+                    Temp3 = Temp2
+                    SnipEnd = Temp3.IndexOf("<")
+
+                    Temp2 = Mid(Temp2, 8)
+
+                    Temp3 = Left(Temp3, SnipEnd)
+                    JPMeaning &= Temp3
+                    Temp3 = ""
+                    If Temp2.IndexOf("();" & QUOTE & ">") = -1 Then
+                        Correct = True
+                    End If
+                Loop
+                Try
+                    WordHTML = Mid(WordHTML, 20)
+
+                    SnipEnd = Temp.IndexOf(")")
+                    Temp = Left(Temp, SnipEnd) 'We now how the inside of the bracket which contains three ids
+
+                    SnipEnd = Temp.LastIndexOf(",") + 2 'We need the last ID
+                    Temp = Mid(Temp, SnipEnd)
+                    If Temp = DownloadID Then
+                        DownloadID = -1
+                    Else
+                        DownloadID = Temp
+                    End If
+                Catch ex As Exception
+                    Failed += 41 - Audio
+                    Audio = 40
+                    Console.ForegroundColor = ConsoleColor.DarkRed
+                    Console.WriteLine("Failed: " & JPMeaning)
+                    Console.ForegroundColor = ConsoleColor.White
+                    Continue For
+                End Try
+
+
+
+                JPMeaning = JPMeaning.Replace(">", "").Replace("<", "").Replace("=", "").Replace(QUOTE, "").Replace("!", "").Replace("?", "").Replace(" ", "")
+
+                Try
+                    Client.DownloadFile("https://www.heylingo.com/_audio/" & DownloadID & ".mp3", Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language & "\Course " & Page & "\" & JPMeaning & ".mp3")
+                    If Page Mod 5 = 0 Then
+                        Console.ForegroundColor = ConsoleColor.Yellow
+                    ElseIf Page Mod 5 = 1 Then
+                        Console.ForegroundColor = ConsoleColor.Cyan
+                    ElseIf Page Mod 5 = 2 Then
+                        Console.ForegroundColor = ConsoleColor.Magenta
+                    ElseIf Page Mod 5 = 3 Then
+                        Console.ForegroundColor = ConsoleColor.Green
+                    ElseIf Page Mod 5 = 4 Then
+                        Console.ForegroundColor = ConsoleColor.Blue
+                    End If
+                    Success += 1
+                    Console.WriteLine("Downloaded " & DownloadID & ": " & JPMeaning)
+                    Console.ForegroundColor = ConsoleColor.White
+                Catch
+                    JPMeaning = DownloadID
+                    Try
+                        Client.DownloadFile("https://www.heylingo.com/_audio/" & DownloadID & ".mp3", Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language & "\Course " & Page & "\" & JPMeaning & ".mp3")
+                        Success += 1
+                        Console.ForegroundColor = ConsoleColor.Green
+                        Console.WriteLine("Downloaded " & DownloadID & ": " & JPMeaning)
+                        Console.ForegroundColor = ConsoleColor.White
+                    Catch
+                        Failed += 1
+                        Console.ForegroundColor = ConsoleColor.DarkRed
+                        Console.WriteLine("Failed to download " & DownloadID & "_" & JPMeaning & "(" & Audio & "/40)")
+                        Console.ForegroundColor = ConsoleColor.White
+                    End Try
+                End Try
+            Next
+        Next
+
+        Total = (EndPage - StartPage + 1) * 40
+        Console.WriteLine()
+        If Success = Total Then
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("Downloaded " & Total & " files")
+            Console.WriteLine("Audio files are in 'Downloads' in a folder called 'HeyLingo Audio'")
+            Console.ForegroundColor = ConsoleColor.White
+        ElseIf Failed > 0 Then
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("Downloaded " & Success & " out of " & Total & " files")
+            Console.ForegroundColor = ConsoleColor.Yellow
+            Console.WriteLine(Failed & " audio files failed to download")
+            Console.ForegroundColor = ConsoleColor.White
+        End If
+
+        Console.WriteLine()
+        Console.WriteLine("Would you like to be taken there?")
+        UserInput = Console.ReadLine.Trim.ToLower
+        If UserInput = "yes" Then
+            Process.Start("explorer.exe", Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language)
+        End If
+
+        Main()
+    End Sub
+
     Sub KanjiInfo(ByVal ActualSearch, ByVal Mode)
         'Mode:
         '1 = Just KanjiInfo
@@ -6101,7 +6355,7 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                 StringTemp3 = StringTemp3.Replace("&#39;", "'")
 
-                If StringTemp.IndexOf("<li>") <> -1 Then 'if there is another On reading compound
+                If StringTemp.IndexOf("<li>") <> -1 And Mode = 0 Then 'if there is another On reading compound
                     StringTemp3 &= "|"
                     Snip1 = StringTemp.IndexOf("<li>")
                     StringTemp = Mid(StringTemp, Snip1 + 8)
@@ -6155,7 +6409,7 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                 StringTemp3 = StringTemp3.Replace("&#39;", "'")
 
-                If StringTemp2.IndexOf("<li>") <> -1 Then
+                If StringTemp2.IndexOf("<li>") <> -1 And Mode = 0 Then
                     StringTemp3 &= "|"
                     Snip1 = StringTemp2.IndexOf("<li>")
                     StringTemp2 = Mid(StringTemp2, Snip1 + 8)
@@ -7073,27 +7327,23 @@ ChangeS:
                 Dim TextUpdater As System.IO.StreamWriter
                 TextUpdater = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\SParameter.txt")
                 For Writer = 0 To TextString.Length - 1
-                    TextUpdater.WriteLine(TextString(Writer))
+                    TextUpdater.WriteLine(TextString(Writer).Trim)
                 Next
                 TextUpdater.Close()
 
                 Console.Clear()
                 Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.WriteLine("Now, using an S parameter of 0 will show these results you have just set.")
+                Console.WriteLine("Using an S parameter of 0 will show these results you have just set.")
                 Console.BackgroundColor = ConsoleColor.Black
                 Console.WriteLine()
 
                 For SType = 0 To TextString.Length - 1
                     If SType = Line Then
-                        Console.ForegroundColor = ConsoleColor.DarkGray
                         Console.WriteLine(TextString(SType))
-                        Console.ForegroundColor = ConsoleColor.White
-                        Console.WriteLine()
                     ElseIf TextString(SType).IndexOf("|") <> -1 Or TextString(SType).IndexOf(":") = -1 Then
                     Else
                         Try
                             Console.WriteLine(TextString(SType))
-                            Console.WriteLine()
                         Catch
                             Console.WriteLine()
                         End Try
@@ -7194,6 +7444,7 @@ ChangeS:
                 Console.WriteLine()
                 Console.WriteLine("0 = View current settings")
                 Console.WriteLine("1 = Reset general settings")
+                Console.WriteLine()
 
                 Write = 0
                 All = False
