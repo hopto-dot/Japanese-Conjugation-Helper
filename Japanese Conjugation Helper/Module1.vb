@@ -2848,7 +2848,7 @@ Module Module1
             End If
 
             'Scraping the definition(s) of the kanjis:
-            DefinitionsGroup = Kanjis(KanjiLoop)
+            DefinitionsGroup = Kanjis(KanjiLoop).Replace("&amp;", "")
 
             'Making a small snip that contains mostly the definitions (the definitions are in a comma list with no separators)
             Snip1 = DefinitionsGroup.IndexOf("kanji-details__main-meanings") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
@@ -2871,7 +2871,7 @@ Module Module1
                 End If
             Catch
             End Try
-            ActualInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup 'Adding definitions list to the definition part of the array
+            ActualInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "") 'Adding definitions list to the definition part of the array
 
 
             'Getting the JLPT level:
@@ -2893,7 +2893,7 @@ Module Module1
             'StringTemp = On
             'StringTemp2 = Kun
             'Getting just the Reading Compounds section of the HTML
-            FoundInGroup = Kanjis(KanjiLoop)
+            FoundInGroup = Kanjis(KanjiLoop).Replace("&amp;", "")
 
             Snip1 = FoundInGroup.IndexOf("row compounds") + 1
             FoundInGroup = Mid(FoundInGroup, Snip1)
@@ -2920,7 +2920,7 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace(vbLf, "")
                 StringTemp3 = StringTemp3.Replace("  【", "【")
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
 
                 Try
                     Snip1 = StringTemp3.IndexOf("(")
@@ -2976,7 +2976,7 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace(vbLf, "")
                 StringTemp3 = StringTemp3.Replace("  【", "【")
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
 
                 'Getting rid of overly long brackets
                 Try
@@ -2985,7 +2985,7 @@ Module Module1
                     StringTemp = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
 
                     If StringTemp.Length > 25 Then
-                        StringTemp3 = StringTemp3.Replace(StringTemp, "")
+                        StringTemp3 = StringTemp3.Replace(StringTemp, "").Replace("&amp;", "")
                     End If
                 Catch
                 End Try
@@ -3029,7 +3029,7 @@ Module Module1
 
         For Printer = 0 To ActualSearchWord.length - 1
             For Replacer = 0 To 5
-                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """")
+                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "")
             Next
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(ActualInfo(Printer, 0))
@@ -3063,7 +3063,7 @@ Module Module1
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
             Dim LastRequest As String = ""
             Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Do you have a Last Request? (for example 'anki', 'kanji' or 'audio')")
+            Console.WriteLine("Do you have a Last Request? (for example 'anki', 'kanji', 'audio' or 'jisho')")
             Console.ForegroundColor = ConsoleColor.White
             LastRequest = Console.ReadLine().ToLower().Trim
             LastRequest = LastRequest.Replace("/", "").Replace("!", "")
@@ -3095,7 +3095,9 @@ Module Module1
                         NumberCheckD = Right(SelectedDefinition(Definition), 1)
                     End If
                     If IsNumeric(NumberCheckD) = False Then
+                        Console.ForegroundColor = ConsoleColor.Red
                         Console.WriteLine("Error: Conjugate; Definition no; D")
+                        Console.ForegroundColor = ConsoleColor.White
                     End If
                     NumberCheckD = NumberCheckD.Replace(" ", "")
 
@@ -3201,10 +3203,60 @@ Module Module1
                 End Try
                 Console.ReadLine()
                 Main()
-            ElseIf LastRequest = "audio" Then
+            ElseIf LastRequest = "audio" Or LastRequest = "/audio" Or LastRequest = "download audio" Or LastRequest = "verb audio" Then
                 VerbAudioGen(ActualSearchWord)
             ElseIf LastRequest = "history" Then
+                Console.Clear()
+                Console.WriteLine("Search history:")
+                Try
+                    Dim HistoryFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+                    Console.WriteLine(HistoryFile)
+                Catch
+                    Console.WriteLine("You have no history.")
+                    Console.ReadLine()
+                    Main()
+                End Try
+                Console.WriteLine("do '/b' to go to your most recent search")
+                LastRequest = Console.ReadLine.ToLower.Trim
 
+                If LastRequest = "/b" Or LastRequest = "/last" Or LastRequest = "/back" Or LastRequest = "/previous" Then
+                    Console.Clear()
+                    Try
+                        Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
+                        If LastSearchFile.Length < 3 Then
+                            Console.ForegroundColor = ConsoleColor.Red
+                            Console.WriteLine("Error: FileWriter.Close")
+                            Console.ForegroundColor = ConsoleColor.White
+                        Else
+                            Console.WriteLine(LastSearchFile)
+                        End If
+                    Catch
+                        Console.ForegroundColor = ConsoleColor.Red
+                        Console.WriteLine("Error: FileWriter.Close")
+                        Console.ForegroundColor = ConsoleColor.White
+                    End Try
+                    Console.ReadLine()
+                    Main()
+                End If
+
+                Main()
+            ElseIf LastRequest = "jisho" Then
+                Try
+                    Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "https://" & WordLink)
+                Catch
+                    Try
+                        Process.Start("C:\Program Files (x86)\Mozilla Firefox\firefox.exe", "https://" & WordLink)
+                    Catch
+                        Try
+                            Process.Start("https://" & WordLink)
+                        Catch
+                            Console.ForegroundColor = ConsoleColor.Red
+                            Console.WriteLine("Cannot open on Jisho because the exe file for your browser isn't were it usually is.")
+                            Console.ForegroundColor = ConsoleColor.White
+                        End Try
+                    End Try
+                End Try
+                Console.ReadLine()
             End If
         End If
     End Sub
@@ -3217,10 +3269,12 @@ Module Module1
         Dim WordGroups() As String
         Client.Encoding = System.Text.Encoding.UTF8
         Dim HTML As String = ""
-        HTML = Client.DownloadString(New Uri("http://" & WordURL))
+        HTML = Client.DownloadString(New Uri("http: //" & WordURL))
 
         If HTML.Length < 100 Then
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Something went wrong.")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
         End If
@@ -6281,7 +6335,7 @@ Module Module1
             End If
 
             'Scraping the definition(s) of the kanjis:
-            DefinitionsGroup = Kanjis(KanjiLoop)
+            DefinitionsGroup = Kanjis(KanjiLoop).Replace("&amp;", "")
 
             'Making a small snip that contains mostly the definitions (the definitions are in a comma list with no separators)
             Snip1 = DefinitionsGroup.IndexOf("kanji-details__main-meanings") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
@@ -6300,11 +6354,11 @@ Module Module1
                 StringTemp = "(" & Mid(DefinitionsGroup, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
 
                 If StringTemp.Length > 25 Then
-                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "")
+                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "").Replace("&amp;", "")
                 End If
             Catch
             End Try
-            KanjiInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup 'Adding definitions list to the definition part of the array
+            KanjiInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "") 'Adding definitions list to the definition part of the array
 
 
             'Getting the JLPT level:
@@ -6353,9 +6407,9 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace(vbLf, "")
                 StringTemp3 = StringTemp3.Replace("  【", "【")
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
 
-                If StringTemp.IndexOf("<li>") <> -1 And Mode = 0 Then 'if there is another On reading compound
+                If StringTemp.IndexOf("<li>") <> -1 And Mode = 1 Then 'if there is another On reading compound
                     StringTemp3 &= "|"
                     Snip1 = StringTemp.IndexOf("<li>")
                     StringTemp = Mid(StringTemp, Snip1 + 8)
@@ -6366,7 +6420,7 @@ Module Module1
                     StringTemp3 = StringTemp3.Replace(vbLf, "")
                     StringTemp3 = StringTemp3.Replace("  【", "【")
                     StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                    StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                    StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
                     If StringTemp.IndexOf("<li>") <> -1 Then 'if there is another On reading compound
                         StringTemp3 &= "|"
                         Snip1 = StringTemp.IndexOf("<li>")
@@ -6378,8 +6432,29 @@ Module Module1
                         StringTemp3 = StringTemp3.Replace(vbLf, "")
                         StringTemp3 = StringTemp3.Replace("  【", "【")
                         StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                        StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                        StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
                     End If
+                End If
+
+                'Getting rid of overly long kanji definitions
+                CountInput = StringTemp3
+                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                If Occurrences > 5 Then
+                    Do Until Occurrences = 5
+                        Snip2 = StringTemp3.LastIndexOf(",")
+                        StringTemp3 = Left(StringTemp3, Snip2)
+                        Occurrences -= 1
+                    Loop
+                End If
+                If StringTemp3.Length > 40 And Occurrences > 2 Then
+                    Try
+                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
+                            Snip2 = StringTemp3.LastIndexOf(",")
+                            StringTemp3 = Left(StringTemp3, Snip2)
+                            Occurrences -= 1
+                        Loop
+                    Catch
+                    End Try
                 End If
 
                 KanjiInfo(KanjiLoop, 4) = "On Reading Compound: " & StringTemp3
@@ -6407,7 +6482,7 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace(vbLf, "")
                 StringTemp3 = StringTemp3.Replace("  【", "【")
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
 
                 If StringTemp2.IndexOf("<li>") <> -1 And Mode = 0 Then
                     StringTemp3 &= "|"
@@ -6420,7 +6495,7 @@ Module Module1
                     StringTemp3 = StringTemp3.Replace(vbLf, "")
                     StringTemp3 = StringTemp3.Replace("  【", "【")
                     StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                    StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                    StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
                     If StringTemp2.IndexOf("<li>") <> -1 Then
                         StringTemp3 &= "|"
                         Snip1 = StringTemp2.IndexOf("<li>")
@@ -6432,10 +6507,31 @@ Module Module1
                         StringTemp3 = StringTemp3.Replace(vbLf, "")
                         StringTemp3 = StringTemp3.Replace("  【", "【")
                         StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                        StringTemp3 = StringTemp3.Replace("&#39;", "'")
+                        StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
                     End If
                 End If
 
+
+                CountInput = StringTemp3
+                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                If Occurrences > 6 Then
+                    Do Until Occurrences = 6
+                        Snip2 = StringTemp3.LastIndexOf(",")
+                        StringTemp3 = Left(StringTemp3, Snip2)
+                        Occurrences -= 1
+                    Loop
+                End If
+
+                If StringTemp3.Length > 70 And Occurrences > 2 Then
+                    Try
+                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
+                            Snip2 = StringTemp3.LastIndexOf(",")
+                            StringTemp3 = Left(StringTemp3, Snip2)
+                            Occurrences -= 1
+                        Loop
+                    Catch
+                    End Try
+                End If
 
                 KanjiInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3
 
