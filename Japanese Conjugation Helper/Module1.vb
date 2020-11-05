@@ -6171,7 +6171,7 @@ Module Module1
             Console.ForegroundColor = ConsoleColor.Green
             Console.WriteLine("Downloaded " & Success & " out of " & Total & " files")
             Console.ForegroundColor = ConsoleColor.Yellow
-            Console.WriteLine(Failed & " audio files failed to download") ''
+            Console.WriteLine(Failed & " audio files failed to download")
             Console.ForegroundColor = ConsoleColor.White
         End If
 
@@ -6182,6 +6182,7 @@ Module Module1
             Process.Start("explorer.exe", Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language)
         End If
 
+        Main()
         Main()
     End Sub
 
