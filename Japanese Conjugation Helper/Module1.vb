@@ -6171,7 +6171,7 @@ Module Module1
             Console.ForegroundColor = ConsoleColor.Green
             Console.WriteLine("Downloaded " & Success & " out of " & Total & " files")
             Console.ForegroundColor = ConsoleColor.Yellow
-            Console.WriteLine(Failed & " audio files failed to download") '
+            Console.WriteLine(Failed & " audio files failed to download") ''
             Console.ForegroundColor = ConsoleColor.White
         End If
 
