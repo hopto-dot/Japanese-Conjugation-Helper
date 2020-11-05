@@ -6,6 +6,8 @@
 
 **For the main functionality of bringing up conjugations of a word, simple type the word on it's own (in Japanese, Romaji or the English word). Find out more about how this and other commands work in [the Wiki](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use).**
 
+<a href="https://www.buymeacoffee.com/hoptodot" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+
 ### [Frequently Asked Questions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/FAQ)
 
 ## If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
