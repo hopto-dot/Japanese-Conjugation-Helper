@@ -2,6 +2,7 @@
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/hopto-dot/Japanese-Conjugation-Helper?color=light%20green&label=Latest)
 [![How to use](https://img.shields.io/badge/Wiki-How%20to%20use-green)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use)
+[![Donate](https://img.shields.io/badge/Donate-Buy%20Me%20A%20Coffee-important.svg)](https://www.buymeacoffee.com/hoptodot)
 
 **A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & sentence breakdown and more!** [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)
 
