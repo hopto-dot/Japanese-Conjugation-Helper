@@ -6,10 +6,11 @@ Imports System.Text
 Imports Newtonsoft.Json.Linq
 
 Imports WanaKanaNet
-'
 
 Module Module1
     Sub Main()
+        Console.InputEncoding = System.Text.Encoding.Unicode
+        Console.OutputEncoding = System.Text.Encoding.Unicode
         Console.ForegroundColor = ConsoleColor.White
         Const QUOTE = """"
         Console.Clear()
@@ -21,8 +22,6 @@ Module Module1
         Else
             Console.Title() = "コンジュゲーター"
         End If
-        Console.InputEncoding = System.Text.Encoding.Unicode
-        Console.OutputEncoding = System.Text.Encoding.Unicode
         Randomize()
 
         Try
@@ -6037,10 +6036,11 @@ Module Module1
         End If
 
         My.Computer.FileSystem.CreateDirectory(Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio")
-        Dim SnipStart, SnipEnd, DownloadID As Integer
+        Dim SnipStart, SnipEnd As Integer
         Dim Temp, Temp2, Temp3, JPMeaning As String
         Dim URL As String = ""
         Dim Total, Success As Integer
+        Dim DownloadID As String
         DownloadID = 0
         For Page = StartPage To EndPage
             Console.WriteLine("------[course " & Page & "]------")
@@ -6104,10 +6104,10 @@ Module Module1
                 Try
                     WordHTML = Mid(WordHTML, 20)
 
-                    SnipEnd = Temp.IndexOf(")")
+                    SnipEnd = Temp.IndexOf(")") - 1
                     Temp = Left(Temp, SnipEnd) 'We now how the inside of the bracket which contains three ids
 
-                    SnipEnd = Temp.LastIndexOf(",") + 2 'We need the last ID
+                    SnipEnd = Temp.IndexOf("'") + 2 'We need the last ID
                     Temp = Mid(Temp, SnipEnd)
                     If Temp = DownloadID Then
                         DownloadID = -1
@@ -6118,7 +6118,7 @@ Module Module1
                     Failed += 41 - Audio
                     Audio = 40
                     Console.ForegroundColor = ConsoleColor.DarkRed
-                    Console.WriteLine("Failed: " & JPMeaning)
+                    Console.WriteLine("ID get Failed: " & JPMeaning)
                     Console.ForegroundColor = ConsoleColor.White
                     Continue For
                 End Try
@@ -6146,15 +6146,15 @@ Module Module1
                 Catch
                     JPMeaning = DownloadID
                     Try
-                        Client.DownloadFile("https://www.heylingo.com/_audio/" & DownloadID & ".mp3", Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language & "\Course " & Page & "\" & JPMeaning & ".mp3")
+                        Client.DownloadFile("https://www.heylingo.com/_audio/" & DownloadID, Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language & "\Course " & Page & "\" & JPMeaning.Replace(".m4a", ".mp3"))
                         Success += 1
                         Console.ForegroundColor = ConsoleColor.Green
-                        Console.WriteLine("Downloaded " & DownloadID & ": " & JPMeaning)
+                        Console.WriteLine("Downloaded " & DownloadID.Replace(".m4a", ".mp3"))
                         Console.ForegroundColor = ConsoleColor.White
                     Catch
                         Failed += 1
                         Console.ForegroundColor = ConsoleColor.DarkRed
-                        Console.WriteLine("Failed to download " & DownloadID & "_" & JPMeaning & "(" & Audio & "/40)")
+                        Console.WriteLine("Failed to download " & DownloadID.Replace(".m4a", ".mp3"))
                         Console.ForegroundColor = ConsoleColor.White
                     End Try
                 End Try
