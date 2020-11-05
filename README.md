@@ -13,7 +13,7 @@
 
 ## Donate
 
-If you feel like this program is helpful and want to show your appreciation then how about buying me a coffee (or a tea because I'm british 😉)
+If you like this program and want to show your appreciation then how about buying me a coffee (or a tea because I'm british 😉)
 
 <a href="https://www.buymeacoffee.com/hoptodot" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Tea" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
