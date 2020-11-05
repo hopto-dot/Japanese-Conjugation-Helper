@@ -6118,12 +6118,10 @@ Module Module1
                     Failed += 41 - Audio
                     Audio = 40
                     Console.ForegroundColor = ConsoleColor.DarkRed
-                    Console.WriteLine("ID get Failed: " & JPMeaning)
+                    Console.WriteLine("ID Fail: " & JPMeaning)
                     Console.ForegroundColor = ConsoleColor.White
                     Continue For
                 End Try
-
-
 
                 JPMeaning = JPMeaning.Replace(">", "").Replace("<", "").Replace("=", "").Replace(QUOTE, "").Replace("!", "").Replace("?", "").Replace(" ", "")
 
@@ -6168,6 +6166,7 @@ Module Module1
             Console.WriteLine("Downloaded " & Total & " files")
             Console.WriteLine("Audio files are in 'Downloads' in a folder called 'HeyLingo Audio'")
             Console.ForegroundColor = ConsoleColor.White
+        ElseIf Failed > Total - 1 Then
         ElseIf Failed > 0 Then
             Console.ForegroundColor = ConsoleColor.Green
             Console.WriteLine("Downloaded " & Success & " out of " & Total & " files")
@@ -6177,7 +6176,7 @@ Module Module1
         End If
 
         Console.WriteLine()
-        Console.WriteLine("Would you like to be taken there?")
+        Console.WriteLine("Would you like to be taken to the folder?")
         UserInput = Console.ReadLine.Trim.ToLower
         If UserInput = "yes" Then
             Process.Start("explorer.exe", Environ$("USERPROFILE") & "\Downloads\HeyLingo Audio\" & Language)
