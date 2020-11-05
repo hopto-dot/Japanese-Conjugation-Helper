@@ -25,17 +25,19 @@ If you like this program and want to show your appreciation then how about buyin
 * **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence
 * **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English
 * **[Kanji Information](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji
-* **Audio** - Downloads audio of various conjugations of a verb (documentation coming soon)
+* **[Audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
+* HeyLingo Audio (/heylingo) - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses
+* **[Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening)** - Start a listening test for a verb or adjective
 * **[Kanji Test](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test)** - Enter Japanese text and get tested on all the kanji
-* **/history** - See you last 40 searches
-* **/b (back)** - Instantly go back to your last search (no internet connection needed)
-* **[/prefs](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
+* **[Preferences](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
 * [**Conjugator Practice**](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
 * **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word
 * **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** - A parameter that determines how much information about a word is displayed
-* [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (essentially a flash card creator)
+* **/history** - See you last 40 searches
+* **/b (back)** - Instantly go back to your last search (no internet connection needed)
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
-* /ranki - Reverse Anki: Generate reverse anki cards (no documentation yet)
+* [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (obsolete command)
+* /ranki - Reverse Anki: Generate reverse anki cards (obsolete command)
 
 ***
 ## **If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
