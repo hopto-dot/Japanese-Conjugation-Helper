@@ -1,6 +1,6 @@
 ## Japanese Conjugation Helper
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/hopto-dot/Japanese-Conjugation-Helper?color=light%20green&label=Latest)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/hopto-dot/Japanese-Conjugation-Helper?color=light%20green&label=Latest)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/releases/latest)
 [![How to use](https://img.shields.io/badge/Wiki-How%20to%20use-green)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use)
 [![Donate](https://img.shields.io/badge/Donate-Buy%20Me%20A%20Coffee-important.svg)](https://www.buymeacoffee.com/hoptodot)
 
