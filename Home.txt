@@ -1,0 +1,62 @@
+<div>
+<h2 style="text-align: center;">Japanese Conjugation Helper</h2>
+<p><a href="https://camo.githubusercontent.com/7b1969babecc51cee6e89e979c3be0e827206e14660867b2b4613c21d14b83b8/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f762f72656c656173652f686f70746f2d646f742f4a6170616e6573652d436f6e6a75676174696f6e2d48656c7065723f636f6c6f723d6c69676874253230677265656e266c6162656c3d4c6174657374" target="_blank" rel="noopener noreferrer"><img src="https://camo.githubusercontent.com/7b1969babecc51cee6e89e979c3be0e827206e14660867b2b4613c21d14b83b8/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f762f72656c656173652f686f70746f2d646f742f4a6170616e6573652d436f6e6a75676174696f6e2d48656c7065723f636f6c6f723d6c69676874253230677265656e266c6162656c3d4c6174657374" alt="GitHub release (latest by date)" data-canonical-src="https://img.shields.io/github/v/release/hopto-dot/Japanese-Conjugation-Helper?color=light%20green&amp;label=Latest" /></a>&nbsp;<a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use"><img src="https://camo.githubusercontent.com/19d3c52f3c920930c90dc6879b60cdc5cc1daafb508dc9bf20742fa9f787af5c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f57696b692d486f77253230746f2532307573652d677265656e" alt="How to use" data-canonical-src="https://img.shields.io/badge/Wiki-How%20to%20use-green" /></a>&nbsp;<a href="https://www.buymeacoffee.com/hoptodot" rel="nofollow"><img src="https://camo.githubusercontent.com/384e28636b7341bfd5a1adda5ef82aafca7aceeff5a8018a7fe07e10fa22522d/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4275792532304d6525323041253230436f666665652d696d706f7274616e742e737667" alt="Donate" data-canonical-src="https://img.shields.io/badge/Donate-Buy%20Me%20A%20Coffee-important.svg" /></a></p>
+</div>
+<div>
+<p><strong>A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator &amp; sentence breakdown and more!</strong>&nbsp;<a href="https://imgur.com/DlKXeyl" rel="nofollow">Here</a>&nbsp;you can see the program performing its main function (Word Lookup). Learn japanese with this amazing tool :)</p>
+</div>
+<div>
+<p><strong>Download the program&nbsp;<a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/releases">here</a>.</strong>&nbsp;The interval that I release a new version will be bigger now because I am back to being a student with lots of other work I need to be focused on, not to fear though, the project isn't dead.</p>
+</div>
+<div>
+<p><strong>For the main functionality of bringing up conjugations of a word, simple type the word on it's own (in Japanese, Romaji or the English word). Find out more about how this and other commands work in&nbsp;<a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use">the Wiki</a>.</strong></p>
+</div>
+<div>
+<h2><strong>Donate</strong></h2>
+</div>
+<div>
+<p>If you like this program and want to show your appreciation then how about buying me a coffee (or a tea because I'm british&nbsp;😉)</p>
+</div>
+<div>
+<p><a href="https://www.buymeacoffee.com/hoptodot" rel="nofollow"><img src="https://camo.githubusercontent.com/c3f856bacd5b09669157ed4774f80fb9d8622dd45ce8fdf2990d3552db99bd27/68747470733a2f2f7777772e6275796d6561636f666665652e636f6d2f6173736574732f696d672f637573746f6d5f696d616765732f6f72616e67655f696d672e706e67" alt="Buy Me A Tea" data-canonical-src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" /></a></p>
+</div>
+<div>
+<h2><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/FAQ">Frequently Asked Questions</a></h2>
+</div>
+<div>
+<h2>If you want to give feedback, request features or report bugs, you may do so&nbsp;<a href="https://forms.gle/WNV1s41cWKrjSMhH6" rel="nofollow">here</a>.</h2>
+</div>
+<div>
+<h2><strong>Summary of&nbsp;<a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands">commands</a>:</strong></h2>
+</div>
+<div>
+<ul>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup">Word Lookup</a></strong>&nbsp;- Looks up any word, phrase or sentence</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator">Translator</a></strong>&nbsp;- Translates English into Japanese, or Japanese into English</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information">Kanji Information</a></strong>&nbsp;- Enter Japanese text and detailed information on all the kanji</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio">Audio</a></strong>&nbsp;- Downloads audio of various conjugations of a verb or adjective</li>
+<li>HeyLingo Audio (/heylingo) - Downloads audio from&nbsp;<a href="https://www.heylingo.com/" rel="nofollow">Hey! Lingo</a>&nbsp;courses</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening">Listening</a></strong>&nbsp;- Start a listening test for a verb or adjective</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test">Kanji Test</a></strong>&nbsp;- Enter Japanese text and get tested on all the kanji</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command">Preferences</a></strong>&nbsp;- Lets you change program settings, these are saved for the next time you use the program.</li>
+<li><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice"><strong>Conjugator Practice</strong></a>&nbsp;- conjugation practice (practice conjugating a word of your choice into different forms)</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests">Last Requests</a></strong>&nbsp;- Things you can do after searching a word</li>
+<li><strong><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter">S parameter</a></strong>&nbsp;- A parameter that determines how much information about a word is displayed</li>
+<li><strong>/history</strong>&nbsp;- See you last 40 searches</li>
+<li><strong>/b (back)</strong>&nbsp;- Instantly go back to your last search (no internet connection needed)</li>
+<li><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command">/h or /help</a>&nbsp;- Brings up more information about a command</li>
+<li><a href="https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice">Reading Practice</a>&nbsp;- Reading practice (obsolete command)</li>
+<li>/ranki - Reverse Anki: Generate reverse anki cards (obsolete command)</li>
+</ul>
+</div>
+<div><hr /></div>
+<div>
+<h2><strong>If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:</strong></h2>
+</div>
+<div>
+<ol>
+<li>Click the ConjugationHelper icon in the very top left of the console window</li>
+<li>Then click "properties" at the bottom</li>
+<li>Lastly, make sure you are on the "Font" tab and select the "MS Mincho" font, there are a few other fonts that work too.&nbsp;<a href="https://camo.githubusercontent.com/c46df116f61e339852eebaea1bc621f3b81a7e779cbfe697981e0af2bab398d2/68747470733a2f2f692e696d6775722e636f6d2f783767446842392e706e67" target="_blank" rel="noopener noreferrer"><img src="https://camo.githubusercontent.com/c46df116f61e339852eebaea1bc621f3b81a7e779cbfe697981e0af2bab398d2/68747470733a2f2f692e696d6775722e636f6d2f783767446842392e706e67" alt="Japanese Characters" width="454" height="222" data-canonical-src="https://i.imgur.com/x7gDhB9.png" /></a></li>
+</ol>
+</div>
