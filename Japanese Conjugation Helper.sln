@@ -8,18 +8,36 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|Default = Debug|Default
 		Release|Any CPU = Release|Any CPU
+		Release|Default = Release|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Default.ActiveCfg = Debug|Any CPU
+		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Default.Build.0 = Debug|Any CPU
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Default.ActiveCfg = Release|Any CPU
+		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Default.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D292D731-5ABD-4273-8CBF-248C6ED4BA73}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Default = Debug|Default
+		Release|Any CPU = Release|Any CPU
+		Release|Default = Release|Default
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Default = Debug|Default
+		Release|Any CPU = Release|Any CPU
+		Release|Default = Release|Default
 	EndGlobalSection
 EndGlobal

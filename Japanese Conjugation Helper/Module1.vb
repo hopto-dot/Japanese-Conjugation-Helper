@@ -1,28 +1,20 @@
 ﻿Imports System.Web
-Imports System
 Imports System.Net
 Imports System.IO
 Imports System.Text
 Imports Newtonsoft.Json.Linq
-
 Imports WanaKanaNet
 
 Module Module1
     Sub Main()
+        Randomize()
         Console.InputEncoding = System.Text.Encoding.Unicode
         Console.OutputEncoding = System.Text.Encoding.Unicode
         Console.ForegroundColor = ConsoleColor.White
         Const QUOTE = """"
         Console.Clear()
         'For the input of Japanese Chaaracters
-        If Int((100) * Rnd()) = 2 Then
-            Console.Title() = "本当に動詞を活用するんだよ"
-        ElseIf Int((50) * Rnd()) <> 2 Then
-            Console.Title() = "Conjugator"
-        Else
-            Console.Title() = "コンジュゲーター"
-        End If
-        Randomize()
+        Console.Title() = "Japanese Conjugation Helper"
 
         Try
             Dim info = TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time")
@@ -30,7 +22,7 @@ Module Module1
             Dim localTime As DateTimeOffset = TimeZoneInfo.ConvertTime(localServerTime, info)
             Dim TimeInJapan As String = localTime.ToString
             TimeInJapan = Left(localTime.DateTime, (localTime.DateTime).ToString.IndexOf("M") + 1)
-            If Int((75) * Rnd()) <> 2 Then
+            If Int((100) * Rnd()) <> 2 Then
                 Console.WriteLine("Japan: " & TimeInJapan)
             Else
                 Console.WriteLine("日本: " & TimeInJapan)
@@ -51,6 +43,8 @@ Module Module1
             Main()
         End If
 
+        Word = Word.Replace("！", "!").Replace("・", "/").Replace("＆", "&")
+
         If Word.IndexOf("/audio ") <> -1 Then
             VerbAudioGen(Right(Word, Word.Length - 7))
         ElseIf Word = "/audio" Then
@@ -67,6 +61,10 @@ Module Module1
             End If
         End If
 
+        If Word = "/sub" Or Left(Word, 9) = "/subtitle" Then
+            DownloadSubtitles()
+        End If
+
         If Word.IndexOf("/listening ") <> -1 Then
             ListeningPractice(Right(Word, Word.Length - 11))
         ElseIf Word = "/listening" Then
@@ -79,7 +77,7 @@ Module Module1
             ReverseAnki()
         End If
 
-        If Word = "/kt" Or Word = "/kanji" Or Word = "/kanjitest" Or Word = "/k" Then
+        If Word = "/kt" Or Word = "/kanji" Or Word = "/kanjitest" Or Word = "/k" Or Left(Word, 2) = "/kt" Then
             KanjiTest()
         End If
 
@@ -87,6 +85,15 @@ Module Module1
             Console.WriteLine("Enter kanji string")
             Word = Console.ReadLine
             KanjiInfo(Word, 1)
+        ElseIf Left(Word, 3) = "/i " Then
+
+            Word = Mid(Word, 3)
+            KanjiInfo(Word, 1)
+        End If
+
+        If Word = "/donate" Then
+            Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "www.buymeacoffee.com/hoptodot")
+            Main()
         End If
 
         If Word = "/history" Then
@@ -160,10 +167,19 @@ Module Module1
 
             Translated = GTranslate(Word, "ja", "en")
             If Translated.ToLower = Word Then
+                Translated = Translated.Replace("`", QUOTE)
                 Translated = GTranslate(Word, "en", "ja")
+                Console.WriteLine(Translated)
+
+                Console.WriteLine()
+
+                Translated = Translated.Replace("`", QUOTE)
+                Translated = GTranslate(Translated, "ja", "en")
+                Console.WriteLine(Translated)
+            Else
+                Translated = Translated.Replace("`", QUOTE)
+                Console.WriteLine(Translated)
             End If
-            Translated = Translated.Replace("`", QUOTE)
-            Console.WriteLine(Translated)
 
             Console.ReadLine()
             Main()
@@ -200,10 +216,6 @@ Module Module1
         End If
 
         If Word = "/" Then
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine("This is not a command")
-            Console.ForegroundColor = ConsoleColor.White
-            Console.ReadLine()
             Main()
         End If
 
@@ -445,6 +457,245 @@ Module Module1
         Main()
     End Sub
 
+    Sub DownloadSubtitles()
+        Console.Clear()
+        Dim Anime As String
+        Dim Language As String
+
+        Console.WriteLine("What anime would you like subtitles for? (Sometimes the anime will be in romaji sometimes in english)")
+        Anime = Console.ReadLine.ToLower.Replace("-", " ").Replace("  ", " ")
+
+        Console.WriteLine("What language would you like subtitles for?")
+        Language = Console.ReadLine.ToLower
+
+        If Language.IndexOf("en") <> -1 Then
+            Language = "English"
+        ElseIf Language.IndexOf("ja") <> -1 Then
+            Language = "Japanese"
+        Else
+            Language = "Japanese"
+        End If
+
+        Dim Client As New WebClient
+        Dim HTML As String
+        If Language = "Japanese" Then
+            Try
+                HTML = Client.DownloadString(New Uri("https://kitsunekko.net/dirlist.php?dir=subtitles%2Fjapanese%2F"))
+            Catch
+            End Try
+        ElseIf Language = "English" Then
+            HTML = Client.DownloadString(New Uri("https://kitsunekko.net/dirlist.php?dir=subtitles%2F"))
+        End If
+
+        Dim Snip1, Snip2 As Integer
+        Snip1 = HTML.IndexOf("<tbody>") + 5
+        HTML = Mid(HTML, Snip1)
+        Snip2 = HTML.IndexOf("</tbody>")
+        HTML = Left(HTML, Snip2)
+
+        Dim Animes(), Found(0), Temp As String
+        Animes = Split(HTML, "</tr>")
+
+        For Search = 0 To Animes.Length - 1
+            Temp = Animes(Search).ToLower.Replace("-", " ").Replace("+", " ")
+            Temp = Temp.Replace("  ", " ")
+            If Temp.IndexOf(Anime.ToLower) <> -1 Then
+                Found(Found.Length - 1) = Animes(Search)
+                Array.Resize(Found, Found.Length + 1)
+            End If
+        Next
+        Array.Resize(Found, Found.Length - 1)
+
+        If Found.Length = 0 Then
+            Console.WriteLine("Anime wasn't found")
+            Console.WriteLine("Maybe try searching for the english title, or romaji title")
+            Console.ReadLine()
+            Main()
+        End If
+
+        Dim AnimeNames(Found.Length - 1) As String
+        For N = 0 To AnimeNames.Length - 1
+            AnimeNames(N) = Found(N)
+
+            Snip1 = AnimeNames(N).IndexOf("<strong>") + 9
+            AnimeNames(N) = Mid(AnimeNames(N), Snip1)
+            Snip2 = AnimeNames(N).IndexOf("</strong>")
+            AnimeNames(N) = Left(AnimeNames(N), Snip2)
+        Next
+        Console.Clear()
+        Dim Correct As Boolean = False
+        Dim Line As Integer = 0
+        Dim Selected() As Boolean
+        Do Until Correct = True
+            Console.SetCursorPosition(0, 0)
+            Console.SetCursorPosition(0, 0)
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("Select Anime to download subtitles for:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+            For Printer = 0 To AnimeNames.Length - 1
+                If Printer = Line Then
+                    Console.BackgroundColor = ConsoleColor.Gray
+                    Console.ForegroundColor = ConsoleColor.Black
+                    Console.WriteLine(AnimeNames(Printer))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.ForegroundColor = ConsoleColor.White
+                Else
+                    Console.WriteLine(AnimeNames(Printer))
+                End If
+            Next
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("[Up/Down Arrow keys] Move up and down")
+            Console.WriteLine("[Enter] Select anime")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+
+
+            Dim KeyReader As ConsoleKeyInfo = Console.ReadKey
+            If KeyReader.Key = ConsoleKey.DownArrow Then
+                If Line < AnimeNames.Length - 1 Then
+                    Line += 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.UpArrow Then
+                If Line > 0 Then
+                    Line -= 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.Escape Then
+                Main()
+            ElseIf KeyReader.Key = ConsoleKey.Enter Then
+                Correct = True
+            End If
+        Loop
+
+        Snip1 = Found(Line).IndexOf("<a href=""") + 10
+        Found(Line) = Mid(Found(Line), Snip1)
+        Snip2 = Found(Line).IndexOf("""")
+        Found(Line) = Left(Found(Line), Snip2)
+
+
+        HTML = Client.DownloadString(New Uri("https://kitsunekko.net" & Found(Line)))
+
+        Found = Split(HTML, "</tr>")
+        Array.Resize(Found, Found.Length - 1)
+        ReDim AnimeNames(Found.Length - 1)
+        For N = 0 To Found.Length - 1
+            AnimeNames(N) = Found(N)
+
+            Snip1 = AnimeNames(N).IndexOf("<strong>") + 9
+            AnimeNames(N) = Mid(AnimeNames(N), Snip1)
+            Snip2 = AnimeNames(N).IndexOf("</strong>")
+            AnimeNames(N) = Left(AnimeNames(N), Snip2)
+        Next
+
+        Correct = False
+        Array.Resize(Selected, Found.Length)
+        Console.Clear()
+        Line = 0
+        Do Until Correct = True
+            Console.SetCursorPosition(0, 0)
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("Select Episodes to download using enter:")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+            For Printer = 0 To AnimeNames.Length - 1
+                If Printer = Line And Selected(Printer) = True Then
+                    Console.BackgroundColor = ConsoleColor.White
+                    Console.ForegroundColor = ConsoleColor.Black
+                    Console.WriteLine(AnimeNames(Printer))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.ForegroundColor = ConsoleColor.White
+                ElseIf Printer = Line Or Selected(Printer) = True Then
+                    Console.BackgroundColor = ConsoleColor.Gray
+                    Console.ForegroundColor = ConsoleColor.Black
+                    Console.WriteLine(AnimeNames(Printer))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.ForegroundColor = ConsoleColor.White
+                Else
+                    Console.WriteLine(AnimeNames(Printer))
+                End If
+            Next
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("[D] Start downloads")
+            Console.WriteLine("[Enter] Select")
+            Console.WriteLine("[Backspace] Deselect")
+            Console.WriteLine("[Spacebar] Select all")
+            Console.WriteLine("[Tab] Deselect all")
+            Console.WriteLine("[Esc] Go back to main")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+
+            Dim KeyReader As ConsoleKeyInfo = Console.ReadKey
+            If KeyReader.Key = ConsoleKey.DownArrow Then
+                If Line < AnimeNames.Length - 1 Then
+                    Line += 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.UpArrow Then
+                If Line > 0 Then
+                    Line -= 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.Escape Then
+                Main()
+            ElseIf KeyReader.Key = ConsoleKey.Enter Then
+                If Selected(Line) = True Then
+                    Selected(Line) = False
+                Else
+                    Selected(Line) = True
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.Delete Or KeyReader.Key = ConsoleKey.Backspace Then
+                Selected(Line) = False
+            ElseIf KeyReader.Key = ConsoleKey.Tab Then
+                For Delete = 0 To Selected.Length - 1
+                    Selected(Delete) = False
+                Next
+            ElseIf KeyReader.Key = ConsoleKey.Spacebar Then
+                For All = 0 To Selected.Length - 1
+                    Selected(All) = True
+                Next
+            ElseIf KeyReader.Key = ConsoleKey.D Then
+                Correct = True
+            End If
+        Loop
+        Correct = False
+        Console.Clear()
+        Console.WriteLine("Downloading:")
+        My.Computer.FileSystem.CreateDirectory(Environ$("USERPROFILE") & "\Downloads\Subtitles\" & Language)
+        Correct = False
+        Dim S As Integer = 0
+        Do Until Correct = True
+            If Selected(S) = True Then
+                Snip1 = Found(S).IndexOf("<a href=""") + 10
+                Found(S) = Mid(Found(S), Snip1)
+                Snip2 = Found(S).IndexOf("""")
+                Found(S) = Left(Found(S), Snip2)
+
+                Try
+                    Client.DownloadFile("https://kitsunekko.net/" & Found(S), Environ$("USERPROFILE") & "\Downloads\Subtitles\" & Language & "\" & Found(S).Replace("subtitles", "").Replace("/japanese/", "").Replace("/", "").Replace("/", ""))
+                    Console.ForegroundColor = ConsoleColor.Green
+                    Console.WriteLine(Found(S))
+                    Console.ForegroundColor = ConsoleColor.White
+                Catch ex As Exception
+                    Console.ForegroundColor = ConsoleColor.Red
+                    Console.WriteLine("Failed: " & Found(S))
+                    Console.ForegroundColor = ConsoleColor.White
+                End Try
+
+            End If
+            S += 1
+            If S >= Selected.Length Then
+                Correct = True
+            End If
+        Loop
+
+        Console.WriteLine("Would you like to be taken to the downloads?")
+        If Console.ReadLine.ToLower.IndexOf("y") <> -1 Then
+            Process.Start("explorer.exe", Environ$("USERPROFILE") & "\Downloads\Subtitles\" & Language)
+        End If
+        Main()
+    End Sub
     Sub ListeningPractice(Word)
         Const QUOTE = """"
         Dim Gender As String = "male"
@@ -464,7 +715,7 @@ Module Module1
         Dim HTML As String = ""
         Client.Encoding = System.Text.Encoding.UTF8
         Try
-            WordURL = ("https://jisho.org/search/" & Word)
+            WordURL = ("https: //jisho.org/search/" & Word)
             HTML = Client.DownloadString(New Uri(WordURL))
         Catch
             Console.ForegroundColor = ConsoleColor.Red
@@ -1711,11 +1962,16 @@ Module Module1
         Console.Clear()
         DisplayDefinitions(Defintions1, Types1, 5, 2)
         Console.BackgroundColor = ConsoleColor.DarkGray
-        If Furigana(0) <> "" Then
-            Console.WriteLine(ActualSearchWord & " (" & Furiganas(0) & ")")
-        Else
+        Try
+            If Furigana(0) <> "" Then
+                Console.WriteLine(ActualSearchWord & " (" & Furiganas(0) & ")")
+            Else
+                Console.WriteLine(ActualSearchWord)
+            End If
+        Catch
             Console.WriteLine(ActualSearchWord)
-        End If
+        End Try
+
         Console.BackgroundColor = ConsoleColor.Black
         Console.WriteLine()
         KanjiInfo(ActualSearchWord, 2)
@@ -2010,7 +2266,7 @@ Module Module1
         If WordIndex > 20 Then
             WordURL = ("https://jisho.org/search/" & Word & "%20%23words?page=2")
             AddingTemp = Client.DownloadString(New Uri(WordURL))
-            HTML = HTML & AddingTemp
+            HTML &= AddingTemp
         End If
 
         Dim HTMLTemp As String = HTML
@@ -2672,7 +2928,7 @@ Module Module1
         'Adding the い back on to the end of the word (if it is an i-adjective)
 
         If Iadjective = True Then
-            ActualSearchWord = ActualSearchWord & "い"
+            ActualSearchWord &= "い"
         End If
 
         'Example Sentence extraction:
@@ -2866,11 +3122,11 @@ Module Module1
                 StringTemp = "(" & Mid(DefinitionsGroup, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
 
                 If StringTemp.Length > 25 Then
-                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "")
+                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "").Replace("&#39;", "")
                 End If
             Catch
             End Try
-            ActualInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "") 'Adding definitions list to the definition part of the array
+            ActualInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "").Replace("&#39;", "") 'Adding definitions list to the definition part of the array
 
 
             'Getting the JLPT level:
@@ -2984,7 +3240,7 @@ Module Module1
                     StringTemp = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
 
                     If StringTemp.Length > 25 Then
-                        StringTemp3 = StringTemp3.Replace(StringTemp, "").Replace("&amp;", "")
+                        StringTemp3 = StringTemp3.Replace(StringTemp, "").Replace("&amp;", "").Replace("&#39;", "")
                     End If
                 Catch
                 End Try
@@ -3011,7 +3267,7 @@ Module Module1
                 End If
 
 
-                ActualInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3
+                ActualInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3.Replace("&#39;", "")
             Else
                 StringTemp2 = ""
                 ActualInfo(KanjiLoop, 5) = "No Kunyomi compounds"
@@ -3028,7 +3284,7 @@ Module Module1
 
         For Printer = 0 To ActualSearchWord.length - 1
             For Replacer = 0 To 5
-                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "")
+                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "").Replace("&#39;", "")
             Next
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(ActualInfo(Printer, 0))
@@ -3266,9 +3522,13 @@ Module Module1
         Dim WordURL As String = "www.romajidesu.com/translator/" & Sentence
         Dim Client As New WebClient
         Dim WordGroups() As String
+        Dim Translate1 As String
         Client.Encoding = System.Text.Encoding.UTF8
         Dim HTML As String = ""
-        HTML = Client.DownloadString(New Uri("http: //" & WordURL))
+        Try
+            HTML = Client.DownloadString(New Uri("http://" & WordURL))
+        Catch
+        End Try
 
         If HTML.Length < 100 Then
             Console.ForegroundColor = ConsoleColor.Red
@@ -3297,8 +3557,11 @@ Module Module1
         Console.WriteLine("Sentence breakdown:")
         Console.WriteLine()
         Console.WriteLine(Sentence)
-        Console.WriteLine(GTranslate(Sentence, "ja", "en"))
+
+        Translate1 = GTranslate(Sentence, "ja", "en")
+        Console.WriteLine(Translate1)
         Console.WriteLine()
+
         Dim FoundInfo, WriteWord, CurrentWord As String
         Dim WriteWord2 = ""
         Dim Snip1, Snip2 As Integer
@@ -6240,6 +6503,7 @@ Module Module1
 
         Dim ReadingsGroup, DefinitionsGroup, JLPT, FoundInGroup As String
         Dim KanjiInfo(ActualSearch.length - 1, 5)
+        Dim RadicalGroups(0) As String
         'Readings:
         '(X, Y)
         'X = Kanji
@@ -6267,7 +6531,7 @@ Module Module1
             StringTemp3 = ReadingsGroup 'Holds both Kun and On (if both are included)
 
             'TEMP
-            KanjiInfo(KanjiLoop, 0) = CurrentKanji
+            KanjiInfo(KanjiLoop, 0) = CurrentKanji.Replace("&#39;", "")
 
             If ReadingsGroup.IndexOf("Kun:") <> -1 Then 'If the kanji has at least one kun reading
                 'Making StringTemp a string holding just kun readings
@@ -6319,7 +6583,7 @@ Module Module1
 
                     StringTemp2 = Mid(StringTemp, Snip1, Snip2 + 1 - Snip1)
 
-                    StringTemp = StringTemp.Replace(StringTemp2, "") 'Getting rid of the reading from the group
+                    StringTemp = StringTemp.Replace(StringTemp2, "").Replace("&#39;", "") 'Getting rid of the reading from the group
 
                     'Getting the actual reading:
                     StringTemp2 = Mid(StringTemp2, 5) 'Getting rid of the < at the start of the whole link trim
@@ -6354,11 +6618,11 @@ Module Module1
                 StringTemp = "(" & Mid(DefinitionsGroup, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
 
                 If StringTemp.Length > 25 Then
-                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "").Replace("&amp;", "")
+                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "").Replace("&amp;", "").Replace("&#39;", "")
                 End If
             Catch
             End Try
-            KanjiInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "") 'Adding definitions list to the definition part of the array
+            KanjiInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "").Replace("&#39;", "") 'Adding definitions list to the definition part of the array
 
 
             'Getting the JLPT level:
@@ -6438,24 +6702,7 @@ Module Module1
 
                 'Getting rid of overly long kanji definitions
                 CountInput = StringTemp3
-                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                If Occurrences > 5 Then
-                    Do Until Occurrences = 5
-                        Snip2 = StringTemp3.LastIndexOf(",")
-                        StringTemp3 = Left(StringTemp3, Snip2)
-                        Occurrences -= 1
-                    Loop
-                End If
-                If StringTemp3.Length > 40 And Occurrences > 2 Then
-                    Try
-                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
-                            Snip2 = StringTemp3.LastIndexOf(",")
-                            StringTemp3 = Left(StringTemp3, Snip2)
-                            Occurrences -= 1
-                        Loop
-                    Catch
-                    End Try
-                End If
+
 
                 KanjiInfo(KanjiLoop, 4) = "On Reading Compound: " & StringTemp3
 
@@ -6484,7 +6731,7 @@ Module Module1
                 StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                 StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
 
-                If StringTemp2.IndexOf("<li>") <> -1 And Mode = 0 Then
+                If StringTemp2.IndexOf("<li>") <> -1 And Mode = 1 Then
                     StringTemp3 &= "|"
                     Snip1 = StringTemp2.IndexOf("<li>")
                     StringTemp2 = Mid(StringTemp2, Snip1 + 8)
@@ -6511,36 +6758,87 @@ Module Module1
                     End If
                 End If
 
-
-                CountInput = StringTemp3
-                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                If Occurrences > 6 Then
-                    Do Until Occurrences = 6
-                        Snip2 = StringTemp3.LastIndexOf(",")
-                        StringTemp3 = Left(StringTemp3, Snip2)
-                        Occurrences -= 1
-                    Loop
-                End If
-
-                If StringTemp3.Length > 70 And Occurrences > 2 Then
-                    Try
-                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
-                            Snip2 = StringTemp3.LastIndexOf(",")
-                            StringTemp3 = Left(StringTemp3, Snip2)
-                            Occurrences -= 1
-                        Loop
-                    Catch
-                    End Try
-                End If
-
                 KanjiInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3
 
             Else
                 StringTemp2 = ""
                 KanjiInfo(KanjiLoop, 5) = "No Kunyomi compounds"
             End If
-        Next
 
+            Dim RadicalFails As Integer = 0
+            'Kanji and radicals
+            Dim KanjiFile As String
+            KanjiFile = My.Computer.FileSystem.ReadAllText("Kanji.txt")
+            Dim RadicalFile As String
+            RadicalFile = My.Computer.FileSystem.ReadAllText("Radicals.txt")
+            Dim Correct As Boolean = False
+            Dim Rows() As String
+            Rows = KanjiFile.Split(vbCrLf)
+            Dim Row() As String
+            Dim R As Integer = 0
+            Dim RadicalsUsed As String
+            Do Until Correct = True
+                Row = Rows(R).Split(vbTab)
+                Row(0) = Row(0).Trim
+                If Row(0) = CurrentKanji Then
+                    RadicalsUsed = Row(2)
+                    Correct = True
+                    Continue Do
+                End If
+
+                R += 1
+            Loop
+            Correct = False
+
+            Dim Radicals() As String
+            RadicalsUsed = RadicalsUsed.Trim
+            RadicalsUsed = RadicalsUsed.Replace(" + ", "+")
+            Radicals = RadicalsUsed.Split("+")
+
+            Rows = RadicalFile.Split(vbCrLf)
+
+            Correct = False
+            For Radical = 0 To Radicals.Length - 1
+                Correct = False
+                R = 0
+                Do Until Correct = True
+                    Try
+                        Row = Rows(R).Split(vbTab)
+                    Catch
+                        RadicalFails += 1 '/i 途親細辱
+                        If RadicalFails > Radicals.Length - 1 Then
+                            RadicalsUsed = ""
+                        End If
+
+                        Correct = True
+                        Continue Do
+                    End Try
+
+                    Row(0) = Row(0).Trim
+                    If Row(1).ToLower.IndexOf(Radicals(Radical).ToLower) <> -1 Or Row(1).ToLower = Radicals(Radical).ToLower Then
+                        Correct = True
+                        Radicals(Radical) = Row(0)
+                        Continue Do
+                    End If
+
+                    R += 1
+                Loop
+            Next
+
+            For Radical = 0 To Radicals.Length - 1
+                RadicalGroups(KanjiLoop) &= Radicals(Radical) & " + "
+            Next
+            RadicalGroups(KanjiLoop) = Left(RadicalGroups(KanjiLoop), RadicalGroups(KanjiLoop).Length - 3)
+
+            RadicalGroups(KanjiLoop) &= " (" & RadicalsUsed.Replace("+", " + ") & ")"
+
+            Array.Resize(RadicalGroups, RadicalGroups.Length + 1)
+            'Next Kanji
+        Next
+        Array.Resize(RadicalGroups, RadicalGroups.Length - 1)
+
+        Console.WriteLine()
+        '------------------------
         'Printing the infomation
         If Mode = 1 Then
             Console.Clear()
@@ -6548,19 +6846,71 @@ Module Module1
             Console.WriteLine()
         End If
 
+        Dim FileReader As String = ""
+        Dim TextString() As String
+        Dim TextWriter As System.IO.StreamWriter
+        Try
+            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+        Catch
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt").Dispose() 'This text file will store user preferences
+            TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+            TextWriter.WriteLine("Default 's=' parameter:4")
+            TextWriter.WriteLine("Maximum definitions shown:6")
+            TextWriter.WriteLine("Reading shown first:kun")
+            TextWriter.Close()
+        End Try
+        TextString = FileReader.Split(vbCrLf)
+        Dim OnFirst As Boolean = False
+        If TextString(2).indexof("on") <> -1 Then
+            OnFirst = True
+        End If
+
         Dim ArrayPrint() As String
         For Printer = 0 To ActualSearch.length - 1
             For Replacer = 0 To 5
-                KanjiInfo(Printer, Replacer) = KanjiInfo(Printer, Replacer).replace("&quot;", """")
+                KanjiInfo(Printer, Replacer) = KanjiInfo(Printer, Replacer).replace("&quot;", """").Replace("&#39;", "")
             Next
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(KanjiInfo(Printer, 0))
             Console.BackgroundColor = ConsoleColor.Black
-            Console.WriteLine(KanjiInfo(Printer, 1))
-            Console.WriteLine(KanjiInfo(Printer, 2))
+            If OnFirst = False Then
+                Console.WriteLine(KanjiInfo(Printer, 1)) 'kun
+                Console.WriteLine(KanjiInfo(Printer, 2)) 'on
+            Else
+                Console.WriteLine(KanjiInfo(Printer, 2)) 'on
+                Console.WriteLine(KanjiInfo(Printer, 1)) 'kun
+            End If
             Console.WriteLine(KanjiInfo(Printer, 3))
+            If RadicalGroups(Printer).IndexOf("()") = -1 Then
+                RadicalGroups(Printer) = RadicalGroups(Printer).Replace("https://www.wanikani.com/radicals/", "")
+                Console.WriteLine("Radicals used: " & RadicalGroups(Printer))
+            End If
 
             If KanjiInfo(Printer, 5).indexof("|") = -1 Then
+                Try
+                    'Shortening
+                    CountInput = KanjiInfo(Printer, 5)
+                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                    If Occurrences > 5 Then
+                        Do Until Occurrences = 7
+                            Snip2 = KanjiInfo(Printer, 5).LastIndexOf(",")
+                            KanjiInfo(Printer, 5) = Left(KanjiInfo(Printer, 5), Snip2)
+                            Occurrences -= 1
+                        Loop
+                    End If
+                    If KanjiInfo(Printer, 5).Length > 50 Or Occurrences < 3 Then
+                        Try
+                            Do Until KanjiInfo(Printer, 5).Length < 51 Or Occurrences = 2
+                                Snip2 = KanjiInfo(Printer, 5).LastIndexOf(",")
+                                KanjiInfo(Printer, 5) = Left(KanjiInfo(Printer, 5), Snip2)
+                                Occurrences -= 1
+                            Loop
+                        Catch
+                        End Try
+                    End If
+                Catch
+                End Try
+
                 Console.WriteLine(KanjiInfo(Printer, 5))
             Else
                 ArrayPrint = KanjiInfo(Printer, 5).split("|")
@@ -6584,16 +6934,16 @@ Module Module1
 
                     CountInput = ArrayPrint(Compound)
                     Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                    If Occurrences > 5 Then
+                    If Occurrences > 6 Then
                         Do Until Occurrences = 5
                             Snip2 = ArrayPrint(Compound).LastIndexOf(",")
                             ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
                             Occurrences -= 1
                         Loop
                     End If
-                    If ArrayPrint(Compound).Length > 50 And Occurrences > 2 Then
+                    If ArrayPrint(Compound).Length > 70 And Occurrences > 2 Then
                         Try
-                            Do Until ArrayPrint(Compound).Length < 51 Or Occurrences = 2
+                            Do Until ArrayPrint(Compound).Length < 60 Or Occurrences < 5
                                 Snip2 = ArrayPrint(Compound).LastIndexOf(",")
                                 ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
                                 Occurrences -= 1
@@ -6650,6 +7000,27 @@ Module Module1
                         End Try
                     End If
                     ''''''''''''''''''''end of shortening info
+
+                    CountInput = ArrayPrint(Compound)
+                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                    If Occurrences > 6 Then
+                        Do Until Occurrences = 6
+                            Snip2 = ArrayPrint(Compound).LastIndexOf(",")
+                            ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
+                            Occurrences -= 1
+                        Loop
+                    End If
+
+                    If ArrayPrint(Compound).Length > 70 And Occurrences > 2 Then
+                        Try
+                            Do Until ArrayPrint(Compound).Length < 40 Or Occurrences = 2
+                                Snip2 = ArrayPrint(Compound).LastIndexOf(",")
+                                ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
+                                Occurrences -= 1
+                            Loop
+                        Catch
+                        End Try
+                    End If
 
                     Console.WriteLine(ArrayPrint(Compound))
                 Next
@@ -7521,6 +7892,7 @@ ChangeS:
                 TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
                 TextWriter.WriteLine("Default 's=' parameter:4")
                 TextWriter.WriteLine("Maximum definitions shown:6")
+                TextWriter.WriteLine("Reading shown first:kun")
                 TextWriter.Close()
             End Try
 
@@ -7615,6 +7987,7 @@ ChangeS:
                 TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
                 TextWriter.WriteLine("Default 's=' parameter:4")
                 TextWriter.WriteLine("Maximum definitions shown:6")
+                TextWriter.WriteLine("Reading shown first:kun")
                 TextWriter.Close()
                 Console.WriteLine("Done")
 
@@ -7689,7 +8062,38 @@ ChangeS:
 
                 Console.ReadLine()
                 Preferences()
+            ElseIf SettingChange = "4" Then 'On or Kun being shown first ------
+                Console.Clear()
+                Console.WriteLine("Which reading would you like to be shown first? (either Onyomi or Kunyomi)")
+
+                Dim UserInput As String
+                UserInput = Console.ReadLine
+                If Left(UserInput, 2) = "ku" Then
+                    NewSetting = "kun"
+                ElseIf Left(UserInput, 2) = "on" Then
+                    NewSetting = "on"
+                Else
+                    Preferences()
+                End If
+
+                TextString(2) = TextString(2).Replace("on", NewSetting)
+                TextString(2) = TextString(2).Replace("kun", NewSetting)
+
+                Dim TextUpdater As System.IO.StreamWriter
+                TextUpdater = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                For Writer = 0 To TextString.Length - 1
+                    TextUpdater.WriteLine(TextString(Writer))
+                Next
+                TextUpdater.Close()
+
+                NewSetting = NewSetting.Replace("on", "Onyomi").Replace("kun", "Kunyomi")
+
+                Console.WriteLine("The reading this is shown first is now '" & NewSetting & "'")
+
+                Console.ReadLine()
+                Preferences()
             End If
+
 
         ElseIf Choice = "3" Then
             Console.WriteLine("Are you sure you want to reset ALL settings?")
