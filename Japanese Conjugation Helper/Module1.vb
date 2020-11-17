@@ -238,7 +238,7 @@ Module Module1
             Console.Clear()
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine("Find more info in the wiki (on GitHub).")
-            Console.WriteLine("If you want to give feedback, request a feature or report bugs do '/feeback' or '/rate'")
+            Console.WriteLine("If you want to give feedback, request a feature or report bugs do '/feedback' or '/rate'")
             Console.BackgroundColor = ConsoleColor.Black
             Console.WriteLine()
             Console.WriteLine("List of commands (note: commands are case sensitive):")
@@ -3274,6 +3274,25 @@ Module Module1
             End If
         Next
 
+        Dim FileReader As String = ""
+        Dim TextString() As String
+        Dim TextWriter As System.IO.StreamWriter
+        Try
+            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+        Catch
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt").Dispose() 'This text file will store user preferences
+            TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+            TextWriter.WriteLine("Default 's=' parameter:4")
+            TextWriter.WriteLine("Maximum definitions shown:6")
+            TextWriter.WriteLine("Reading shown first:kun")
+            TextWriter.Close()
+        End Try
+        TextString = FileReader.Split(vbCrLf)
+        Dim OnFirst As Boolean = False
+        If TextString(2).IndexOf("on") <> -1 Then
+            OnFirst = True
+        End If
+
         'Printing the infomation
         'Display Type: 1 = with LastRequest, 2 = without LastRequest
         If DisplayType = 2 Then
@@ -3289,8 +3308,15 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(ActualInfo(Printer, 0))
             Console.BackgroundColor = ConsoleColor.Black
-            Console.WriteLine(ActualInfo(Printer, 1))
-            Console.WriteLine(ActualInfo(Printer, 2))
+
+            If OnFirst = False Then
+                Console.WriteLine(ActualInfo(Printer, 1)) 'kun
+                Console.WriteLine(ActualInfo(Printer, 2)) 'on
+            Else
+                Console.WriteLine(ActualInfo(Printer, 2)) 'on
+                Console.WriteLine(ActualInfo(Printer, 1)) 'kun
+            End If
+
             Console.WriteLine(ActualInfo(Printer, 3))
             Console.WriteLine(ActualInfo(Printer, 5))
             Console.WriteLine(ActualInfo(Printer, 4))
@@ -6767,16 +6793,33 @@ Module Module1
 
             Dim RadicalFails As Integer = 0
             'Kanji and radicals
-            Dim KanjiFile As String
-            KanjiFile = My.Computer.FileSystem.ReadAllText("Kanji.txt")
-            Dim RadicalFile As String
-            RadicalFile = My.Computer.FileSystem.ReadAllText("Radicals.txt")
+            Dim KanjiFile As String = ""
+            Try
+                KanjiFile = My.Computer.FileSystem.ReadAllText("Kanji.txt")
+            Catch ex As Exception
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("A file wasn't found in the program files. You will have to reinstall the program from Github")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End Try
+
+            Dim RadicalFile As String = ""
+            Try
+                RadicalFile = My.Computer.FileSystem.ReadAllText("Radicals.txt")
+            Catch ex As Exception
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("A file wasn't found in the program files. You will have to reinstall the program from Github")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End Try
             Dim Correct As Boolean = False
             Dim Rows() As String
             Rows = KanjiFile.Split(vbCrLf)
             Dim Row() As String
             Dim R As Integer = 0
-            Dim RadicalsUsed As String
+            Dim RadicalsUsed As String = ""
             Do Until Correct = True
                 Row = Rows(R).Split(vbTab)
                 Row(0) = Row(0).Trim
@@ -6836,8 +6879,6 @@ Module Module1
             'Next Kanji
         Next
         Array.Resize(RadicalGroups, RadicalGroups.Length - 1)
-
-        Console.WriteLine()
         '------------------------
         'Printing the infomation
         If Mode = 1 Then
@@ -6880,13 +6921,14 @@ Module Module1
                 Console.WriteLine(KanjiInfo(Printer, 2)) 'on
                 Console.WriteLine(KanjiInfo(Printer, 1)) 'kun
             End If
+
             Console.WriteLine(KanjiInfo(Printer, 3))
             If RadicalGroups(Printer).IndexOf("()") = -1 Then
                 RadicalGroups(Printer) = RadicalGroups(Printer).Replace("https://www.wanikani.com/radicals/", "")
                 Console.WriteLine("Radicals used: " & RadicalGroups(Printer))
             End If
 
-            If KanjiInfo(Printer, 5).indexof("|") = -1 Then
+            If KanjiInfo(Printer, 5).indexof("|") = -1 Then 'Kun
                 Try
                     'Shortening
                     CountInput = KanjiInfo(Printer, 5)
@@ -6957,7 +6999,7 @@ Module Module1
                 Next
             End If
 
-            If KanjiInfo(Printer, 4).indexof("|") = -1 Then
+            If KanjiInfo(Printer, 4).indexof("|") = -1 Then 'On
                 Console.WriteLine(KanjiInfo(Printer, 4))
             Else
                 ArrayPrint = KanjiInfo(Printer, 4).split("|")
@@ -8197,5 +8239,5 @@ ChangeS:
             Writer.Close()
         End Using
     End Sub
-    'test
+
 End Module
