@@ -574,7 +574,6 @@ Module Module1
         Snip2 = Found(Line).IndexOf("""")
         Found(Line) = Left(Found(Line), Snip2)
 
-
         HTML = Client.DownloadString(New Uri("https://kitsunekko.net" & Found(Line)))
 
         Found = Split(HTML, "</tr>")

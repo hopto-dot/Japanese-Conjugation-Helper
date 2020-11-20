@@ -5,22 +5,20 @@ VisualStudioVersion = 16.0.30309.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Japanese Conjugation Helper", "Japanese Conjugation Helper\Japanese Conjugation Helper.vbproj", "{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "JCH Installer", "JCH Installer\JCH Installer.vdproj", "{A0CA191B-3016-41C3-80CD-3F1C7ACC5FC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Debug|Default = Debug|Default
 		Release|Any CPU = Release|Any CPU
-		Release|Default = Release|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Default.ActiveCfg = Debug|Any CPU
-		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Debug|Default.Build.0 = Debug|Any CPU
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Default.ActiveCfg = Release|Any CPU
-		{5DC260AC-64DB-467C-88AA-3E7DE39ACC66}.Release|Default.Build.0 = Release|Any CPU
+		{A0CA191B-3016-41C3-80CD-3F1C7ACC5FC4}.Debug|Any CPU.ActiveCfg = Debug
+		{A0CA191B-3016-41C3-80CD-3F1C7ACC5FC4}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
