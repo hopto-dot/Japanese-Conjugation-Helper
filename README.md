@@ -28,7 +28,7 @@ If you like this program and want to show your appreciation then how about buyin
 * Sub - Downloads subtitles from [Kitsu Nekko](https://kitsunekko.net/)
 * **[/Audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
 * HeyLingo Audio (/heylingo) - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses
-* [/]
+* [/Subtitles] Downloads English or Japanese subtitles for almost any anime
 * **[/Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening)** - Start a listening test for a verb or adjective
 * **[Kanji Test (/k)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test)** - Enter Japanese text and get tested on all the kanji
 * [**Conjugator Practice** (/p)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
