@@ -46,6 +46,7 @@ If you like this program and want to show your appreciation then how about buyin
 - [X] Download audio from various sites
 - [ ] Make a proper example sentence feature
 - [ ] Improve KanjiTest (/k)
+- [ ] Making a fully up-to-date and easy to follow [wiki](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#index)
 
 ***
 ## **If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
