@@ -10,7 +10,6 @@
 
 **For the main functionality of bringing up conjugations of a word, simple type the word on it's own (in Japanese, Romaji or the English word). Find out more about how this and other commands work in [the Wiki](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use).**
 
-
 ## Donate
 
 If you like this program and want to show your appreciation then how about buying me a coffee (or a tea because I'm british 😉)
@@ -40,6 +39,13 @@ If you like this program and want to show your appreciation then how about buyin
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
 * [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (obsolete command)
 * /ranki - Reverse Anki: Generate reverse anki cards (obsolete command)
+
+## To do:
+- [ ] Make an offline searching possible
+- [ ] Making searching for words more optimised and quicker
+- [X] Download audio from various sites
+- [ ] Make a proper example sentence feature
+- [ ] Improve KanjiTest (/k)
 
 ***
 ## **If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
