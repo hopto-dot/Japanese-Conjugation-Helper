@@ -6373,150 +6373,102 @@ Module Module1
                 RadicalGroups(Printer) = RadicalGroups(Printer).Replace("https://www.wanikani.com/radicals/", "")
                 Console.WriteLine("Radicals used: " & RadicalGroups(Printer))
             End If
-
-            If KanjiInfo(Printer, 5).indexof("|") = -1 Then 'Kun
-                Try
-                    'Shortening
-                    CountInput = KanjiInfo(Printer, 5)
-                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                    If Occurrences > 5 Then
-                        Do Until Occurrences = 7
-                            Snip2 = KanjiInfo(Printer, 5).LastIndexOf(",")
-                            KanjiInfo(Printer, 5) = Left(KanjiInfo(Printer, 5), Snip2)
-                            Occurrences -= 1
-                        Loop
+            Dim ReadingNumber As Integer
+            For RD = 0 To 1
+                If RD = 0 Then
+                    If OnFirst = True Then
+                        ReadingNumber = 4
+                    Else
+                        ReadingNumber = 5
                     End If
-                    If KanjiInfo(Printer, 5).Length > 50 Or Occurrences < 3 Then
-                        Try
-                            Do Until KanjiInfo(Printer, 5).Length < 51 Or Occurrences = 2
-                                Snip2 = KanjiInfo(Printer, 5).LastIndexOf(",")
-                                KanjiInfo(Printer, 5) = Left(KanjiInfo(Printer, 5), Snip2)
+                Else
+                    If ReadingNumber = 4 Then
+                        ReadingNumber = 5
+                    Else
+                        ReadingNumber = 4
+                    End If
+                End If
+
+                If KanjiInfo(Printer, ReadingNumber).indexof("|") = -1 Then 'Kun
+                    Try
+                        'Shortening
+                        CountInput = KanjiInfo(Printer, ReadingNumber)
+                        Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                        If Occurrences > 5 Then
+                            Do Until Occurrences = 7
+                                Snip2 = KanjiInfo(Printer, ReadingNumber).LastIndexOf(",")
+                                KanjiInfo(Printer, ReadingNumber) = Left(KanjiInfo(Printer, ReadingNumber), Snip2)
                                 Occurrences -= 1
                             Loop
-                        Catch
-                        End Try
-                    End If
-                Catch
-                End Try
-
-                Console.WriteLine(KanjiInfo(Printer, 5))
-            Else
-                ArrayPrint = KanjiInfo(Printer, 5).split("|")
-                ArrayPrint(0) = ArrayPrint(0).Replace("Kun Reading Compound: ", "")
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.WriteLine("Kun Reading Compounds:")
-                Console.BackgroundColor = ConsoleColor.Black
-                For Compound = 0 To ArrayPrint.Length - 1
-
-                    ''Shortening info''''''''''''''''''''
-                    Try
-                        Snip1 = ArrayPrint(Compound).IndexOf("(")
-                        Snip2 = ArrayPrint(Compound).IndexOf(")")
-                        StringTemp = "(" & Mid(ArrayPrint(Compound), Snip1 + 2, Snip2 - 1 - Snip1) & ")"
-
-                        If StringTemp.Length > 50 Then
-                            ArrayPrint(Compound) = ArrayPrint(Compound).Replace(StringTemp, "")
+                        End If
+                        If KanjiInfo(Printer, ReadingNumber).Length > 50 Or Occurrences < 3 Then
+                            Try
+                                Do Until KanjiInfo(Printer, ReadingNumber).Length < 51 Or Occurrences = 2
+                                    Snip2 = KanjiInfo(Printer, ReadingNumber).LastIndexOf(",")
+                                    KanjiInfo(Printer, ReadingNumber) = Left(KanjiInfo(Printer, ReadingNumber), Snip2)
+                                    Occurrences -= 1
+                                Loop
+                            Catch
+                            End Try
                         End If
                     Catch
                     End Try
 
-                    CountInput = ArrayPrint(Compound)
-                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                    If Occurrences > 6 Then
-                        Do Until Occurrences = 5
-                            Snip2 = ArrayPrint(Compound).LastIndexOf(",")
-                            ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
-                            Occurrences -= 1
-                        Loop
+                    Console.WriteLine(KanjiInfo(Printer, ReadingNumber))
+                Else
+                    ArrayPrint = KanjiInfo(Printer, ReadingNumber).split("|")
+                    ArrayPrint(0) = ArrayPrint(0).Replace("Kun Reading Compound: ", "").Replace("On Reading Compound: ", "")
+                    Console.BackgroundColor = ConsoleColor.DarkGray
+                    If ReadingNumber = 4 Then
+                        Console.WriteLine("On Reading Compounds:")
+                    Else
+                        Console.WriteLine("Kun Reading Compounds:")
                     End If
-                    If ArrayPrint(Compound).Length > 70 And Occurrences > 2 Then
+
+                    Console.BackgroundColor = ConsoleColor.Black
+                    For Compound = 0 To ArrayPrint.Length - 1
+
+                        ''Shortening info''''''''''''''''''''
                         Try
-                            Do Until ArrayPrint(Compound).Length < 60 Or Occurrences < 5
+                            Snip1 = ArrayPrint(Compound).IndexOf("(")
+                            Snip2 = ArrayPrint(Compound).IndexOf(")")
+                            StringTemp = "(" & Mid(ArrayPrint(Compound), Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                            If StringTemp.Length > 50 Then
+                                ArrayPrint(Compound) = ArrayPrint(Compound).Replace(StringTemp, "")
+                            End If
+                        Catch
+                        End Try
+
+                        CountInput = ArrayPrint(Compound)
+                        Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                        If Occurrences > 6 Then
+                            Do Until Occurrences = 5
                                 Snip2 = ArrayPrint(Compound).LastIndexOf(",")
                                 ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
                                 Occurrences -= 1
                             Loop
-                        Catch
-                        End Try
-                    End If
-                    ''''''''''''''''''''end of shortening info
-
-                    Console.WriteLine(ArrayPrint(Compound))
-                Next
-            End If
-
-            If KanjiInfo(Printer, 4).indexof("|") = -1 Then 'On
-                Console.WriteLine(KanjiInfo(Printer, 4))
-            Else
-                ArrayPrint = KanjiInfo(Printer, 4).split("|")
-                ArrayPrint(0) = ArrayPrint(0).Replace("On Reading Compound: ", "")
-
-                Console.BackgroundColor = ConsoleColor.DarkGray
-                Console.WriteLine("On Reading Compounds:")
-                Console.BackgroundColor = ConsoleColor.Black
-
-                For Compound = 0 To ArrayPrint.Length - 1
-                    ''Shortening info''''''''''''''''''''
-                    Try
-                        Snip1 = ArrayPrint(Compound).IndexOf("(")
-                        Snip2 = ArrayPrint(Compound).IndexOf(")")
-                        StringTemp = "(" & Mid(ArrayPrint(Compound), Snip1 + 2, Snip2 - 1 - Snip1) & ")"
-
-                        If StringTemp.Length > 50 Then
-                            ArrayPrint(Compound) = ArrayPrint(Compound).Replace(StringTemp, "")
                         End If
-                    Catch
-                    End Try
+                        If ArrayPrint(Compound).Length > 70 And Occurrences > 2 Then
+                            Try
+                                Do Until ArrayPrint(Compound).Length < 60 Or Occurrences < 5
+                                    Snip2 = ArrayPrint(Compound).LastIndexOf(",")
+                                    ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
+                                    Occurrences -= 1
+                                Loop
+                            Catch
+                            End Try
+                        End If
+                        ''''''''''''''''''''end of shortening info
 
-                    CountInput = ArrayPrint(Compound)
-                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                    If Occurrences > 5 Then
-                        Do Until Occurrences = 5
-                            Snip2 = ArrayPrint(Compound).LastIndexOf(",")
-                            ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
-                            Occurrences -= 1
-                        Loop
-                    End If
-                    If ArrayPrint(Compound).Length > 50 And Occurrences > 2 Then
-                        Try
-                            Do Until ArrayPrint(Compound).Length < 51 Or Occurrences = 2
-                                Snip2 = ArrayPrint(Compound).LastIndexOf(",")
-                                ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
-                                Occurrences -= 1
-                            Loop
-                        Catch
-                        End Try
-                    End If
-                    ''''''''''''''''''''end of shortening info
-
-                    CountInput = ArrayPrint(Compound)
-                    Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                    If Occurrences > 6 Then
-                        Do Until Occurrences = 6
-                            Snip2 = ArrayPrint(Compound).LastIndexOf(",")
-                            ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
-                            Occurrences -= 1
-                        Loop
-                    End If
-
-                    If ArrayPrint(Compound).Length > 70 And Occurrences > 2 Then
-                        Try
-                            Do Until ArrayPrint(Compound).Length < 40 Or Occurrences = 2
-                                Snip2 = ArrayPrint(Compound).LastIndexOf(",")
-                                ArrayPrint(Compound) = Left(ArrayPrint(Compound), Snip2)
-                                Occurrences -= 1
-                            Loop
-                        Catch
-                        End Try
-                    End If
-
-                    Console.WriteLine(ArrayPrint(Compound))
-                Next
-            End If
+                        Console.WriteLine(ArrayPrint(Compound))
+                    Next
+                End If
+            Next
 
             Console.WriteLine()
-        Next
-        If Mode = 2 Then
+            Next
+            If Mode = 2 Then
             Exit Sub
         End If
 
@@ -6884,8 +6836,13 @@ Module Module1
             End If
 
             Console.WriteLine(ActualInfo(Printer, 3))
-            Console.WriteLine(ActualInfo(Printer, 5))
-            Console.WriteLine(ActualInfo(Printer, 4))
+            If OnFirst = True Then
+                Console.WriteLine(ActualInfo(Printer, 4))
+                Console.WriteLine(ActualInfo(Printer, 5))
+            Else
+                Console.WriteLine(ActualInfo(Printer, 5))
+                Console.WriteLine(ActualInfo(Printer, 4))
+            End If
             Console.WriteLine()
         Next
 
