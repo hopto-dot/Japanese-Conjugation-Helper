@@ -6,6 +6,15 @@ Imports Newtonsoft.Json.Linq
 Imports WanaKanaNet
 
 Module Module1
+
+    Dim Words(0) As Word
+    Class Word
+        Public Word As String = ""
+        Public Furigana As String = ""
+        Public Types() As String
+        Public Meanings() As String = {""}
+        Public Page As Integer
+    End Class
     Sub Main()
         Randomize()
         Console.InputEncoding = System.Text.Encoding.Unicode
@@ -41,6 +50,15 @@ Module Module1
 
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
             Main()
+        End If
+
+        If Word = "/load" Then
+            LoadWordJson()
+            Main()
+        End If
+
+        If Left(Word, 2) = "//" Then
+            WordJsonSearch(Word)
         End If
 
         Word = Word.Replace("！", "!").Replace("・", "/").Replace("＆", "&")
@@ -334,125 +352,106 @@ Module Module1
 
         Main()
     End Sub
-    Sub Help(ByVal Command)
-        Const QUOTE = """"
-        Command = Command.ToLower
+    Sub LoadWordJson()
+        Console.WriteLine("Loading for offline use...")
+        Dim JsonReader As String
+        Dim FileEntries(), WordEntries() As String
+        Dim Correct As Boolean = False
+        Dim I As Integer
+        Array.Resize(Words, Words.Length + 1)
+        For JSon = 1 To 29 'Loop for each file
+            JsonReader = My.Computer.FileSystem.ReadAllText("jmdict_english\term_bank_" & JSon & ".json")
+            'Getting rid of starting '[[' and ending ']]':
+            JsonReader = Mid(JsonReader, 3)
+            FileEntries = Split(JsonReader, "],[")
+
+            For Word = 0 To 999
+                WordEntries = FileEntries(Word).Split(",")
+
+                'Adding info to words array:
+                Words(Words.Length - 1) = New Word
+                Words(Words.Length - 1).Word = WordEntries(0).Replace("""", "") 'Adding actual word
+                Words(Words.Length - 1).Furigana = WordEntries(1).Replace("""", "") 'Adding furigana
+                Words(Words.Length - 1).Types = WordEntries(2).Split(" ") 'Adding word types
+                Words(Words.Length - 1).Page = JSon 'Adding which JSON file it is in
+
+                'Adding the meanings (which are often spread across a few array positions start at 5)
+                Correct = False
+                I = 5
+                Do Until Correct = True
+                    Words(Words.Length - 1).Meanings(Words(Words.Length - 1).Meanings.Length - 1) = WordEntries(I) 'Current free slot in 'meanings' array will be filled
+                    If WordEntries(I).Contains("]") Then
+                        Correct = True
+                        Continue Do
+                    End If
+
+                    Array.Resize(Words(Words.Length - 1).Meanings, Words(Words.Length - 1).Meanings.Length + 1) 'Increasing size of 'meanings' by 1
+                    I += 1
+                Loop
+
+                For Replacer = 0 To Words(Words.Length - 1).Types.Length - 1
+                    Words(Words.Length - 1).Types(Replacer) = Words(Words.Length - 1).Types(Replacer).Replace("""", "")
+                Next
+                For Replacer = 0 To Words(Words.Length - 1).Meanings.Length - 1
+                    Words(Words.Length - 1).Meanings(Replacer) = Words(Words.Length - 1).Meanings(Replacer).Replace("""", "").Replace("[", "").Replace("]", "")
+                Next
+
+                Array.Resize(Words, Words.Length + 1)
+            Next
+        Next
+        Array.Resize(Words, Words.Length - 1)
+    End Sub
+    Sub WordJsonSearch(Word)
+        Word = Word.replace("//", "")
+        If Words.Length < 100 Then
+            Array.Resize(Words, 0)
+            LoadWordJson()
+        End If
         Console.Clear()
+        Console.WriteLine("Searching for '{0}'", Word)
+        Dim Results As New List(Of Word) From {}
 
-        If Command = "search" Or Command = "wordlookup" Or Command = "word" Or Command = "lookup" Or Command = "definition" Or Command = "conjugate" Then
-            Console.WriteLine("WordLookup: To lookup a word and bring up information and conjugation patterns, simply type and English or Japanese word, Japanese words can also be written using romaji (english transliteration), surround words in quotes to make sure the program knows that it is definitely the english word you are seaching for and not romaji. Example: " & QUOTE & "hate" & QUOTE)
-            Console.WriteLine("the (number of results) parameter is how many results the program will bring up, you then choose one of these results to have details about it show up.")
-            Console.WriteLine("This command is best with adjectives and verbs because they have the most conjugation patterns, but nouns work too!")
-            Console.WriteLine("This isn't technically a command because it doesn't use a " & QUOTE & "/" & QUOTE)
-            Console.WriteLine()
-            Console.WriteLine("Syntax: (english/japanese/romaji) (number of results)")
-            Console.WriteLine("Examples:")
-            Console.WriteLine("静か")
-            Console.WriteLine("shizuka")
-            Console.WriteLine("quiet 5")
-            Console.WriteLine("interesting 15")
-            Console.ReadLine()
-            Main()
+        For Each ArrayWord In Words
+            If ArrayWord.Word.Contains(Word) = True Or ArrayWord.Furigana.Contains(Word) = True Or ArrayWord.Meanings(0).Contains(Word) = True Or ArrayWord.Furigana.Contains(WanaKana.ToHiragana(Word)) = True Then
+                Results.Add(ArrayWord)
+            End If
+        Next
+
+        If Results.Count > 20 Then
+            Do Until Results.Count <= 20
+                Results.Remove(Results(Results.Count - 1))
+            Loop
         End If
 
-        If Command = "/r" Or Command = "r" Or Command.indexof("reading") <> -1 Then
-            Console.WriteLine("/r: Reading practice, to use this command (sentences) must be in a specific format")
-            Console.WriteLine("This command is pretty useful for the average user because it requires a hotkey file to be affective")
-            Console.WriteLine("This command is pretty much creating flashcards, so as long as you follow the syntax you can make it do anything")
+        Console.Clear()
+        For Each Result In Results
+            For Type = 0 To Result.Types.Length - 1
+                If Result.Types(Type) = "n" Then
+                    Result.Types(Type) = "noun"
+                End If
+                Result.Types(Type) = Result.Types(Type).Replace("vs", "suru-verb").Replace("adj", "adjective").Replace("uk", "usually as kana").Replace("sl", "slang")
+                Console.WriteLine(Result.Types(Type))
+            Next
+            Console.WriteLine(Result.Word & " (" & Result.Furigana & ")")
+            For Meaning = 0 To Result.Meanings.Length - 1
+                Console.WriteLine(Meaning + 1 & ". " & Result.Meanings(Meaning))
+            Next
             Console.WriteLine()
-            Console.WriteLine()
-            Console.WriteLine("Syntax; /r (sentences) [2]")
-            Console.WriteLine("(sentences) is a specific format of japanese sentences and its english meaning")
-            Console.WriteLine("If you have have the " & QUOTE & "2" & QUOTE & " parameter at the end, it means you are pasting in more than one batch of sentences")
-            Console.WriteLine()
-            Console.WriteLine("(sentences) format:")
-            Console.WriteLine("|(Japanese sentence)^(english meaning)")
-            Console.WriteLine(QUOTE & "|" & QUOTE & " is the start of a japanese sentence, " & QUOTE & "^" & QUOTE & " is the start of the english sentence.")
-            Console.WriteLine()
-            Console.WriteLine("You can paste in a whole batch like this:")
-            Console.WriteLine("|(Japanese sentence)^(english meaning)" & "|(Japanese sentence)^(english meaning)" & "|(Japanese sentence)^(english meaning)")
-            Console.WriteLine()
-            Console.WriteLine()
-            Console.WriteLine("Examples:")
-            Console.WriteLine("|そこで私たちを待っている幸福が、私たちが望むような幸福ではないかもしれない。 ^It may be that the happiness awaiting us is not at all the sort of happiness we would want.")
-            Console.WriteLine()
-            Console.WriteLine("|家に帰りましょうか。 ^Why don't we go home?|「少しうちに寄っていかない？」「いいの？」「うち共働きで親は遅いの」 ^" & QUOTE & "Want To drop round my place?" & QUOTE & "can I?" & QUOTE & " My parents come home late As they both work." & QUOTE & "|先ずは憧れの作家の文章の呼吸をつかむためにひたすら筆写、丸写しをする。 ^First, in order to get a feel for your favourite author's work, transcribe and copy in full.")
-            Console.ReadLine()
-            Main()
+        Next
+        Console.ForegroundColor = ConsoleColor.DarkGray
+        If Results.Count = 0 Then
+            Console.WriteLine("Couldn't find results for " & Word)
+            Console.WriteLine("Offline searching mostly supports nouns and phrases so you may not be able to find this word.")
+
         End If
 
-        If Command = "k" Or Command = "/k" Or Command = "/kanjitest" Or Command = "kanjitest" Or Command = "/kt" Then
-            Console.WriteLine("KanjiTest: Enter Japanese text and then generate a quiz of the kanji in that text")
-            Console.WriteLine("Type '/k' and then enter Japanese text; as long as the text contains kanji it will work")
-            Console.WriteLine("Syntax: /k")
-            Console.WriteLine()
-            Console.WriteLine()
-            Console.WriteLine("Examples:")
-            Console.ReadLine()
-            Main()
-        End If
-
-        If Command = "!" Or Command.indexof("transl") <> -1 Then
-            Console.WriteLine("Translate: Translate Japanese into English or the other way round")
-            Console.WriteLine("Syntax: ![text]")
-            Console.WriteLine()
-            Console.WriteLine()
-            Console.WriteLine("Examples:")
-            Console.WriteLine("!this will work")
-            Console.WriteLine("!これも")
-            Console.ReadLine()
-            Main()
-        End If
-
-        If Command = "/h" Or Command = "/help" Or Command = "help" Or Command = "h" Then
-            Console.WriteLine("/h: Brings up this help menu, if you want more help with a command then add the command parameter:")
-            Console.WriteLine("Syntax: /h [command]")
-            Console.WriteLine()
-            Console.WriteLine()
-            Console.WriteLine("Examples:")
-            Console.WriteLine("/h /r")
-            Console.WriteLine("/help WordLookup")
-            Console.ReadLine()
-            Main()
-        End If
-
-        If Command = "/p" Or Command = "p" Then
-            Console.WriteLine("/p: Start a small quiz that helps you conjugate verbs, this only works with verbs but will later work with adjectives and nouns, the (word) parameter is the word that you want help conjugating")
-            Console.WriteLine("Japanese words can also be written using romaji (english transliteration), surround words in quotes to make sure the program knows that it is definitely the english word you are seaching for and not romaji. Example: " & QUOTE & "hate" & QUOTE)
-            Console.WriteLine("Syntax: /p [english/japanese/romaji word]")
-            Console.WriteLine()
-            Console.WriteLine("When the quiz starts it will tell you which form to change the word to, failing lowers your score.")
-            Console.ReadLine()
-            Main()
-        End If
-
-        If Command.length < 13 And Command.indexof("pref") <> -1 Then
-            Console.WriteLine("/prefs: Lets you change settings for the program.")
-            Console.WriteLine("Settings are mostly do with with how information is displayed")
-            Console.WriteLine()
-            Console.WriteLine("Read the Wiki information on what each setting does")
-            Console.ReadLine()
-            Main()
-        End If
-
-        If Command.length < 10 And Command.indexof("audio") <> -1 Then
-            Console.WriteLine("Download audio of various conjugations of a verb")
-            Console.WriteLine("Only works with verbs (doesn't work with suru-verbs)")
-            Console.WriteLine()
-            Console.WriteLine("Syntax: /audio [verb] (!s/f)")
-            Console.WriteLine("Add !f if you want female audio")
-            Console.WriteLine("Add !m if you want female audio")
-            Console.WriteLine()
-            Console.WriteLine("If you don't specify gender of pronunciations, it will be male by default")
-            Console.WriteLine("Example: /audio odoru !f")
-            Console.ReadLine()
-            Main()
-        End If
-
-        Console.ForegroundColor = ConsoleColor.Yellow
-        Console.WriteLine("There is no information for " & QUOTE & Command & QUOTE)
-        Console.WriteLine(QUOTE & Command & QUOTE & " is not a command.")
+        Console.WriteLine()
+        Console.WriteLine("Offline searching should only be used for emergencies:")
+        Console.WriteLine(" - Not very effective")
+        Console.WriteLine(" - Usually only supports weirdly specific words.")
+        Console.WriteLine(" - No features are supported with it")
         Console.ForegroundColor = ConsoleColor.White
+
         Console.ReadLine()
         Main()
     End Sub
@@ -2244,12 +2243,7 @@ Module Module1
         Try
             HTML = Client.DownloadString(New Uri(WordURL))
         Catch
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine("Search failed")
-            Console.WriteLine("Check you are connected to the internet")
-            Console.ForegroundColor = ConsoleColor.White
-            Console.ReadLine()
-            Main()
+            WordJSonSearch(Word)
         End Try
 
         Dim AddingTemp As String = ""
@@ -2955,590 +2949,6 @@ Module Module1
 
 
         Main()
-    End Sub
-
-    Sub KanjiDisplay(ByVal ActualSearchWord, ByVal WordLink, ByVal SelectedDefinition, ByVal FoundTypes, ByVal DisplayType)
-        'Display Type: 1 = with LastRequest, 2 = without LastRequest
-        Const QUOTE = """"
-        Dim WordURL, WordHTML, CurrentKanji As String
-        Dim Client As New WebClient
-        Client.Encoding = System.Text.Encoding.UTF8
-
-        For Checker = 1 To ActualSearchWord.length
-            If WanaKana.IsKanji(Mid(ActualSearchWord, Checker, 1)) = False Then
-                If Checker > ActualSearchWord.length Then
-                    Continue For
-                End If
-                Try
-                    ActualSearchWord = ActualSearchWord.replace(Mid(ActualSearchWord, Checker, 1), "")
-                Catch
-                    Continue For
-                End Try
-                Checker -= 1
-                If Checker = 0 Then
-                    Checker = 1
-                End If
-            End If
-        Next
-        If WanaKana.IsKanji(Mid(ActualSearchWord, 1, 1)) = False Then
-            ActualSearchWord = Mid(ActualSearchWord, 2)
-        End If
-
-        Try
-            'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
-            WordURL = ("https://jisho.org/search/" & ActualSearchWord & "%20%23kanji")
-            WordHTML = Client.DownloadString(New Uri(WordURL))
-        Catch
-            Exit Sub
-        End Try
-
-        Dim Snip1, Snip2 As Integer
-
-        Snip1 = WordHTML.IndexOf("data-area-name=" & QUOTE & "print" & QUOTE)
-        WordHTML = Mid(WordHTML, Snip1 + 10)
-
-        Dim KanjiString As String = ""
-        Snip1 = WordHTML.IndexOf("main_results")
-        KanjiString = Mid(WordHTML, Snip1 + 10)
-        Snip2 = WordHTML.IndexOf("Jisho.org is lovingly crafted by")
-        KanjiString = Left(WordHTML, Snip2 + 25)
-
-        Dim Kanjis() As String
-        Kanjis = KanjiString.Split(New String() {"kanji details"}, StringSplitOptions.RemoveEmptyEntries)
-
-        Dim ReadingsGroup, DefinitionsGroup, JLPT, FoundInGroup As String
-        Dim ActualInfo(ActualSearchWord.length - 1, 5)
-        'Readings:
-        '(X, Y)
-        'X = Kanji
-        '0Y = Kun    1Y = On    2Y = Meaning    3Y = JLPT    4Y = On Found in    5Y = Kun Found in
-        Dim StringTemp, StringTemp2, StringTemp3 As String
-        Dim CountInput As String
-        Dim ToCount As String = ","
-        Dim Occurrences As Integer = 0
-
-        For KanjiLoop = 0 To ActualSearchWord.length - 1
-            CurrentKanji = Mid(ActualSearchWord, KanjiLoop + 1, 1)
-
-            'Getting the section that is just readings for each kanji
-            Try
-                Snip1 = Kanjis(KanjiLoop).IndexOf("anji-details__main-readings") 'Getting the position just before the snip for the readings group
-            Catch
-                Continue For
-            End Try
-            If Snip1 = -1 Then
-                Continue For
-            End If
-            ReadingsGroup = Mid(Kanjis(KanjiLoop), Snip1)
-            Snip2 = ReadingsGroup.IndexOf("small-12 large-5 columns") 'Getting the position just after the snip for the readings group
-            ReadingsGroup = Left(ReadingsGroup, Snip2)
-            StringTemp3 = ReadingsGroup 'Holds both Kun and On (if both are included)
-
-            ActualInfo(KanjiLoop, 0) = CurrentKanji
-
-            If ReadingsGroup.IndexOf("Kun:") <> -1 Then 'If the kanji has at least one kun reading
-                'Making StringTemp a string holding just kun readings
-                StringTemp = ReadingsGroup
-                Snip2 = StringTemp.IndexOf("On:")
-                If Snip2 <> -1 Then 'If there is a Kun reading and On reading
-                    StringTemp = Left(StringTemp, Snip2) 'This is holding just Kun readings
-                End If
-
-                Do Until StringTemp.IndexOf("<a href=") = -1 'Do until no more Kun readings
-                    'Finding the start and end of a reading including the link (which won't be used but is needed to trim the reading):
-                    Snip1 = StringTemp.IndexOf("<a href=")
-                    Snip2 = StringTemp.IndexOf("</a>") + 4
-
-                    If Snip1 = -1 Or Snip2 = 3 Then
-                        Continue Do
-                    End If
-
-                    StringTemp2 = Mid(StringTemp, Snip1, Snip2 + 1 - Snip1)
-
-                    StringTemp = StringTemp.Replace(StringTemp2, "") 'Getting rid of the reading from the group
-
-                    'Getting the actual reading:
-                    StringTemp2 = Mid(StringTemp2, 5) 'Getting rid of the < at the start of the whole link trim
-                    Snip1 = StringTemp2.IndexOf(">")
-                    Snip2 = StringTemp2.IndexOf("<")
-                    StringTemp2 = Mid(StringTemp2, Snip1 + 2, Snip2 - 1 - Snip1)
-
-                    ActualInfo(KanjiLoop, 1) &= StringTemp2 & "、"
-                Loop
-                ActualInfo(KanjiLoop, 1) = "Kun: " & ActualInfo(KanjiLoop, 1)
-            Else 'If the kanji doesn't have at least one kun reading
-                ActualInfo(KanjiLoop, 1) = "Kun:"
-            End If
-
-            'On scraps
-            If ReadingsGroup.IndexOf("On:") <> -1 Then 'If there is an on reading
-                StringTemp = StringTemp3
-                Snip2 = StringTemp.IndexOf("On:")
-                StringTemp = Mid(StringTemp, Snip2)
-                Do Until StringTemp.IndexOf("<a href=") = -1 'Do until no more On readings
-                    'Finding the start and end of a reading including the link (which won't be used but is needed to trim the reading):
-                    Snip1 = StringTemp.IndexOf("<a href=")
-                    Snip2 = StringTemp.IndexOf("</a>") + 4
-
-                    If Snip1 = -1 Or Snip2 = 3 Then
-                        Continue Do
-                    End If
-
-                    StringTemp2 = Mid(StringTemp, Snip1, Snip2 + 1 - Snip1)
-
-                    StringTemp = StringTemp.Replace(StringTemp2, "") 'Getting rid of the reading from the group
-
-                    'Getting the actual reading:
-                    StringTemp2 = Mid(StringTemp2, 5) 'Getting rid of the < at the start of the whole link trim
-                    Snip1 = StringTemp2.IndexOf(">")
-                    Snip2 = StringTemp2.IndexOf("<")
-                    StringTemp2 = Mid(StringTemp2, Snip1 + 2, Snip2 - 1 - Snip1)
-
-                    ActualInfo(KanjiLoop, 2) &= StringTemp2 & "、"
-                Loop
-                ActualInfo(KanjiLoop, 2) = "On: " & ActualInfo(KanjiLoop, 2)
-            Else 'If the kanji doesn't have at least one kun reading
-                ActualInfo(KanjiLoop, 2) = "On:"
-            End If
-
-            'Scraping the definition(s) of the kanjis:
-            DefinitionsGroup = Kanjis(KanjiLoop).Replace("&amp;", "")
-
-            'Making a small snip that contains mostly the definitions (the definitions are in a comma list with no separators)
-            Snip1 = DefinitionsGroup.IndexOf("kanji-details__main-meanings") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
-            DefinitionsGroup = Mid(DefinitionsGroup, Snip1)
-            Snip2 = DefinitionsGroup.IndexOf("kanji-details__main-readings") 'Getting the position just after the snip for the readings group
-            DefinitionsGroup = Left(DefinitionsGroup, Snip2)
-
-            'Getting just the comma list of definitions:
-            Snip1 = DefinitionsGroup.IndexOf(vbLf) + 8 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
-            DefinitionsGroup = Mid(DefinitionsGroup, Snip1)
-            Snip2 = DefinitionsGroup.IndexOf(vbLf) 'Getting the position just after the snip for the readings group
-            DefinitionsGroup = Left(DefinitionsGroup, Snip2)
-            Try 'Making the definition of the Kanji not have an overly long bracket
-                Snip1 = DefinitionsGroup.IndexOf("(")
-                Snip2 = DefinitionsGroup.IndexOf(")")
-                StringTemp = "(" & Mid(DefinitionsGroup, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
-
-                If StringTemp.Length > 25 Then
-                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "").Replace("&#39;", "")
-                End If
-            Catch
-            End Try
-            ActualInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "").Replace("&#39;", "") 'Adding definitions list to the definition part of the array
-
-
-            'Getting the JLPT level:
-            Try
-                JLPT = Kanjis(KanjiLoop)
-                Snip1 = JLPT.IndexOf("JLPT level") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
-                JLPT = Mid(JLPT, Snip1)
-                Snip2 = JLPT.IndexOf("</strong>") 'Getting the position just after the snip for the readings group
-                JLPT = Left(JLPT, Snip2)
-                Snip1 = JLPT.IndexOf("<strong>") + 9 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
-                JLPT = Mid(JLPT, Snip1)
-                JLPT = "JLPT Level: " & JLPT
-            Catch
-                JLPT = "JLPT Level:"
-            End Try
-            ActualInfo(KanjiLoop, 3) = JLPT 'Adding JLPT information to the information array
-
-            'Getting "found in" words:
-            'StringTemp = On
-            'StringTemp2 = Kun
-            'Getting just the Reading Compounds section of the HTML
-            FoundInGroup = Kanjis(KanjiLoop).Replace("&amp;", "")
-
-            Snip1 = FoundInGroup.IndexOf("row compounds") + 1
-            FoundInGroup = Mid(FoundInGroup, Snip1)
-            Snip2 = FoundInGroup.IndexOf("row kanji-details--section")
-            FoundInGroup = Left(FoundInGroup, Snip2)
-
-
-            'Getting On compounds
-            If FoundInGroup.IndexOf("On reading compounds") <> -1 Then 'If the kanji has at least one On compound
-                'Making StringTemp a string holding just On compounds:
-                StringTemp = FoundInGroup
-                Snip2 = StringTemp.IndexOf("Kun reading compounds")
-                If Snip2 <> -1 Then 'If there is a Kun compound (and On)
-                    StringTemp = Left(StringTemp, Snip2) 'This is holding just Kun compounds
-                End If 'If there isn't an Kun reading we don't need to snip (we wouldn't be able to anyway)
-                'We now have just the On compounds
-
-                Snip1 = StringTemp.IndexOf("<li>")
-                StringTemp = Mid(StringTemp, Snip1 + 8)
-
-                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
-                Snip2 = StringTemp.IndexOf("</li>")
-                StringTemp3 = Left(StringTemp, Snip2 - 1)
-                StringTemp3 = StringTemp3.Replace(vbLf, "")
-                StringTemp3 = StringTemp3.Replace("  【", "【")
-                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
-
-                Try
-                    Snip1 = StringTemp3.IndexOf("(")
-                    Snip2 = StringTemp3.IndexOf(")")
-                    StringTemp2 = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
-
-                    If StringTemp2.Length > 25 Then
-                        StringTemp3 = StringTemp3.Replace(StringTemp2, "")
-                    End If
-                Catch
-                End Try
-
-                CountInput = StringTemp3
-                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                If Occurrences > 5 Then
-                    Do Until Occurrences = 5
-                        Snip2 = StringTemp3.LastIndexOf(",")
-                        StringTemp3 = Left(StringTemp3, Snip2)
-                        Occurrences -= 1
-                    Loop
-                End If
-                If StringTemp3.Length > 40 And Occurrences > 2 Then
-                    Try
-                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
-                            Snip2 = StringTemp3.LastIndexOf(",")
-                            StringTemp3 = Left(StringTemp3, Snip2)
-                            Occurrences -= 1
-                        Loop
-                    Catch
-                    End Try
-                End If
-
-                ActualInfo(KanjiLoop, 4) = "On Reading Compound: " & StringTemp3
-            Else 'If the kanji doesn't have at least one kun reading
-                StringTemp = ""
-                ActualInfo(KanjiLoop, 4) = "No Onyomi compounds"
-            End If
-
-            If FoundInGroup.IndexOf("Kun reading compounds") <> -1 Then 'If the kanji has at least one Kun compound
-                StringTemp2 = FoundInGroup
-                If FoundInGroup.IndexOf("Kun reading compounds") <> -1 Then 'If the kanji also has an On compound
-                    Snip2 = StringTemp2.IndexOf("Kun reading compounds")
-                    StringTemp2 = Mid(StringTemp2, Snip2)
-                End If
-                'We now have just the Kun compounds
-
-                Snip1 = StringTemp2.IndexOf("<li>")
-                StringTemp2 = Mid(StringTemp2, Snip1 + 8)
-
-                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
-                Snip2 = StringTemp2.IndexOf("</li>")
-                StringTemp3 = Left(StringTemp2, Snip2 - 1)
-                StringTemp3 = StringTemp3.Replace(vbLf, "")
-                StringTemp3 = StringTemp3.Replace("  【", "【")
-                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
-
-                'Getting rid of overly long brackets
-                Try
-                    Snip1 = StringTemp3.IndexOf("(")
-                    Snip2 = StringTemp3.IndexOf(")")
-                    StringTemp = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
-
-                    If StringTemp.Length > 25 Then
-                        StringTemp3 = StringTemp3.Replace(StringTemp, "").Replace("&amp;", "").Replace("&#39;", "")
-                    End If
-                Catch
-                End Try
-
-                CountInput = StringTemp3
-                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
-                If Occurrences > 5 Then
-                    Do Until Occurrences = 5
-                        Snip2 = StringTemp3.LastIndexOf(",")
-                        StringTemp3 = Left(StringTemp3, Snip2)
-                        Occurrences -= 1
-                    Loop
-                End If
-
-                If StringTemp3.Length > 40 And Occurrences > 2 Then
-                    Try
-                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
-                            Snip2 = StringTemp3.LastIndexOf(",")
-                            StringTemp3 = Left(StringTemp3, Snip2)
-                            Occurrences -= 1
-                        Loop
-                    Catch
-                    End Try
-                End If
-
-
-                ActualInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3.Replace("&#39;", "")
-            Else
-                StringTemp2 = ""
-                ActualInfo(KanjiLoop, 5) = "No Kunyomi compounds"
-            End If
-        Next
-
-        Dim FileReader As String = ""
-        Dim TextString() As String
-        Dim TextWriter As System.IO.StreamWriter
-        Try
-            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
-        Catch
-            File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt").Dispose() 'This text file will store user preferences
-            TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
-            TextWriter.WriteLine("Default 's=' parameter:4")
-            TextWriter.WriteLine("Maximum definitions shown:6")
-            TextWriter.WriteLine("Reading shown first:kun")
-            TextWriter.Close()
-        End Try
-        TextString = FileReader.Split(vbCrLf)
-        Dim OnFirst As Boolean = False
-        If TextString(2).IndexOf("on") <> -1 Then
-            OnFirst = True
-        End If
-
-        'Printing the infomation
-        'Display Type: 1 = with LastRequest, 2 = without LastRequest
-        If DisplayType = 2 Then
-            Console.Clear()
-            Console.WriteLine("Kanji information for 「" & ActualSearchWord & "」")
-            Console.WriteLine()
-        End If
-
-        For Printer = 0 To ActualSearchWord.length - 1
-            For Replacer = 0 To 5
-                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "").Replace("&#39;", "")
-            Next
-            Console.BackgroundColor = ConsoleColor.DarkGray
-            Console.WriteLine(ActualInfo(Printer, 0))
-            Console.BackgroundColor = ConsoleColor.Black
-
-            If OnFirst = False Then
-                Console.WriteLine(ActualInfo(Printer, 1)) 'kun
-                Console.WriteLine(ActualInfo(Printer, 2)) 'on
-            Else
-                Console.WriteLine(ActualInfo(Printer, 2)) 'on
-                Console.WriteLine(ActualInfo(Printer, 1)) 'kun
-            End If
-
-            Console.WriteLine(ActualInfo(Printer, 3))
-            Console.WriteLine(ActualInfo(Printer, 5))
-            Console.WriteLine(ActualInfo(Printer, 4))
-            Console.WriteLine()
-        Next
-
-        Dim KanjisLine As String = "【"
-        For Kanji = 1 To ActualInfo.Length / 6
-            If Kanji <> ActualInfo.Length / 6 Then
-                KanjisLine &= Left(ActualInfo(Kanji - 1, 0), 1) & "(" & Mid(ActualInfo(Kanji - 1, 0), 5) & ") "
-            Else
-                KanjisLine &= Left(ActualInfo(Kanji - 1, 0), 1) & "(" & Mid(ActualInfo(Kanji - 1, 0), 5) & ")】"
-            End If
-        Next
-
-        Dim Definition As Integer
-        Dim MatchT As Boolean
-        Dim NumberCheckD As String = ""
-        Dim NumberCheckT As String = ""
-        Dim Type As Integer = 0
-        Dim SB1, SB2 As Integer
-        Dim BArea As String
-
-        If DisplayType = 1 Then
-            'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
-            Dim LastRequest As String = ""
-            Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Do you have a Last Request? (for example 'anki', 'kanji', 'audio' or 'jisho')")
-            Console.ForegroundColor = ConsoleColor.White
-            LastRequest = Console.ReadLine().ToLower().Trim
-            LastRequest = LastRequest.Replace("/", "").Replace("!", "")
-
-            Dim Types As String = FoundTypes(0)
-            If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
-                My.Computer.Clipboard.SetText(KanjisLine)
-                Console.Clear()
-                Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
-                Console.ReadLine()
-            ElseIf LastRequest.ToLower = "/anki" Or LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Then
-                If FoundTypes.IndexOf("!") = FoundTypes.Length Then
-                    FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
-                End If
-
-                Dim AnkiString() As String = FoundTypes.Split("|") 'How holds the types
-                Dim AnkiCopy As String = ""
-                NumberCheckD = ""
-                NumberCheckT = ""
-                Type = 0
-                Definition = 0
-                MatchT = False
-                Do Until Definition = SelectedDefinition.Length
-                    NumberCheckD = Right(SelectedDefinition(Definition), 2)
-                    If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
-                        NumberCheckD = Right(NumberCheckD, 1)
-                    End If
-                    If IsNumeric(NumberCheckD) = False Then
-                        NumberCheckD = Right(SelectedDefinition(Definition), 1)
-                    End If
-                    If IsNumeric(NumberCheckD) = False Then
-                        Console.ForegroundColor = ConsoleColor.Red
-                        Console.WriteLine("Error: Conjugate; Definition no; D")
-                        Console.ForegroundColor = ConsoleColor.White
-                    End If
-                    NumberCheckD = NumberCheckD.Replace(" ", "")
-
-                    If NumberCheckT = NumberCheckD Then
-                        AnkiCopy = AnkiCopy & vbCrLf
-                    End If
-                    MatchT = False
-                    Type = 0
-                    Do Until Type = AnkiString.Length Or MatchT = True
-                        MatchT = False
-                        If AnkiString(Type) = "!" Then
-                            Type += 1
-                            Continue Do
-                        End If
-
-                        NumberCheckT = Right(AnkiString(Type), 2)
-                        If IsNumeric(NumberCheckT) = False Then
-                            NumberCheckT = Right(AnkiString(Type), 1)
-                        End If
-                        NumberCheckD = NumberCheckD.Replace(" ", "")
-                        NumberCheckD = NumberCheckD.Replace(".", "")
-
-                        If NumberCheckT = NumberCheckD Then
-
-                            If Definition <> 0 Then
-                                AnkiCopy = vbCrLf & AnkiCopy
-                            End If
-
-                            If Definition < 10 Then
-                                AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & vbCrLf
-                            ElseIf Definition > 9 And AnkiString(Type).IndexOf("aux") <> -1 Or Definition > 9 And AnkiString(Type).IndexOf("irr") Then
-                                AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
-
-                                If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
-                                    AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
-                                Else
-                                    SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
-                                    SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
-                                    BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
-
-                                    If BArea.IndexOf("kana") = -1 Then
-
-                                        AnkiCopy = AnkiCopy & vbCrLf
-
-                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
-                                    Else
-                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
-                                    End If
-
-                                End If
-                            End If
-                            MatchT = True
-                            AnkiString(Type) = "!"
-                            Continue Do
-                        End If
-                        Type += 1
-                    Loop
-
-                    If Definition < 10 Then
-                        'AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & vbCrLf
-
-                        If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
-                            AnkiCopy = AnkiCopy.TrimEnd
-                            AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
-                        Else
-                            SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
-                            SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
-                            BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
-
-                            If BArea.IndexOf("kana") = -1 Then
-                                If Definition <> 0 Then
-                                    AnkiCopy = AnkiCopy & vbCrLf
-                                End If
-                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
-                            Else
-                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
-                            End If
-                        End If
-                    End If
-
-
-                    Definition += 1
-                Loop
-
-                AnkiCopy = AnkiCopy.Trim
-
-                AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & ActualSearchWord & vbCrLf & KanjisLine.Replace("[", "(").Replace("]", ")")
-
-                My.Computer.Clipboard.SetText(AnkiCopy.Replace("[", "(").Replace("]", ")"))
-
-                Console.Clear()
-                Console.WriteLine("Copied " & QUOTE & AnkiCopy.Replace("[", "(").Replace("]", ")") & QUOTE & " to clipboard")
-                Console.ReadLine()
-            ElseIf LastRequest.ToLower = "history" Or LastRequest.ToLower = "/history" Then
-                Console.Clear()
-                Console.WriteLine("Search history:")
-                Try
-                    Dim HistoryFile As String
-                    HistoryFile = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
-                    Console.WriteLine(HistoryFile)
-                Catch
-                    Main()
-                End Try
-                Console.ReadLine()
-                Main()
-            ElseIf LastRequest = "audio" Or LastRequest = "/audio" Or LastRequest = "download audio" Or LastRequest = "verb audio" Then
-                VerbAudioGen(ActualSearchWord)
-            ElseIf LastRequest = "history" Then
-                Console.Clear()
-                Console.WriteLine("Search history:")
-                Try
-                    Dim HistoryFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
-                    Console.WriteLine(HistoryFile)
-                Catch
-                    Console.WriteLine("You have no history.")
-                    Console.ReadLine()
-                    Main()
-                End Try
-                Console.WriteLine("do '/b' to go to your most recent search")
-                LastRequest = Console.ReadLine.ToLower.Trim
-
-                If LastRequest = "/b" Or LastRequest = "/last" Or LastRequest = "/back" Or LastRequest = "/previous" Then
-                    Console.Clear()
-                    Try
-                        Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
-                        If LastSearchFile.Length < 3 Then
-                            Console.ForegroundColor = ConsoleColor.Red
-                            Console.WriteLine("Error: FileWriter.Close")
-                            Console.ForegroundColor = ConsoleColor.White
-                        Else
-                            Console.WriteLine(LastSearchFile)
-                        End If
-                    Catch
-                        Console.ForegroundColor = ConsoleColor.Red
-                        Console.WriteLine("Error: FileWriter.Close")
-                        Console.ForegroundColor = ConsoleColor.White
-                    End Try
-                    Console.ReadLine()
-                    Main()
-                End If
-
-                Main()
-            ElseIf LastRequest = "jisho" Then
-                Try
-                    Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "https://" & WordLink)
-                Catch
-                    Try
-                        Process.Start("C:\Program Files (x86)\Mozilla Firefox\firefox.exe", "https://" & WordLink)
-                    Catch
-                        Try
-                            Process.Start("https://" & WordLink)
-                        Catch
-                            Console.ForegroundColor = ConsoleColor.Red
-                            Console.WriteLine("Cannot open on Jisho because the exe file for your browser isn't were it usually is.")
-                            Console.ForegroundColor = ConsoleColor.White
-                        End Try
-                    End Try
-                End Try
-                Console.ReadLine()
-            End If
-        End If
     End Sub
     Sub TranslateSentence(ByVal Sentence)
         Const QUOTE = """"
@@ -6228,7 +5638,6 @@ Module Module1
         Console.ReadLine()
         Main()
     End Sub
-
     Sub HeyLingoDownload(Language)
         Console.Clear()
         Dim UserInput As String = ""
@@ -6473,7 +5882,6 @@ Module Module1
         Main()
         Main()
     End Sub
-
     Sub KanjiInfo(ByVal ActualSearch, ByVal Mode)
         'Mode:
         '1 = Just KanjiInfo
@@ -6722,6 +6130,32 @@ Module Module1
                         StringTemp3 = StringTemp3.Replace("  【", "【")
                         StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                         StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
+                        If StringTemp.IndexOf("<li>") <> -1 Then 'if there is another On reading compound
+                            StringTemp3 &= "|"
+                            Snip1 = StringTemp.IndexOf("<li>")
+                            StringTemp = Mid(StringTemp, Snip1 + 8)
+
+                            'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                            Snip2 = StringTemp.IndexOf("</li>")
+                            StringTemp3 &= Left(StringTemp, Snip2 - 1)
+                            StringTemp3 = StringTemp3.Replace(vbLf, "")
+                            StringTemp3 = StringTemp3.Replace("  【", "【")
+                            StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                            StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
+                            If StringTemp.IndexOf("<li>") <> -1 Then 'if there is another On reading compound
+                                StringTemp3 &= "|"
+                                Snip1 = StringTemp.IndexOf("<li>")
+                                StringTemp = Mid(StringTemp, Snip1 + 8)
+
+                                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                                Snip2 = StringTemp.IndexOf("</li>")
+                                StringTemp3 &= Left(StringTemp, Snip2 - 1)
+                                StringTemp3 = StringTemp3.Replace(vbLf, "")
+                                StringTemp3 = StringTemp3.Replace("  【", "【")
+                                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
+                            End If
+                        End If
                     End If
                 End If
 
@@ -6780,6 +6214,19 @@ Module Module1
                         StringTemp3 = StringTemp3.Replace("  【", "【")
                         StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                         StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
+                        If StringTemp2.IndexOf("<li>") <> -1 Then
+                            StringTemp3 &= "|"
+                            Snip1 = StringTemp2.IndexOf("<li>")
+                            StringTemp2 = Mid(StringTemp2, Snip1 + 8)
+
+                            'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                            Snip2 = StringTemp2.IndexOf("</li>")
+                            StringTemp3 &= Left(StringTemp2, Snip2 - 1)
+                            StringTemp3 = StringTemp3.Replace(vbLf, "")
+                            StringTemp3 = StringTemp3.Replace("  【", "【")
+                            StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                            StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
+                        End If
                     End If
                 End If
 
@@ -6901,7 +6348,7 @@ Module Module1
         End Try
         TextString = FileReader.Split(vbCrLf)
         Dim OnFirst As Boolean = False
-        If TextString(2).indexof("on") <> -1 Then
+        If TextString(2).IndexOf("on") <> -1 Then
             OnFirst = True
         End If
 
@@ -7076,6 +6523,589 @@ Module Module1
         Console.WriteLine("Done!")
         Console.ReadLine()
         Main()
+    End Sub
+    Sub KanjiDisplay(ByVal ActualSearchWord, ByVal WordLink, ByVal SelectedDefinition, ByVal FoundTypes, ByVal DisplayType)
+        'Display Type: 1 = with LastRequest, 2 = without LastRequest
+        Const QUOTE = """"
+        Dim WordURL, WordHTML, CurrentKanji As String
+        Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
+
+        For Checker = 1 To ActualSearchWord.length
+            If WanaKana.IsKanji(Mid(ActualSearchWord, Checker, 1)) = False Then
+                If Checker > ActualSearchWord.length Then
+                    Continue For
+                End If
+                Try
+                    ActualSearchWord = ActualSearchWord.replace(Mid(ActualSearchWord, Checker, 1), "")
+                Catch
+                    Continue For
+                End Try
+                Checker -= 1
+                If Checker = 0 Then
+                    Checker = 1
+                End If
+            End If
+        Next
+        If WanaKana.IsKanji(Mid(ActualSearchWord, 1, 1)) = False Then
+            ActualSearchWord = Mid(ActualSearchWord, 2)
+        End If
+
+        Try
+            'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
+            WordURL = ("https://jisho.org/search/" & ActualSearchWord & "%20%23kanji")
+            WordHTML = Client.DownloadString(New Uri(WordURL))
+        Catch
+            Exit Sub
+        End Try
+
+        Dim Snip1, Snip2 As Integer
+
+        Snip1 = WordHTML.IndexOf("data-area-name=" & QUOTE & "print" & QUOTE)
+        WordHTML = Mid(WordHTML, Snip1 + 10)
+
+        Dim KanjiString As String = ""
+        Snip1 = WordHTML.IndexOf("main_results")
+        KanjiString = Mid(WordHTML, Snip1 + 10)
+        Snip2 = WordHTML.IndexOf("Jisho.org is lovingly crafted by")
+        KanjiString = Left(WordHTML, Snip2 + 25)
+
+        Dim Kanjis() As String
+        Kanjis = KanjiString.Split(New String() {"kanji details"}, StringSplitOptions.RemoveEmptyEntries)
+
+        Dim ReadingsGroup, DefinitionsGroup, JLPT, FoundInGroup As String
+        Dim ActualInfo(ActualSearchWord.length - 1, 5)
+        'Readings:
+        '(X, Y)
+        'X = Kanji
+        '0Y = Kun    1Y = On    2Y = Meaning    3Y = JLPT    4Y = On Found in    5Y = Kun Found in
+        Dim StringTemp, StringTemp2, StringTemp3 As String
+        Dim CountInput As String
+        Dim ToCount As String = ","
+        Dim Occurrences As Integer = 0
+
+        For KanjiLoop = 0 To ActualSearchWord.length - 1
+            CurrentKanji = Mid(ActualSearchWord, KanjiLoop + 1, 1)
+
+            'Getting the section that is just readings for each kanji
+            Try
+                Snip1 = Kanjis(KanjiLoop).IndexOf("anji-details__main-readings") 'Getting the position just before the snip for the readings group
+            Catch
+                Continue For
+            End Try
+            If Snip1 = -1 Then
+                Continue For
+            End If
+            ReadingsGroup = Mid(Kanjis(KanjiLoop), Snip1)
+            Snip2 = ReadingsGroup.IndexOf("small-12 large-5 columns") 'Getting the position just after the snip for the readings group
+            ReadingsGroup = Left(ReadingsGroup, Snip2)
+            StringTemp3 = ReadingsGroup 'Holds both Kun and On (if both are included)
+
+            ActualInfo(KanjiLoop, 0) = CurrentKanji
+
+            If ReadingsGroup.IndexOf("Kun:") <> -1 Then 'If the kanji has at least one kun reading
+                'Making StringTemp a string holding just kun readings
+                StringTemp = ReadingsGroup
+                Snip2 = StringTemp.IndexOf("On:")
+                If Snip2 <> -1 Then 'If there is a Kun reading and On reading
+                    StringTemp = Left(StringTemp, Snip2) 'This is holding just Kun readings
+                End If
+
+                Do Until StringTemp.IndexOf("<a href=") = -1 'Do until no more Kun readings
+                    'Finding the start and end of a reading including the link (which won't be used but is needed to trim the reading):
+                    Snip1 = StringTemp.IndexOf("<a href=")
+                    Snip2 = StringTemp.IndexOf("</a>") + 4
+
+                    If Snip1 = -1 Or Snip2 = 3 Then
+                        Continue Do
+                    End If
+
+                    StringTemp2 = Mid(StringTemp, Snip1, Snip2 + 1 - Snip1)
+
+                    StringTemp = StringTemp.Replace(StringTemp2, "") 'Getting rid of the reading from the group
+
+                    'Getting the actual reading:
+                    StringTemp2 = Mid(StringTemp2, 5) 'Getting rid of the < at the start of the whole link trim
+                    Snip1 = StringTemp2.IndexOf(">")
+                    Snip2 = StringTemp2.IndexOf("<")
+                    StringTemp2 = Mid(StringTemp2, Snip1 + 2, Snip2 - 1 - Snip1)
+
+                    ActualInfo(KanjiLoop, 1) &= StringTemp2 & "、"
+                Loop
+                ActualInfo(KanjiLoop, 1) = "Kun: " & ActualInfo(KanjiLoop, 1)
+            Else 'If the kanji doesn't have at least one kun reading
+                ActualInfo(KanjiLoop, 1) = "Kun:"
+            End If
+
+            'On scraps
+            If ReadingsGroup.IndexOf("On:") <> -1 Then 'If there is an on reading
+                StringTemp = StringTemp3
+                Snip2 = StringTemp.IndexOf("On:")
+                StringTemp = Mid(StringTemp, Snip2)
+                Do Until StringTemp.IndexOf("<a href=") = -1 'Do until no more On readings
+                    'Finding the start and end of a reading including the link (which won't be used but is needed to trim the reading):
+                    Snip1 = StringTemp.IndexOf("<a href=")
+                    Snip2 = StringTemp.IndexOf("</a>") + 4
+
+                    If Snip1 = -1 Or Snip2 = 3 Then
+                        Continue Do
+                    End If
+
+                    StringTemp2 = Mid(StringTemp, Snip1, Snip2 + 1 - Snip1)
+
+                    StringTemp = StringTemp.Replace(StringTemp2, "") 'Getting rid of the reading from the group
+
+                    'Getting the actual reading:
+                    StringTemp2 = Mid(StringTemp2, 5) 'Getting rid of the < at the start of the whole link trim
+                    Snip1 = StringTemp2.IndexOf(">")
+                    Snip2 = StringTemp2.IndexOf("<")
+                    StringTemp2 = Mid(StringTemp2, Snip1 + 2, Snip2 - 1 - Snip1)
+
+                    ActualInfo(KanjiLoop, 2) &= StringTemp2 & "、"
+                Loop
+                ActualInfo(KanjiLoop, 2) = "On: " & ActualInfo(KanjiLoop, 2)
+            Else 'If the kanji doesn't have at least one kun reading
+                ActualInfo(KanjiLoop, 2) = "On:"
+            End If
+
+            'Scraping the definition(s) of the kanjis:
+            DefinitionsGroup = Kanjis(KanjiLoop).Replace("&amp;", "")
+
+            'Making a small snip that contains mostly the definitions (the definitions are in a comma list with no separators)
+            Snip1 = DefinitionsGroup.IndexOf("kanji-details__main-meanings") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+            DefinitionsGroup = Mid(DefinitionsGroup, Snip1)
+            Snip2 = DefinitionsGroup.IndexOf("kanji-details__main-readings") 'Getting the position just after the snip for the readings group
+            DefinitionsGroup = Left(DefinitionsGroup, Snip2)
+
+            'Getting just the comma list of definitions:
+            Snip1 = DefinitionsGroup.IndexOf(vbLf) + 8 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+            DefinitionsGroup = Mid(DefinitionsGroup, Snip1)
+            Snip2 = DefinitionsGroup.IndexOf(vbLf) 'Getting the position just after the snip for the readings group
+            DefinitionsGroup = Left(DefinitionsGroup, Snip2)
+            Try 'Making the definition of the Kanji not have an overly long bracket
+                Snip1 = DefinitionsGroup.IndexOf("(")
+                Snip2 = DefinitionsGroup.IndexOf(")")
+                StringTemp = "(" & Mid(DefinitionsGroup, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                If StringTemp.Length > 25 Then
+                    DefinitionsGroup = DefinitionsGroup.Replace(StringTemp, "").Replace("&#39;", "")
+                End If
+            Catch
+            End Try
+            ActualInfo(KanjiLoop, 0) &= " - " & DefinitionsGroup.Replace("&amp;", "").Replace("&#39;", "") 'Adding definitions list to the definition part of the array
+
+
+            'Getting the JLPT level:
+            Try
+                JLPT = Kanjis(KanjiLoop)
+                Snip1 = JLPT.IndexOf("JLPT level") + 10 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+                JLPT = Mid(JLPT, Snip1)
+                Snip2 = JLPT.IndexOf("</strong>") 'Getting the position just after the snip for the readings group
+                JLPT = Left(JLPT, Snip2)
+                Snip1 = JLPT.IndexOf("<strong>") + 9 'Getting the position just before the snip for the readings group, the + amount is because we are looking for the same string to get the end of the cut
+                JLPT = Mid(JLPT, Snip1)
+                JLPT = "JLPT Level: " & JLPT
+            Catch
+                JLPT = "JLPT Level:"
+            End Try
+            ActualInfo(KanjiLoop, 3) = JLPT 'Adding JLPT information to the information array
+
+            'Getting "found in" words:
+            'StringTemp = On
+            'StringTemp2 = Kun
+            'Getting just the Reading Compounds section of the HTML
+            FoundInGroup = Kanjis(KanjiLoop).Replace("&amp;", "")
+
+            Snip1 = FoundInGroup.IndexOf("row compounds") + 1
+            FoundInGroup = Mid(FoundInGroup, Snip1)
+            Snip2 = FoundInGroup.IndexOf("row kanji-details--section")
+            FoundInGroup = Left(FoundInGroup, Snip2)
+
+
+            'Getting On compounds
+            If FoundInGroup.IndexOf("On reading compounds") <> -1 Then 'If the kanji has at least one On compound
+                'Making StringTemp a string holding just On compounds:
+                StringTemp = FoundInGroup
+                Snip2 = StringTemp.IndexOf("Kun reading compounds")
+                If Snip2 <> -1 Then 'If there is a Kun compound (and On)
+                    StringTemp = Left(StringTemp, Snip2) 'This is holding just Kun compounds
+                End If 'If there isn't an Kun reading we don't need to snip (we wouldn't be able to anyway)
+                'We now have just the On compounds
+
+                Snip1 = StringTemp.IndexOf("<li>")
+                StringTemp = Mid(StringTemp, Snip1 + 8)
+
+                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                Snip2 = StringTemp.IndexOf("</li>")
+                StringTemp3 = Left(StringTemp, Snip2 - 1)
+                StringTemp3 = StringTemp3.Replace(vbLf, "")
+                StringTemp3 = StringTemp3.Replace("  【", "【")
+                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
+
+                Try
+                    Snip1 = StringTemp3.IndexOf("(")
+                    Snip2 = StringTemp3.IndexOf(")")
+                    StringTemp2 = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                    If StringTemp2.Length > 25 Then
+                        StringTemp3 = StringTemp3.Replace(StringTemp2, "")
+                    End If
+                Catch
+                End Try
+
+                CountInput = StringTemp3
+                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                If Occurrences > 5 Then
+                    Do Until Occurrences = 5
+                        Snip2 = StringTemp3.LastIndexOf(",")
+                        StringTemp3 = Left(StringTemp3, Snip2)
+                        Occurrences -= 1
+                    Loop
+                End If
+                If StringTemp3.Length > 40 And Occurrences > 2 Then
+                    Try
+                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
+                            Snip2 = StringTemp3.LastIndexOf(",")
+                            StringTemp3 = Left(StringTemp3, Snip2)
+                            Occurrences -= 1
+                        Loop
+                    Catch
+                    End Try
+                End If
+
+                ActualInfo(KanjiLoop, 4) = "On Reading Compound: " & StringTemp3
+            Else 'If the kanji doesn't have at least one kun reading
+                StringTemp = ""
+                ActualInfo(KanjiLoop, 4) = "No Onyomi compounds"
+            End If
+
+            If FoundInGroup.IndexOf("Kun reading compounds") <> -1 Then 'If the kanji has at least one Kun compound
+                StringTemp2 = FoundInGroup
+                If FoundInGroup.IndexOf("Kun reading compounds") <> -1 Then 'If the kanji also has an On compound
+                    Snip2 = StringTemp2.IndexOf("Kun reading compounds")
+                    StringTemp2 = Mid(StringTemp2, Snip2)
+                End If
+                'We now have just the Kun compounds
+
+                Snip1 = StringTemp2.IndexOf("<li>")
+                StringTemp2 = Mid(StringTemp2, Snip1 + 8)
+
+                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
+                Snip2 = StringTemp2.IndexOf("</li>")
+                StringTemp3 = Left(StringTemp2, Snip2 - 1)
+                StringTemp3 = StringTemp3.Replace(vbLf, "")
+                StringTemp3 = StringTemp3.Replace("  【", "【")
+                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
+                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
+
+                'Getting rid of overly long brackets
+                Try
+                    Snip1 = StringTemp3.IndexOf("(")
+                    Snip2 = StringTemp3.IndexOf(")")
+                    StringTemp = "(" & Mid(StringTemp3, Snip1 + 2, Snip2 - 1 - Snip1) & ")"
+
+                    If StringTemp.Length > 25 Then
+                        StringTemp3 = StringTemp3.Replace(StringTemp, "").Replace("&amp;", "").Replace("&#39;", "")
+                    End If
+                Catch
+                End Try
+
+                CountInput = StringTemp3
+                Occurrences = ((CountInput.Length - CountInput.Replace(ToCount, String.Empty).Length) / ToCount.Length) + 1
+                If Occurrences > 5 Then
+                    Do Until Occurrences = 5
+                        Snip2 = StringTemp3.LastIndexOf(",")
+                        StringTemp3 = Left(StringTemp3, Snip2)
+                        Occurrences -= 1
+                    Loop
+                End If
+
+                If StringTemp3.Length > 40 And Occurrences > 2 Then
+                    Try
+                        Do Until StringTemp3.Length < 40 Or Occurrences = 2
+                            Snip2 = StringTemp3.LastIndexOf(",")
+                            StringTemp3 = Left(StringTemp3, Snip2)
+                            Occurrences -= 1
+                        Loop
+                    Catch
+                    End Try
+                End If
+
+
+                ActualInfo(KanjiLoop, 5) = "Kun Reading Compound: " & StringTemp3.Replace("&#39;", "")
+            Else
+                StringTemp2 = ""
+                ActualInfo(KanjiLoop, 5) = "No Kunyomi compounds"
+            End If
+        Next
+
+        Dim FileReader As String = ""
+        Dim TextString() As String
+        Dim TextWriter As System.IO.StreamWriter
+        Try
+            FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+        Catch
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt").Dispose() 'This text file will store user preferences
+            TextWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+            TextWriter.WriteLine("Default 's=' parameter:4")
+            TextWriter.WriteLine("Maximum definitions shown:6")
+            TextWriter.WriteLine("Reading shown first:kun")
+            TextWriter.Close()
+        End Try
+        TextString = FileReader.Split(vbCrLf)
+        Dim OnFirst As Boolean = False
+        If TextString(2).IndexOf("on") <> -1 Then
+            OnFirst = True
+        End If
+
+        'Printing the infomation
+        'Display Type: 1 = with LastRequest, 2 = without LastRequest
+        If DisplayType = 2 Then
+            Console.Clear()
+            Console.WriteLine("Kanji information for 「" & ActualSearchWord & "」")
+            Console.WriteLine()
+        End If
+
+        For Printer = 0 To ActualSearchWord.length - 1
+            For Replacer = 0 To 5
+                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "").Replace("&#39;", "")
+            Next
+            Console.BackgroundColor = ConsoleColor.DarkGray
+            Console.WriteLine(ActualInfo(Printer, 0))
+            Console.BackgroundColor = ConsoleColor.Black
+
+            If OnFirst = False Then
+                Console.WriteLine(ActualInfo(Printer, 1)) 'kun
+                Console.WriteLine(ActualInfo(Printer, 2)) 'on
+            Else
+                Console.WriteLine(ActualInfo(Printer, 2)) 'on
+                Console.WriteLine(ActualInfo(Printer, 1)) 'kun
+            End If
+
+            Console.WriteLine(ActualInfo(Printer, 3))
+            Console.WriteLine(ActualInfo(Printer, 5))
+            Console.WriteLine(ActualInfo(Printer, 4))
+            Console.WriteLine()
+        Next
+
+        Dim KanjisLine As String = "【"
+        For Kanji = 1 To ActualInfo.Length / 6
+            If Kanji <> ActualInfo.Length / 6 Then
+                KanjisLine &= Left(ActualInfo(Kanji - 1, 0), 1) & "(" & Mid(ActualInfo(Kanji - 1, 0), 5) & ") "
+            Else
+                KanjisLine &= Left(ActualInfo(Kanji - 1, 0), 1) & "(" & Mid(ActualInfo(Kanji - 1, 0), 5) & ")】"
+            End If
+        Next
+
+        Dim Definition As Integer
+        Dim MatchT As Boolean
+        Dim NumberCheckD As String = ""
+        Dim NumberCheckT As String = ""
+        Dim Type As Integer = 0
+        Dim SB1, SB2 As Integer
+        Dim BArea As String
+
+        If DisplayType = 1 Then
+            'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
+            Dim LastRequest As String = ""
+            Console.ForegroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Do you have a Last Request? (for example 'anki', 'kanji', 'audio' or 'jisho')")
+            Console.ForegroundColor = ConsoleColor.White
+            LastRequest = Console.ReadLine().ToLower().Trim
+            LastRequest = LastRequest.Replace("/", "").Replace("!", "")
+
+            Dim Types As String = FoundTypes(0)
+            If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
+                My.Computer.Clipboard.SetText(KanjisLine)
+                Console.Clear()
+                Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
+                Console.ReadLine()
+            ElseIf LastRequest.ToLower = "/anki" Or LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Then
+                If FoundTypes.IndexOf("!") = FoundTypes.Length Then
+                    FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
+                End If
+
+                Dim AnkiString() As String = FoundTypes.Split("|") 'How holds the types
+                Dim AnkiCopy As String = ""
+                NumberCheckD = ""
+                NumberCheckT = ""
+                Type = 0
+                Definition = 0
+                MatchT = False
+                Do Until Definition = SelectedDefinition.Length
+                    NumberCheckD = Right(SelectedDefinition(Definition), 2)
+                    If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
+                        NumberCheckD = Right(NumberCheckD, 1)
+                    End If
+                    If IsNumeric(NumberCheckD) = False Then
+                        NumberCheckD = Right(SelectedDefinition(Definition), 1)
+                    End If
+                    If IsNumeric(NumberCheckD) = False Then
+                        Console.ForegroundColor = ConsoleColor.Red
+                        Console.WriteLine("Error: Conjugate; Definition no; D")
+                        Console.ForegroundColor = ConsoleColor.White
+                    End If
+                    NumberCheckD = NumberCheckD.Replace(" ", "")
+
+                    If NumberCheckT = NumberCheckD Then
+                        AnkiCopy = AnkiCopy & vbCrLf
+                    End If
+                    MatchT = False
+                    Type = 0
+                    Do Until Type = AnkiString.Length Or MatchT = True
+                        MatchT = False
+                        If AnkiString(Type) = "!" Then
+                            Type += 1
+                            Continue Do
+                        End If
+
+                        NumberCheckT = Right(AnkiString(Type), 2)
+                        If IsNumeric(NumberCheckT) = False Then
+                            NumberCheckT = Right(AnkiString(Type), 1)
+                        End If
+                        NumberCheckD = NumberCheckD.Replace(" ", "")
+                        NumberCheckD = NumberCheckD.Replace(".", "")
+
+                        If NumberCheckT = NumberCheckD Then
+
+                            If Definition <> 0 Then
+                                AnkiCopy = vbCrLf & AnkiCopy
+                            End If
+
+                            If Definition < 10 Then
+                                AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & vbCrLf
+                            ElseIf Definition > 9 And AnkiString(Type).IndexOf("aux") <> -1 Or Definition > 9 And AnkiString(Type).IndexOf("irr") Then
+                                AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
+
+                                If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                                    AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                                Else
+                                    SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                                    SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                                    BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                                    If BArea.IndexOf("kana") = -1 Then
+
+                                        AnkiCopy = AnkiCopy & vbCrLf
+
+                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                                    Else
+                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                    End If
+
+                                End If
+                            End If
+                            MatchT = True
+                            AnkiString(Type) = "!"
+                            Continue Do
+                        End If
+                        Type += 1
+                    Loop
+
+                    If Definition < 10 Then
+                        'AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & vbCrLf
+
+                        If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
+                            AnkiCopy = AnkiCopy.TrimEnd
+                            AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                        Else
+                            SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                            SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                            BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
+
+                            If BArea.IndexOf("kana") = -1 Then
+                                If Definition <> 0 Then
+                                    AnkiCopy = AnkiCopy & vbCrLf
+                                End If
+                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                            Else
+                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                            End If
+                        End If
+                    End If
+
+
+                    Definition += 1
+                Loop
+
+                AnkiCopy = AnkiCopy.Trim
+
+                AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & ActualSearchWord & vbCrLf & KanjisLine.Replace("[", "(").Replace("]", ")")
+
+                My.Computer.Clipboard.SetText(AnkiCopy.Replace("[", "(").Replace("]", ")"))
+
+                Console.Clear()
+                Console.WriteLine("Copied " & QUOTE & AnkiCopy.Replace("[", "(").Replace("]", ")") & QUOTE & " to clipboard")
+                Console.ReadLine()
+            ElseIf LastRequest.ToLower = "history" Or LastRequest.ToLower = "/history" Then
+                Console.Clear()
+                Console.WriteLine("Search history:")
+                Try
+                    Dim HistoryFile As String
+                    HistoryFile = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+                    Console.WriteLine(HistoryFile)
+                Catch
+                    Main()
+                End Try
+                Console.ReadLine()
+                Main()
+            ElseIf LastRequest = "audio" Or LastRequest = "/audio" Or LastRequest = "download audio" Or LastRequest = "verb audio" Then
+                VerbAudioGen(ActualSearchWord)
+            ElseIf LastRequest = "history" Then
+                Console.Clear()
+                Console.WriteLine("Search history:")
+                Try
+                    Dim HistoryFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
+                    Console.WriteLine(HistoryFile)
+                Catch
+                    Console.WriteLine("You have no history.")
+                    Console.ReadLine()
+                    Main()
+                End Try
+                Console.WriteLine("do '/b' to go to your most recent search")
+                LastRequest = Console.ReadLine.ToLower.Trim
+
+                If LastRequest = "/b" Or LastRequest = "/last" Or LastRequest = "/back" Or LastRequest = "/previous" Then
+                    Console.Clear()
+                    Try
+                        Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
+                        If LastSearchFile.Length < 3 Then
+                            Console.ForegroundColor = ConsoleColor.Red
+                            Console.WriteLine("Error: FileWriter.Close")
+                            Console.ForegroundColor = ConsoleColor.White
+                        Else
+                            Console.WriteLine(LastSearchFile)
+                        End If
+                    Catch
+                        Console.ForegroundColor = ConsoleColor.Red
+                        Console.WriteLine("Error: FileWriter.Close")
+                        Console.ForegroundColor = ConsoleColor.White
+                    End Try
+                    Console.ReadLine()
+                    Main()
+                End If
+
+                Main()
+            ElseIf LastRequest = "jisho" Then
+                Try
+                    Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "https://" & WordLink)
+                Catch
+                    Try
+                        Process.Start("C:\Program Files (x86)\Mozilla Firefox\firefox.exe", "https://" & WordLink)
+                    Catch
+                        Try
+                            Process.Start("https://" & WordLink)
+                        Catch
+                            Console.ForegroundColor = ConsoleColor.Red
+                            Console.WriteLine("Cannot open on Jisho because the exe file for your browser isn't were it usually is.")
+                            Console.ForegroundColor = ConsoleColor.White
+                        End Try
+                    End Try
+                End Try
+                Console.ReadLine()
+            End If
+        End If
     End Sub
 
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
@@ -7603,7 +7633,6 @@ Module Module1
 
         Return step4
     End Function
-
 
     Sub Preferences()
         Const QUOTE = """"
@@ -8222,7 +8251,6 @@ ChangeS:
 
         Main()
     End Sub
-
     Sub WriteToFile(ByVal ToWrite, ByVal FileName)
         FileName = "C:\ProgramData\Japanese Conjugation Helper\" & FileName & ".txt"
 
@@ -8237,6 +8265,129 @@ ChangeS:
             Writer.WriteLine(ToWrite)
             Writer.Close()
         End Using
+    End Sub
+
+    Sub Help(ByVal Command)
+        Const QUOTE = """"
+        Command = Command.ToLower
+        Console.Clear()
+
+        If Command = "search" Or Command = "wordlookup" Or Command = "word" Or Command = "lookup" Or Command = "definition" Or Command = "conjugate" Then
+            Console.WriteLine("WordLookup: To lookup a word and bring up information and conjugation patterns, simply type and English or Japanese word, Japanese words can also be written using romaji (english transliteration), surround words in quotes to make sure the program knows that it is definitely the english word you are seaching for and not romaji. Example: " & QUOTE & "hate" & QUOTE)
+            Console.WriteLine("the (number of results) parameter is how many results the program will bring up, you then choose one of these results to have details about it show up.")
+            Console.WriteLine("This command is best with adjectives and verbs because they have the most conjugation patterns, but nouns work too!")
+            Console.WriteLine("This isn't technically a command because it doesn't use a " & QUOTE & "/" & QUOTE)
+            Console.WriteLine()
+            Console.WriteLine("Syntax: (english/japanese/romaji) (number of results)")
+            Console.WriteLine("Examples:")
+            Console.WriteLine("静か")
+            Console.WriteLine("shizuka")
+            Console.WriteLine("quiet 5")
+            Console.WriteLine("interesting 15")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command = "/r" Or Command = "r" Or Command.indexof("reading") <> -1 Then
+            Console.WriteLine("/r: Reading practice, to use this command (sentences) must be in a specific format")
+            Console.WriteLine("This command is pretty useful for the average user because it requires a hotkey file to be affective")
+            Console.WriteLine("This command is pretty much creating flashcards, so as long as you follow the syntax you can make it do anything")
+            Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Syntax; /r (sentences) [2]")
+            Console.WriteLine("(sentences) is a specific format of japanese sentences and its english meaning")
+            Console.WriteLine("If you have have the " & QUOTE & "2" & QUOTE & " parameter at the end, it means you are pasting in more than one batch of sentences")
+            Console.WriteLine()
+            Console.WriteLine("(sentences) format:")
+            Console.WriteLine("|(Japanese sentence)^(english meaning)")
+            Console.WriteLine(QUOTE & "|" & QUOTE & " is the start of a japanese sentence, " & QUOTE & "^" & QUOTE & " is the start of the english sentence.")
+            Console.WriteLine()
+            Console.WriteLine("You can paste in a whole batch like this:")
+            Console.WriteLine("|(Japanese sentence)^(english meaning)" & "|(Japanese sentence)^(english meaning)" & "|(Japanese sentence)^(english meaning)")
+            Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Examples:")
+            Console.WriteLine("|そこで私たちを待っている幸福が、私たちが望むような幸福ではないかもしれない。 ^It may be that the happiness awaiting us is not at all the sort of happiness we would want.")
+            Console.WriteLine()
+            Console.WriteLine("|家に帰りましょうか。 ^Why don't we go home?|「少しうちに寄っていかない？」「いいの？」「うち共働きで親は遅いの」 ^" & QUOTE & "Want To drop round my place?" & QUOTE & "can I?" & QUOTE & " My parents come home late As they both work." & QUOTE & "|先ずは憧れの作家の文章の呼吸をつかむためにひたすら筆写、丸写しをする。 ^First, in order to get a feel for your favourite author's work, transcribe and copy in full.")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command = "k" Or Command = "/k" Or Command = "/kanjitest" Or Command = "kanjitest" Or Command = "/kt" Then
+            Console.WriteLine("KanjiTest: Enter Japanese text and then generate a quiz of the kanji in that text")
+            Console.WriteLine("Type '/k' and then enter Japanese text; as long as the text contains kanji it will work")
+            Console.WriteLine("Syntax: /k")
+            Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Examples:")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command = "!" Or Command.indexof("transl") <> -1 Then
+            Console.WriteLine("Translate: Translate Japanese into English or the other way round")
+            Console.WriteLine("Syntax: ![text]")
+            Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Examples:")
+            Console.WriteLine("!this will work")
+            Console.WriteLine("!これも")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command = "/h" Or Command = "/help" Or Command = "help" Or Command = "h" Then
+            Console.WriteLine("/h: Brings up this help menu, if you want more help with a command then add the command parameter:")
+            Console.WriteLine("Syntax: /h [command]")
+            Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Examples:")
+            Console.WriteLine("/h /r")
+            Console.WriteLine("/help WordLookup")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command = "/p" Or Command = "p" Then
+            Console.WriteLine("/p: Start a small quiz that helps you conjugate verbs, this only works with verbs but will later work with adjectives and nouns, the (word) parameter is the word that you want help conjugating")
+            Console.WriteLine("Japanese words can also be written using romaji (english transliteration), surround words in quotes to make sure the program knows that it is definitely the english word you are seaching for and not romaji. Example: " & QUOTE & "hate" & QUOTE)
+            Console.WriteLine("Syntax: /p [english/japanese/romaji word]")
+            Console.WriteLine()
+            Console.WriteLine("When the quiz starts it will tell you which form to change the word to, failing lowers your score.")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command.length < 13 And Command.indexof("pref") <> -1 Then
+            Console.WriteLine("/prefs: Lets you change settings for the program.")
+            Console.WriteLine("Settings are mostly do with with how information is displayed")
+            Console.WriteLine()
+            Console.WriteLine("Read the Wiki information on what each setting does")
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Command.length < 10 And Command.indexof("audio") <> -1 Then
+            Console.WriteLine("Download audio of various conjugations of a verb")
+            Console.WriteLine("Only works with verbs (doesn't work with suru-verbs)")
+            Console.WriteLine()
+            Console.WriteLine("Syntax: /audio [verb] (!s/f)")
+            Console.WriteLine("Add !f if you want female audio")
+            Console.WriteLine("Add !m if you want female audio")
+            Console.WriteLine()
+            Console.WriteLine("If you don't specify gender of pronunciations, it will be male by default")
+            Console.WriteLine("Example: /audio odoru !f")
+            Console.ReadLine()
+            Main()
+        End If
+
+        Console.ForegroundColor = ConsoleColor.Yellow
+        Console.WriteLine("There is no information for " & QUOTE & Command & QUOTE)
+        Console.WriteLine(QUOTE & Command & QUOTE & " is not a command.")
+        Console.ForegroundColor = ConsoleColor.White
+        Console.ReadLine()
+        Main()
     End Sub
 
 End Module
