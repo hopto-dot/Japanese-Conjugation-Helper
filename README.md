@@ -21,27 +21,28 @@ If you like this program and want to show your appreciation then how about buyin
 ## If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
 ## **Summary of [commands](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
-* **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence (just type in a word)
-* **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English (type ! before a sentence)
-* **[Kanji Information (/i)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji
-**[/Preferences](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
-* Sub - Downloads subtitles from [Kitsu Nekko](https://kitsunekko.net/)
+## *Useful commands are in bold*
+* **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence (simply type a Japanese or English word or type '[word] [results]' to specify how many results you want to see)
+* **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English (use '!' before English or Japanese sentences)
+* **[Kanji Information (/i)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji will be shown
 * **[/Audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
-* HeyLingo Audio (/heylingo) - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses
-* [/Subtitles] Downloads English or Japanese subtitles for almost any anime
-* **[/Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening)** - Start a listening test for a verb or adjective
-* **[Kanji Test (/k)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test)** - Enter Japanese text and get tested on all the kanji
-* [**Conjugator Practice** (/p)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
-* **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word (see wiki to see how to use)
-* **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** - A parameter that determines how much information about a word is displayed (see wiki to see how to use)
+* **/Subtitles** - Download English or Japanese anime subtitles - do '/subtitles [language]' (language is optional)
+* /heylingo - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses, you can choose a language course but doing '/heylingo [language]'.
+* **[/Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening)** - Start a listening test for a verb or adjective with '/listening [word]'
+* **[/k (Kanji Test)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test)** - Enter Japanese Kanji and get tested on them all 'do /k [kanji]'
+* **Offline Searching** - do '//[search]' to search for a word offline (should only be used for emergancies)
+* **[Preferences](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
+* [**Conjugator Practice**](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
+* **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word (for example download audio for that word)
+* **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** (not a command) - Things you can do after searching a word (for example download audio for that word)- A parameter that determines how much information about a word is displayed
 * **/history** - See you last 40 searches
-* **/b (back)** - Instantly go back to your last search (no internet connection needed)
+* **/b (back)** - Instantly go back to your last search (no internet connection needed however can be buggy)
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
 * [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (obsolete command)
 * /ranki - Reverse Anki: Generate reverse anki cards (obsolete command)
-
+***
 ## To do:
-- [ ] Make an offline searching possible
+- [X] Make an offline searching possible
 - [ ] Making searching for words more optimised and quicker
 - [X] Download audio from various sites
 - [ ] Make a proper example sentence feature
@@ -54,5 +55,4 @@ If you like this program and want to show your appreciation then how about buyin
 2. Then click "properties" at the bottom
 3. Lastly, make sure you are on the "Font" tab and select the "MS Mincho" font, there are a few other fonts that work too.
 ![Japanese Characters](https://i.imgur.com/x7gDhB9.png)
-
 ***
