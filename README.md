@@ -20,8 +20,8 @@ If you like this program and want to show your appreciation then how about buyin
 
 ## If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
-## **Summary of [commands](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
-## *Useful commands are in bold*
+## **Summary of [functions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
+## *Useful things are in bold*
 * **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence (simply type a Japanese or English word or type '[word] [results]' to specify how many results you want to see)
 * **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English (use '!' before English or Japanese sentences)
 * **[Kanji Information (/i)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji will be shown
@@ -35,11 +35,11 @@ If you like this program and want to show your appreciation then how about buyin
 * [**Conjugator Practice**](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
 * **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word (for example download audio for that word)
 * **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** (not a command) - Things you can do after searching a word (for example download audio for that word)- A parameter that determines how much information about a word is displayed
-* **/history** - See you last 40 searches
-* **/b (back)** - Instantly go back to your last search (no internet connection needed however can be buggy)
+* **/History** - See you last 40 searches
+* **/b (Back)** - Instantly go back to your last search (no internet connection needed however can be buggy)
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
 * [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (obsolete command)
-* /ranki - Reverse Anki: Generate reverse anki cards (obsolete command)
+* /Ranki - Reverse Anki: Generate reverse anki cards (obsolete command)
 ***
 ## To do:
 - [X] Make an offline searching possible
