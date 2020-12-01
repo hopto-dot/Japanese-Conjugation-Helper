@@ -26,7 +26,7 @@ If you like this program and want to show your appreciation then how about buyin
 * **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English (use '!' before English or Japanese sentences)
 * **[Kanji Information (/i)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji will be shown
 * **[/Audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
-* **/Subtitles** - Download English or Japanese anime subtitles - do '/subtitles [language]' (language is optional)
+* **/Subtitles** - Download English or Japanese anime subtitles, specify the language and anime after you have typed '/subtitles'
 * /heylingo - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses, you can choose a language course but doing '/heylingo [language]'.
 * **[/Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening)** - Start a listening test for a verb or adjective with '/listening [word]'
 * **[/k (Kanji Test)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test)** - Enter Japanese Kanji and get tested on them all 'do /k [kanji]'
