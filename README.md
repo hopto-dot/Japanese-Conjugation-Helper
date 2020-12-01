@@ -51,8 +51,8 @@ If you like this program and want to show your appreciation then how about buyin
 
 ***
 ## **If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
-1. Click the ConjugationHelper icon in the very top left of the console window
+1. Click the ConjugationHelper icon in the very top left corner of the console window
 2. Then click "properties" at the bottom
-3. Lastly, make sure you are on the "Font" tab and select the "MS Mincho" font, there are a few other fonts that work too.
+3. Lastly, make sure you are on the "Font" tab and select the "MS Mincho" font, there are a few other fonts that work too such as MS Gothic
 ![Japanese Characters](https://i.imgur.com/x7gDhB9.png)
 ***
