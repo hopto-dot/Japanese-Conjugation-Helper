@@ -24,22 +24,22 @@ If you like this program and want to show your appreciation then how about buyin
 ## *Useful things are in bold*
 * **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence (simply type a Japanese or English word or type '[word] [results]' to specify how many results you want to see)
 * **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English (use '!' before English or Japanese sentences)
-* **[Kanji Information (/i)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji will be shown
-* **[/Audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
+* **[/i (Kanji Information)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji will be shown
+* **[/audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
 * **/Subtitles** - Download English or Japanese anime subtitles, specify the language and anime after you have typed '/subtitles'
 * /Heylingo - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses, you can choose a language course but doing '/heylingo [language]'.
-* **[/Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening)** - Start a listening test for a verb or adjective with '/listening [word]'
+* **[/listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening)** - Start a listening test for a verb or adjective with '/listening [word]'
 * **[/k (Kanji Test)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test)** - Enter Japanese Kanji and get tested on them all 'do /k [kanji]'
 * **Offline Searching** - do '//[search]' to search for a word offline (should only be used for emergancies)
 * **[Preferences](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
-* [**Conjugator Practice**](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
+* [**/p (Conjugator Practice)**](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
 * **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word (for example download audio for that word)
 * **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** (not a command) - Things you can do after searching a word (for example download audio for that word)- A parameter that determines how much information about a word is displayed
-* **/History** - See you last 40 searches
-* **/b (Back)** - Instantly go back to your last search (no internet connection needed however can be buggy)
+* **/history** - See you last 40 searches
+* **/b (back)** - Instantly go back to your last search (no internet connection needed however can be buggy)
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
 * [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (obsolete command)
-* /Ranki - Reverse Anki: Generate reverse anki cards (obsolete command)
+* /Ranki - Reverse Anki: Generate reverse anki cards for cards that aren't as straight forward as flipping the fields (hard to use)
 ***
 ## To do:
 - [X] Make an offline searching possible
