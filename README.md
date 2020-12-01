@@ -20,7 +20,7 @@ If you like this program and want to show your appreciation then how about buyin
 
 ## If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
-## **Summary of [functions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
+## **Summary of [Functions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
 ## *Useful things are in bold*
 * **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence (simply type a Japanese or English word or type '[word] [results]' to specify how many results you want to see)
 * **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English (use '!' before English or Japanese sentences)
@@ -39,7 +39,7 @@ If you like this program and want to show your appreciation then how about buyin
 * **/b (back)** - Instantly go back to your last search (no internet connection needed however can be buggy)
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
 * [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (obsolete command)
-* /Ranki - Reverse Anki: Generate reverse anki cards for cards that aren't as straight forward as flipping the fields (hard to use)
+* /ranki - Reverse Anki: Generate reverse anki cards for cards that aren't as straight forward as flipping the fields (hard to use)
 ***
 ## To do:
 - [X] Make an offline searching possible
