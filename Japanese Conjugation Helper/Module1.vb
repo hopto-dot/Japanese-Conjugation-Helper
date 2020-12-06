@@ -6722,16 +6722,29 @@ Module Module1
             Console.WriteLine()
         End If
 
-        For Printer = 0 To ActualSearchWord.length - 1
+        Dim ActualSLength As Integer = ActualSearchWord.length - 1
+        Dim Dupe As Boolean
+        For Printer = 0 To ActualSLength
+            If Dupe = True Then
+                Continue For
+            End If
             For Replacer = 0 To 5
                 Try
                     ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "").Replace("&#39;", "")
                 Catch ex As Exception
+                    Dim ResizeArray(Replacer, 5)
+                    Array.Copy(ActualInfo, ResizeArray, ResizeArray.Length)
+                    ReDim ActualInfo(Replacer, 5)
+                    Array.Copy(ResizeArray, ActualInfo, ActualInfo.Length)
                     Replacer = 5
-                    Printer = ActualSearchWord.length - 1
+                    Dupe = True
                     Continue For
                 End Try
             Next
+            If Dupe = True Then
+                Continue For
+            End If
+
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(ActualInfo(Printer, 0))
             Console.BackgroundColor = ConsoleColor.Black
@@ -6770,7 +6783,8 @@ Module Module1
         Dim NumberCheckT As String = ""
         Dim Type As Integer = 0
         Dim SB1, SB2 As Integer
-        Dim BArea, BArea2 As String
+        Dim BArea As String = ""
+        Dim BArea2 As String = ""
         Dim DefG1 = 10
 
         If DisplayType = 1 Then
@@ -6836,13 +6850,13 @@ Module Module1
                                     AnkiCopy = AnkiCopy & vbCrLf
                                 End If
                                 Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                                AnkiCopy = AnkiCopy & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
+                                AnkiCopy = AnkiCopy & vbCrLf & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
                             ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
                                 Console.WriteLine()
                                 Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
                                 Console.WriteLine()
                                 AnkiCopy = AnkiCopy & vbCrLf
-                                AnkiCopy = AnkiCopy & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
+                                AnkiCopy = AnkiCopy & vbCrLf & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
                                 AnkiCopy = AnkiCopy & vbCrLf
 
                                 'Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
@@ -6860,9 +6874,9 @@ Module Module1
                                         Console.WriteLine(BArea)
                                         Console.ForegroundColor = ConsoleColor.White
                                         Console.WriteLine()
-                                        AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
-                                        AnkiCopy = AnkiCopy & BArea
-                                        AnkiCopy = AnkiCopy & vbCrLf
+                                        AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                        AnkiCopy = AnkiCopy & vbCrLf & BArea
+                                        AnkiCopy = AnkiCopy & vbCrLf & vbCrLf
                                     Else
                                         SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                                         SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
@@ -6874,7 +6888,7 @@ Module Module1
                                             Console.WriteLine(BArea)
                                             Console.ForegroundColor = ConsoleColor.White
                                             AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
-                                            AnkiCopy = AnkiCopy & BArea
+                                            AnkiCopy = AnkiCopy & vbCrLf & BArea
                                         Else
                                             BArea2 = BArea 'BArea is acting like a temp
 
@@ -6884,12 +6898,13 @@ Module Module1
                                             End If
 
                                             If BArea2.Length > 3 Then
+                                                BArea = BArea.Replace("See also", "See also ")
                                                 BArea2 = BArea2.Replace("See also", "See also ")
                                                 Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2)
-                                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2
+                                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2
                                             Else
                                                 Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
                                             End If
                                         End If
                                     End If
@@ -6906,7 +6921,7 @@ Module Module1
                     If Definition < DefG1 + 1 Then
                         If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
                             Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
-                            AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                            AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
                         Else
                             SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                             SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
@@ -6915,11 +6930,13 @@ Module Module1
                             If BArea.IndexOf("kana") = -1 Then
                                 Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
                                 BArea = BArea.Replace("See also", "See also ")
+                                BArea2 = BArea2.Replace("See also", "See also ")
                                 Console.ForegroundColor = ConsoleColor.DarkGray
                                 Console.WriteLine(BArea)
                                 Console.ForegroundColor = ConsoleColor.White
-                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
-                                AnkiCopy = AnkiCopy & BArea
+
+                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                'AnkiCopy = AnkiCopy & vbCrLf & BArea
                             Else
                                 BArea2 = BArea 'BArea is acting like a temp
 
@@ -6929,16 +6946,17 @@ Module Module1
                                 End If
 
                                 If BArea2.Length > 3 Then
+                                    BArea = BArea.Replace("See also", "See also ")
                                     BArea2 = BArea2.Replace("See also", "See also ")
                                     Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
                                     Console.ForegroundColor = ConsoleColor.DarkGray
                                     Console.WriteLine(BArea2)
                                     Console.ForegroundColor = ConsoleColor.White
-                                    AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                    AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
                                     AnkiCopy = AnkiCopy & BArea
                                 Else
                                     Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
-                                    AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                    AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
                                 End If
                             End If
                         End If
@@ -6949,11 +6967,13 @@ Module Module1
                 AnkiCopy = AnkiCopy.Trim
 
                 AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & FullWord & vbCrLf & KanjisLine.Replace("[", "(").Replace("]", ")")
+                AnkiCopy = AnkiCopy.Replace("See also", "See also ")
+                AnkiCopy = AnkiCopy.Replace("See also  ", "See also ")
+                AnkiCopy = AnkiCopy.Replace(", )", "")
 
                 My.Computer.Clipboard.SetText(AnkiCopy.Replace("[", "(").Replace("]", ")"))
 
-                'Console.Clear()
-                Console.WriteLine("-------")
+                Console.Clear()
                 Console.WriteLine("Copied: " & vbCrLf & AnkiCopy.Replace("[", "(").Replace("]", ")"))
                 LastRequest = Console.ReadLine
                 If LastRequest = "save" Then
