@@ -8,6 +8,7 @@ Imports WanaKanaNet
 Module Module1
 
     Dim Words(0) As Word
+    Dim DebugMode As Boolean
     Class Word
         Public Word As String = ""
         Public Furigana As String = ""
@@ -41,12 +42,41 @@ Module Module1
 
         If Int((100) * Rnd()) <> 2 Then
             Console.WriteLine("Enter a command, or type " & QUOTE & "/h" & QUOTE & " for help")
+            If DebugMode = True Then
+                Console.WriteLine("(Debug mode is active)")
+            End If
         Else
             Console.WriteLine("コマンドを入力したらどう？ OwO")
         End If
 
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
         Dim Word As String = Console.ReadLine.ToLower.Trim 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
+
+        If Word.Contains("/saves") = True And Word.Length < 8 Then
+            Console.Clear()
+
+            Try
+                Console.WriteLine("Here are you saved words:")
+                Console.WriteLine(My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt"))
+            Catch ex As Exception
+                Console.ForegroundColor = ConsoleColor.Red
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                Else
+                    Console.WriteLine("You have no saved words")
+                    Console.WriteLine("To save a word, search for a word then type 'save'")
+                End If
+                Console.ForegroundColor = ConsoleColor.White
+            End Try
+
+            Console.ReadLine()
+            Main()
+        End If
+
+        If Word = "_debug_" Then
+            DebugMode = True
+            Main()
+        End If
 
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
             Main()
@@ -216,12 +246,16 @@ Module Module1
         If Left(Word, 5) = "/file" Then
             Try
                 Process.Start("C:\ProgramData\Japanese Conjugation Helper")
-            Catch
+            Catch Ex As Exception
                 Console.Clear()
                 Console.ForegroundColor = ConsoleColor.Red
-                Console.WriteLine("No program files have been created yet.")
-                Console.WriteLine("Type '/prefs' to get started.")
-                Console.ForegroundColor = ConsoleColor.White
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                Else
+                    Console.WriteLine("No program files have been created yet.")
+                    Console.WriteLine("Type '/prefs' to get started.")
+                    Console.ForegroundColor = ConsoleColor.White
+                End If
                 If Console.ReadLine.ToLower = "/prefs" Then
                     Preferences()
                 End If
@@ -363,9 +397,9 @@ Module Module1
         Console.WriteLine("What language would you like subtitles for?")
         Language = Console.ReadLine.ToLower
 
-        If Language.IndexOf("en") <> -1 Then
+        If Language.Contains("en") = True Or Language.Contains("glish") = True Then
             Language = "English"
-        ElseIf Language.IndexOf("ja") <> -1 Then
+        ElseIf Language.Contains("j") = True Then
             Language = "Japanese"
         Else
             Language = "Japanese"
@@ -376,10 +410,21 @@ Module Module1
         If Language = "Japanese" Then
             Try
                 HTML = Client.DownloadString(New Uri("https://kitsunekko.net/dirlist.php?dir=subtitles%2Fjapanese%2F"))
-            Catch
+            Catch Ex As Exception
+                If DebugMode = True Then
+                    Console.WriteLine(Ex.Message)
+                    Console.ReadLine()
+                End If
             End Try
         ElseIf Language = "English" Then
-            HTML = Client.DownloadString(New Uri("https://kitsunekko.net/dirlist.php?dir=subtitles%2F"))
+            Try
+                HTML = Client.DownloadString(New Uri("https://kitsunekko.net/dirlist.php?dir=subtitles%2F"))
+            Catch ex As Exception
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                    Console.ReadLine()
+                End If
+            End Try
         End If
 
         Dim Snip1, Snip2 As Integer
@@ -402,10 +447,14 @@ Module Module1
         Array.Resize(Found, Found.Length - 1)
 
         If Found.Length = 0 Then
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Anime wasn't found")
             Console.WriteLine("Maybe try searching for the english title, or romaji title")
+            Console.ForegroundColor = ConsoleColor.White
             Console.ReadLine()
             Main()
+        ElseIf Found.Length > 30 Then
+            Array.Resize(Found, 30)
         End If
 
         Dim AnimeNames(Found.Length - 1) As String
@@ -422,7 +471,6 @@ Module Module1
         Dim Line As Integer = 0
         Dim Selected() As Boolean
         Do Until Correct = True
-            Console.SetCursorPosition(0, 0)
             Console.SetCursorPosition(0, 0)
             Console.BackgroundColor = ConsoleColor.White
             Console.ForegroundColor = ConsoleColor.Green
@@ -461,6 +509,12 @@ Module Module1
                 Main()
             ElseIf KeyReader.Key = ConsoleKey.Enter Then
                 Correct = True
+            ElseIf KeyReader.Key = ConsoleKey.Q Then
+                Line = AnimeNames.Length * (2 / 7)
+            ElseIf KeyReader.Key = ConsoleKey.W Then
+                Line = AnimeNames.Length * (3 / 6)
+            ElseIf KeyReader.Key = ConsoleKey.E Then
+                Line = AnimeNames.Length * (5 / 7)
             End If
         Loop
 
@@ -551,8 +605,25 @@ Module Module1
                 Next
             ElseIf KeyReader.Key = ConsoleKey.D Then
                 Correct = True
+            ElseIf KeyReader.Key = ConsoleKey.Home Then
+                Line = 0
+            ElseIf KeyReader.Key = ConsoleKey.End Then
+                Line = AnimeNames.Length - 1
+            ElseIf KeyReader.Key = ConsoleKey.Q Then
+                Line = AnimeNames.Length * (2 / 7)
+            ElseIf KeyReader.Key = ConsoleKey.W Then
+                Line = AnimeNames.Length * (3 / 6)
+            ElseIf KeyReader.Key = ConsoleKey.E Then
+                Line = AnimeNames.Length * (5 / 7)
             End If
         Loop
+
+        If Line > AnimeNames.Length - 1 Then
+            Line += AnimeNames.Length - 1
+        ElseIf Line < 0 Then
+            Line = 0
+        End If
+
         Correct = False
         Console.Clear()
         Console.WriteLine("Downloading:")
@@ -2840,7 +2911,14 @@ Module Module1
         HTMLTemp = Client.DownloadString(New Uri(WordURL))
         SentenceExample = RetrieveClassRange(HTMLTemp, "<li class=" & QUOTE & "clearfix" & QUOTE & "><span class=" & QUOTE & "furigana" & QUOTE & ">", "inline_copyright", "Example Sentence") 'Firstly extracting the whole group
         If SentenceExample.Length > 10 Then
-            Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
+            Try
+                Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
+            Catch ex As Exception
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                    Console.ReadLine()
+                End If
+            End Try
         End If
         If Example.Length < 200 And Example.Length > 4 Then
             Console.WriteLine(Example.Trim)
@@ -6787,6 +6865,7 @@ Module Module1
         Dim BArea2 As String = ""
         Dim DefG1 = 10
 
+LastRequest:
         If DisplayType = 1 Then
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
             Dim LastRequest As String = ""
@@ -6797,12 +6876,12 @@ Module Module1
             LastRequest = LastRequest.Replace("/", "").Replace("!", "")
 
             Dim Types As String = FoundTypes(0)
-            If LastRequest.ToLower = "kanji" Or LastRequest.ToLower = "copy kanji" Then
+            If LastRequest.Contains("kanji") = True Then
                 My.Computer.Clipboard.SetText(KanjisLine)
                 Console.Clear()
                 Console.WriteLine("Copied " & QUOTE & KanjisLine & QUOTE & " to clipboard")
-                Console.ReadLine()
-            ElseIf LastRequest.ToLower = "/anki" Or LastRequest.ToLower = "anki" Or LastRequest.ToLower = "copy anki" Then
+                GoTo LastRequest
+            ElseIf LastRequest.Contains("ank") = True Then
                 If FoundTypes.IndexOf("!") = FoundTypes.Length Then
                     FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
                 End If
@@ -6975,32 +7054,10 @@ Module Module1
 
                 Console.Clear()
                 Console.WriteLine("Copied: " & vbCrLf & AnkiCopy.Replace("[", "(").Replace("]", ")"))
-                LastRequest = Console.ReadLine
-                If LastRequest = "save" Then
-                    SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
-                    Console.WriteLine("Word saved!")
-                    Console.ReadLine()
-                End If
-            ElseIf LastRequest.ToLower = "history" Or LastRequest.ToLower = "/history" Then
-                Console.Clear()
-                Console.WriteLine("Search history:")
-                Try
-                    Dim HistoryFile As String
-                    HistoryFile = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\SearchHistory.txt")
-                    Console.WriteLine(HistoryFile)
-                Catch
-                    Main()
-                End Try
-                LastRequest = Console.ReadLine
-                If LastRequest = "save" Then
-                    SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
-                    Console.WriteLine("Word saved!")
-                    Console.ReadLine()
-                End If
-                Main()
-            ElseIf LastRequest = "audio" Or LastRequest = "/audio" Or LastRequest = "download audio" Or LastRequest = "verb audio" Then
+                GoTo LastRequest
+            ElseIf LastRequest.Contains("audi") = True Then
                 VerbAudioGen(ActualSearchWord)
-            ElseIf LastRequest = "history" Then
+            ElseIf LastRequest.Contains("hist") = True Then
                 Console.Clear()
                 Console.WriteLine("Search history:")
                 Try
@@ -7008,44 +7065,10 @@ Module Module1
                     Console.WriteLine(HistoryFile)
                 Catch
                     Console.WriteLine("You have no history.")
-                    LastRequest = Console.ReadLine
-                    If LastRequest = "save" Then
-                        SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
-                        Console.WriteLine("Word saved!")
-                        Console.ReadLine()
-                    End If
-                    Main()
+                    GoTo LastRequest
                 End Try
-                Console.WriteLine("do '/b' to go to your most recent search")
-                LastRequest = Console.ReadLine.ToLower.Trim
-
-                If LastRequest = "/b" Or LastRequest = "/last" Or LastRequest = "/back" Or LastRequest = "/previous" Then
-                    Console.Clear()
-                    Try
-                        Dim LastSearchFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\LastSearch.txt")
-                        If LastSearchFile.Length < 3 Then
-                            Console.ForegroundColor = ConsoleColor.Red
-                            Console.WriteLine("Error: FileWriter.Close")
-                            Console.ForegroundColor = ConsoleColor.White
-                        Else
-                            Console.WriteLine(LastSearchFile)
-                        End If
-                    Catch
-                        Console.ForegroundColor = ConsoleColor.Red
-                        Console.WriteLine("Error: FileWriter.Close")
-                        Console.ForegroundColor = ConsoleColor.White
-                    End Try
-                    LastRequest = Console.ReadLine
-                    If LastRequest = "save" Then
-                        SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
-                        Console.WriteLine("Word saved!")
-                        Console.ReadLine()
-                    End If
-                    Main()
-                End If
-
-                Main()
-            ElseIf LastRequest = "jisho" Then
+                GoTo LastRequest
+            ElseIf LastRequest.Contains("jish") = True Then
                 Try
                     Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "https://" & WordLink)
                 Catch
@@ -7061,18 +7084,14 @@ Module Module1
                         End Try
                     End Try
                 End Try
-                LastRequest = Console.ReadLine
-                If LastRequest = "save" Then
-                    SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
-                    Console.WriteLine("Word saved!")
-                    Console.ReadLine()
-                End If
-            ElseIf LastRequest = "save" Then
+                GoTo LastRequest
+            ElseIf LastRequest.Contains("save") = True Then
                 SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
                 Console.WriteLine("Word saved!")
-                Console.ReadLine()
+                GoTo LastRequest
             End If
         End If
+        Main()
     End Sub
 
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
@@ -7303,15 +7322,23 @@ Module Module1
         Try
             EnglishSentence = Mid(SentenceExample, EngSent + 1, EngSentEnd - EngSent + 1)
             EnglishSentence = EnglishSentence.Replace("class=" & QUOTE & "english" & QUOTE & ">", "")
-        Catch
+        Catch Ex As Exception
+            If DebugMode = True Then
+                Console.WriteLine(ex.Message)
+                Console.ReadLine()
+            End If
             Return ("")
         End Try
         Dim JPSentEnd As Integer = SentenceExample.IndexOf("</ul>")
         Dim JapaneseSentence As String = ""
         Try
             JapaneseSentence = Mid(SentenceExample, 2, JPSentEnd - 1)
-        Catch
+        Catch Ex As Exception
             Console.ForegroundColor = ConsoleColor.Red
+            If DebugMode = True Then
+                Console.WriteLine(ex.Message)
+                Console.WriteLine()
+            End If
             Console.WriteLine("Error: ExampleSentence; JapaneseSentence")
             Console.WriteLine("Catch: 1")
             Console.WriteLine("JPSentEnd: " & JPSentEnd)
@@ -7337,9 +7364,7 @@ Module Module1
 
         JapaneseSentence = JapaneseSentence.Replace("  ", "")
 
-
         Return ("|" & JapaneseSentence & "|" & EnglishSentence & "|")
-
     End Function
     Function WordLinkScraper(ByVal URL) 'This is for getting the definition of a word from the page of the word instead of the search results, this is much more reliable for definitions
         Const QUOTE = """"
