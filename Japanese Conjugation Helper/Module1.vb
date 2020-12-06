@@ -352,110 +352,6 @@ Module Module1
 
         Main()
     End Sub
-    Sub LoadWordJson()
-        Console.WriteLine("Loading for offline use...")
-        Dim JsonReader As String
-        Dim FileEntries(), WordEntries() As String
-        Dim Correct As Boolean = False
-        Dim I As Integer
-        Array.Resize(Words, Words.Length + 1)
-        For JSon = 1 To 29 'Loop for each file
-            JsonReader = My.Computer.FileSystem.ReadAllText("jmdict_english\term_bank_" & JSon & ".json")
-            'Getting rid of starting '[[' and ending ']]':
-            JsonReader = Mid(JsonReader, 3)
-            FileEntries = Split(JsonReader, "],[")
-
-            For Word = 0 To 999
-                WordEntries = FileEntries(Word).Split(",")
-
-                'Adding info to words array:
-                Words(Words.Length - 1) = New Word
-                Words(Words.Length - 1).Word = WordEntries(0).Replace("""", "") 'Adding actual word
-                Words(Words.Length - 1).Furigana = WordEntries(1).Replace("""", "") 'Adding furigana
-                Words(Words.Length - 1).Types = WordEntries(2).Split(" ") 'Adding word types
-                Words(Words.Length - 1).Page = JSon 'Adding which JSON file it is in
-
-                'Adding the meanings (which are often spread across a few array positions start at 5)
-                Correct = False
-                I = 5
-                Do Until Correct = True
-                    Words(Words.Length - 1).Meanings(Words(Words.Length - 1).Meanings.Length - 1) = WordEntries(I) 'Current free slot in 'meanings' array will be filled
-                    If WordEntries(I).Contains("]") Then
-                        Correct = True
-                        Continue Do
-                    End If
-
-                    Array.Resize(Words(Words.Length - 1).Meanings, Words(Words.Length - 1).Meanings.Length + 1) 'Increasing size of 'meanings' by 1
-                    I += 1
-                Loop
-
-                For Replacer = 0 To Words(Words.Length - 1).Types.Length - 1
-                    Words(Words.Length - 1).Types(Replacer) = Words(Words.Length - 1).Types(Replacer).Replace("""", "")
-                Next
-                For Replacer = 0 To Words(Words.Length - 1).Meanings.Length - 1
-                    Words(Words.Length - 1).Meanings(Replacer) = Words(Words.Length - 1).Meanings(Replacer).Replace("""", "").Replace("[", "").Replace("]", "")
-                Next
-
-                Array.Resize(Words, Words.Length + 1)
-            Next
-        Next
-        Array.Resize(Words, Words.Length - 1)
-    End Sub
-    Sub WordJsonSearch(Word)
-        Word = Word.replace("//", "")
-        If Words.Length < 100 Then
-            Array.Resize(Words, 0)
-            LoadWordJson()
-        End If
-        Console.Clear()
-        Console.WriteLine("Searching for '{0}'", Word)
-        Dim Results As New List(Of Word) From {}
-
-        For Each ArrayWord In Words
-            If ArrayWord.Word.Contains(Word) = True Or ArrayWord.Furigana.Contains(Word) = True Or ArrayWord.Meanings(0).Contains(Word) = True Or ArrayWord.Furigana.Contains(WanaKana.ToHiragana(Word)) = True Then
-                Results.Add(ArrayWord)
-            End If
-        Next
-
-        If Results.Count > 20 Then
-            Do Until Results.Count <= 20
-                Results.Remove(Results(Results.Count - 1))
-            Loop
-        End If
-
-        Console.Clear()
-        For Each Result In Results
-            For Type = 0 To Result.Types.Length - 1
-                If Result.Types(Type) = "n" Then
-                    Result.Types(Type) = "noun"
-                End If
-                Result.Types(Type) = Result.Types(Type).Replace("vs", "suru-verb").Replace("adj", "adjective").Replace("uk", "usually as kana").Replace("sl", "slang")
-                Console.WriteLine(Result.Types(Type))
-            Next
-            Console.WriteLine(Result.Word & " (" & Result.Furigana & ")")
-            For Meaning = 0 To Result.Meanings.Length - 1
-                Console.WriteLine(Meaning + 1 & ". " & Result.Meanings(Meaning))
-            Next
-            Console.WriteLine()
-        Next
-        Console.ForegroundColor = ConsoleColor.DarkGray
-        If Results.Count = 0 Then
-            Console.WriteLine("Couldn't find results for " & Word)
-            Console.WriteLine("Offline searching mostly supports nouns and phrases so you may not be able to find this word.")
-
-        End If
-
-        Console.WriteLine()
-        Console.WriteLine("Offline searching should only be used for emergencies:")
-        Console.WriteLine(" - Not very effective")
-        Console.WriteLine(" - Usually only supports weirdly specific words.")
-        Console.WriteLine(" - No features are supported with it")
-        Console.ForegroundColor = ConsoleColor.White
-
-        Console.ReadLine()
-        Main()
-    End Sub
-
     Sub DownloadSubtitles()
         Console.Clear()
         Dim Anime As String
@@ -2100,6 +1996,26 @@ Module Module1
         Console.ReadLine()
         Main()
     End Sub
+
+    Sub SaveWord(Word, Furigana, Definition)
+        If Dir$("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt") = "" Then
+            File.Create("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt").Dispose()
+        End If
+
+        Dim HistoryFile As String = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt")
+        Dim Saves() As String = HistoryFile.Split(vbLf)
+
+        Dim HistoryWriter As System.IO.StreamWriter
+        HistoryWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt", True)
+
+        If Furigana.Length > 0 Then
+                HistoryWriter.WriteLine(Definition & " - " & Word & " (" & Furigana & ")")
+            Else
+                HistoryWriter.WriteLine(Definition & " - " & Word)
+            End If
+        HistoryWriter.Close()
+    End Sub
+
     Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer)
         Const QUOTE = """"
         Dim SEquals As String = ""
@@ -2108,7 +2024,6 @@ Module Module1
 
         'Code for the "s=" parameter; only shows the more advanced forms:
         Dim AdvancedParam As Integer = 0
-
 
         'Making a file to use as "/back" to see last search instantly:
         Try
@@ -2243,7 +2158,7 @@ Module Module1
         Try
             HTML = Client.DownloadString(New Uri(WordURL))
         Catch
-            WordJSonSearch(Word)
+            WordJsonSearch(Word)
         End Try
 
         Dim AddingTemp As String = ""
@@ -2496,15 +2411,12 @@ Module Module1
             IsCommon = True
         End If
 
-
         'Building of the chosen Definition and Type arrays:
         Dim SelectedDefinition() As String = FoundDefinitions(0).Split("|")
         Dim SelectedType() As String = FoundTypes.Split("|")
         For Add = 1 To SelectedDefinition.Length
             SelectedDefinition(Add - 1) = SelectedDefinition(Add - 1).Replace("&quot;", QUOTE) & Add
         Next
-
-
 
         Dim StartingHTML As Integer
         StartingHTML = HTML.IndexOf(ActualSearchWord)
@@ -2767,14 +2679,14 @@ Module Module1
             End If
 
             If FullWordType.IndexOf("Godan verb") <> -1 Then
-                ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes, Furigana) '(Verb/Word, Very Type, Meaning, "ComparativeType")
             End If
 
             If FullWordType.IndexOf("Ichidan verb") <> -1 Then
-                ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes, Furigana) '(Verb/Word, Very Type, Meaning, "ComparativeType")
             End If
 
-            ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes)
+            ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes, Furigana)
 
             'Main()
 
@@ -2803,15 +2715,15 @@ Module Module1
                     End If
 
                     If FullWordType.IndexOf("Godan verb") <> -1 Then
-                        ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                        ConjugateVerb(ActualSearchWord, "Godan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes, Furigana) '(Verb/Word, Very Type, Meaning, "ComparativeType")
                     End If
 
                     If FullWordType.IndexOf("Ichidan verb") <> -1 Then
 
-                        ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes) '(Verb/Word, Very Type, Meaning, "ComparativeType")
+                        ConjugateVerb(ActualSearchWord, "Ichidan", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes, Furigana) '(Verb/Word, Very Type, Meaning, "ComparativeType")
                     End If
 
-                    ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes)
+                    ConjugateVerb(ActualSearchWord, "Error", Scrap, ComparativeType, AdvancedParam, SelectedDefinition, FoundTypes, Furigana)
                     Console.ReadLine()
                     Main()
                 End If
@@ -2942,7 +2854,7 @@ Module Module1
         End If
 
         If AdvancedParam <> 0 Or KanjiBool = True Then
-            KanjiDisplay(ActualSearchWord, WordLink, SelectedDefinition, FoundTypes, 1)
+            KanjiDisplay(ActualSearchWord, WordLink, SelectedDefinition, FoundTypes, 1, Furigana)
         Else
             Console.ReadLine()
         End If
@@ -2950,176 +2862,7 @@ Module Module1
 
         Main()
     End Sub
-    Sub TranslateSentence(ByVal Sentence)
-        Const QUOTE = """"
-        '彼は銀行に行くことが難しいと思ってしまいます。
-
-        Dim WordURL As String = "www.romajidesu.com/translator/" & Sentence
-        Dim Client As New WebClient
-        Dim WordGroups() As String
-        Dim Translate1 As String
-        Client.Encoding = System.Text.Encoding.UTF8
-        Dim HTML As String = ""
-        Try
-            HTML = Client.DownloadString(New Uri("http://" & WordURL))
-        Catch
-        End Try
-
-        If HTML.Length < 100 Then
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine("Something went wrong.")
-            Console.ForegroundColor = ConsoleColor.White
-            Console.ReadLine()
-            Main()
-        End If
-
-        HTML = Mid(HTML, HTML.IndexOf("Original Japanese sentence"), HTML.Length - (HTML.Length - HTML.IndexOf("Translated Romaji/Kana")) - HTML.IndexOf("Original Japanese sentence")).Trim
-        HTML = HTML.Replace(vbLf, "").Replace("       ", "").Replace("    ", "").Replace("   ", "") 'Cleaning up the HTML so it is easier to read and scrap from. Yes, I probably should have done this for the other web scraping.
-        WordGroups = Split(HTML, "bf=")
-
-        ' Console.WriteLine("Debug?")
-        'If Console.ReadLine = "1" Then
-        'For Printer = 0 To WordGroups.Length - 1
-        'Console.WriteLine(WordGroups(Printer) & "__")
-        'Console.WriteLine()
-        'Console.WriteLine()
-        'Console.WriteLine()
-        'Console.WriteLine()
-        'Next
-        'End If
-
-        Console.Clear()
-        Console.WriteLine("Sentence breakdown:")
-        Console.WriteLine()
-        Console.WriteLine(Sentence)
-
-        Translate1 = GTranslate(Sentence, "ja", "en")
-        Console.WriteLine(Translate1)
-        Console.WriteLine()
-
-        Dim FoundInfo, WriteWord, CurrentWord As String
-        Dim WriteWord2 = ""
-        Dim Snip1, Snip2 As Integer
-        Dim Definition(0) As String
-        Dim Furigana As String
-
-        For I = 1 To WordGroups.Length - 1
-            'Snipping the "base form"
-            Snip2 = Mid(WordGroups(I), 2).IndexOf(QUOTE) - 1
-            FoundInfo = Mid(WordGroups(I), 2, Snip2 + 1)
-            WriteWord = FoundInfo
-            CurrentWord = FoundInfo
-
-            'Getting the definition:
-            Definition(I - 1) = DefinitionScraper("jisho.org/search/" & CurrentWord)
-            Snip1 = Definition(I - 1).IndexOf(";")
-            If Snip1 <> -1 Then
-                Definition(I - 1) = Left(Definition(I - 1), Snip1)
-            End If
-            Snip1 = Definition(I - 1).IndexOf("(")
-            If Snip1 <> -1 Then
-                Definition(I - 1) = Left(Definition(I - 1), Snip1)
-            End If
-
-            'Snipping furigana:
-            Snip1 = WordGroups(I).IndexOf("_blank") + 9
-            WordGroups(I) = Mid(WordGroups(I), Snip1)
-
-            Snip2 = WordGroups(I).IndexOf(" ")
-            WriteWord = Left(WordGroups(I), Snip2).Replace("<div", "")
-
-            Snip2 = WordGroups(I).IndexOf("<br/>")
-            Furigana = Left(WordGroups(I), Snip2)
-            Snip1 = Furigana.LastIndexOf(" ") + 1
-            Furigana = Mid(Furigana, Snip1).Trim
-
-            'Snipping the <i> info 1
-            Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
-            Snip2 = WordGroups(I).IndexOf("</i>")
-            FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
-
-            WriteWord = FoundInfo & " " & WriteWord 'word type + word
-            If Furigana.Length > 0 Then
-                WriteWord = WriteWord & " (" & Furigana & ")" '(word type + word) + furigana
-            End If
-
-
-            Try
-                Snip1 = WordGroups(I).IndexOf("particle") + 5
-                WordGroups(I) = Mid(WordGroups(I), Snip1)
-
-                'Snipping the helping particle
-                Snip1 = WordGroups(I).IndexOf(">") + 1 '+2 because that is the length of ">"
-                Snip2 = WordGroups(I).IndexOf("<")
-                WriteWord2 = Mid(WordGroups(I), Snip1 + 1, Snip2 - Snip1)
-                WriteWord2 = WriteWord2.Replace(CurrentWord, "")
-            Catch
-                WriteWord2 = ""
-            End Try
-
-            Try
-                'Snipping the second <i> (if it exists):
-                Snip1 = WordGroups(I).IndexOf("</i>") + 3 'I probably could be 4, but using 3 to be safe
-                WordGroups(I) = Mid(WordGroups(I), Snip1)
-
-                Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
-                Snip2 = WordGroups(I).IndexOf("</i>")
-                FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
-                If FoundInfo.IndexOf("symbol") = -1 Then
-                    WriteWord2 = WriteWord2 & FoundInfo 'Adding the word type before the word
-                End If
-
-                Try 'Snipping the third <i> (if it exists):
-                    Snip1 = WordGroups(I).IndexOf("</i>") + 3 'I probably could be 4, but using 3 to be safe
-                    WordGroups(I) = Mid(WordGroups(I), Snip1)
-
-                    Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
-                    Snip2 = WordGroups(I).IndexOf("</i>")
-                    FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
-
-                    If FoundInfo.IndexOf("symbol") = -1 Then
-                        WriteWord2 = WriteWord2 & FoundInfo 'Adding the word type before the word
-                    End If
-                Catch
-                End Try
-
-            Catch
-            End Try
-
-            If WordGroups.Length = 1 Or WordGroups(0).Length < 2 Then
-                Console.WriteLine("Trying again.")
-                Threading.Thread.Sleep(1000)
-                Console.Clear()
-                TranslateSentence(Sentence)
-            End If
-
-            WriteWord = WriteWord.Trim
-            WriteWord2 = WriteWord2.Trim
-            If Left(WriteWord2, 2) = ", " Then
-                WriteWord2 = Mid(WriteWord2, 3)
-            End If
-
-            If WriteWord2 <> "" Then
-                Console.WriteLine(WriteWord & " (" & WriteWord2 & "): " & Definition(I - 1))
-            Else
-                Console.WriteLine(WriteWord & ": " & Definition(I - 1))
-            End If
-            'Console.WriteLine()
-            WriteWord2 = ""
-
-
-            Array.Resize(Definition, Definition.Length + 1)
-        Next
-        Array.Resize(Definition, Definition.Length - 1)
-
-        Console.WriteLine()
-        Console.ForegroundColor = ConsoleColor.DarkGray
-        Console.WriteLine("Note: Entering ungrammatical nonsense leads to weird results.")
-        Console.ForegroundColor = ConsoleColor.White
-        Console.ReadLine()
-        Main()
-    End Sub
-    Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType, ByVal S, ByVal SelectedDefinition, ByVal FoundTypes)
+    Sub ConjugateVerb(ByRef PlainVerb, ByRef Type, ByRef Meaning, ByRef ComparativeType, ByVal S, ByVal SelectedDefinition, ByVal FoundTypes, ByVal Furigana)
         Const QUOTE = """"
         Dim Last As String = Right(PlainVerb, 1) 'This is the last Japanese character of the verb, this is used for changing forms
 
@@ -4028,12 +3771,181 @@ Module Module1
         End If
 
         If S <> 0 Or KanjiBool = True Then
-            KanjiDisplay(PlainVerb, "jisho.org/word/", SelectedDefinition, FoundTypes, 1)
+            KanjiDisplay(PlainVerb, "jisho.org/word/", SelectedDefinition, FoundTypes, 1, Furigana)
         Else
             Console.ReadLine()
         End If
 
         'Console.ReadLine()
+        Main()
+    End Sub
+    Sub TranslateSentence(ByVal Sentence)
+        Const QUOTE = """"
+        '彼は銀行に行くことが難しいと思ってしまいます。
+
+        Dim WordURL As String = "www.romajidesu.com/translator/" & Sentence
+        Dim Client As New WebClient
+        Dim WordGroups() As String
+        Dim Translate1 As String
+        Client.Encoding = System.Text.Encoding.UTF8
+        Dim HTML As String = ""
+        Try
+            HTML = Client.DownloadString(New Uri("http://" & WordURL))
+        Catch
+        End Try
+
+        If HTML.Length < 100 Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Something went wrong.")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End If
+
+        HTML = Mid(HTML, HTML.IndexOf("Original Japanese sentence"), HTML.Length - (HTML.Length - HTML.IndexOf("Translated Romaji/Kana")) - HTML.IndexOf("Original Japanese sentence")).Trim
+        HTML = HTML.Replace(vbLf, "").Replace("       ", "").Replace("    ", "").Replace("   ", "") 'Cleaning up the HTML so it is easier to read and scrap from. Yes, I probably should have done this for the other web scraping.
+        WordGroups = Split(HTML, "bf=")
+
+        ' Console.WriteLine("Debug?")
+        'If Console.ReadLine = "1" Then
+        'For Printer = 0 To WordGroups.Length - 1
+        'Console.WriteLine(WordGroups(Printer) & "__")
+        'Console.WriteLine()
+        'Console.WriteLine()
+        'Console.WriteLine()
+        'Console.WriteLine()
+        'Next
+        'End If
+
+        Console.Clear()
+        Console.WriteLine("Sentence breakdown:")
+        Console.WriteLine()
+        Console.WriteLine(Sentence)
+
+        Translate1 = GTranslate(Sentence, "ja", "en")
+        Console.WriteLine(Translate1)
+        Console.WriteLine()
+
+        Dim FoundInfo, WriteWord, CurrentWord As String
+        Dim WriteWord2 = ""
+        Dim Snip1, Snip2 As Integer
+        Dim Definition(0) As String
+        Dim Furigana As String
+
+        For I = 1 To WordGroups.Length - 1
+            'Snipping the "base form"
+            Snip2 = Mid(WordGroups(I), 2).IndexOf(QUOTE) - 1
+            FoundInfo = Mid(WordGroups(I), 2, Snip2 + 1)
+            WriteWord = FoundInfo
+            CurrentWord = FoundInfo
+
+            'Getting the definition:
+            Definition(I - 1) = DefinitionScraper("jisho.org/search/" & CurrentWord)
+            Snip1 = Definition(I - 1).IndexOf(";")
+            If Snip1 <> -1 Then
+                Definition(I - 1) = Left(Definition(I - 1), Snip1)
+            End If
+            Snip1 = Definition(I - 1).IndexOf("(")
+            If Snip1 <> -1 Then
+                Definition(I - 1) = Left(Definition(I - 1), Snip1)
+            End If
+
+            'Snipping furigana:
+            Snip1 = WordGroups(I).IndexOf("_blank") + 9
+            WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+            Snip2 = WordGroups(I).IndexOf(" ")
+            WriteWord = Left(WordGroups(I), Snip2).Replace("<div", "")
+
+            Snip2 = WordGroups(I).IndexOf("<br/>")
+            Furigana = Left(WordGroups(I), Snip2)
+            Snip1 = Furigana.LastIndexOf(" ") + 1
+            Furigana = Mid(Furigana, Snip1).Trim
+
+            'Snipping the <i> info 1
+            Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
+            Snip2 = WordGroups(I).IndexOf("</i>")
+            FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
+
+            WriteWord = FoundInfo & " " & WriteWord 'word type + word
+            If Furigana.Length > 0 Then
+                WriteWord = WriteWord & " (" & Furigana & ")" '(word type + word) + furigana
+            End If
+
+
+            Try
+                Snip1 = WordGroups(I).IndexOf("particle") + 5
+                WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+                'Snipping the helping particle
+                Snip1 = WordGroups(I).IndexOf(">") + 1 '+2 because that is the length of ">"
+                Snip2 = WordGroups(I).IndexOf("<")
+                WriteWord2 = Mid(WordGroups(I), Snip1 + 1, Snip2 - Snip1)
+                WriteWord2 = WriteWord2.Replace(CurrentWord, "")
+            Catch
+                WriteWord2 = ""
+            End Try
+
+            Try
+                'Snipping the second <i> (if it exists):
+                Snip1 = WordGroups(I).IndexOf("</i>") + 3 'I probably could be 4, but using 3 to be safe
+                WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+                Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
+                Snip2 = WordGroups(I).IndexOf("</i>")
+                FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
+                If FoundInfo.IndexOf("symbol") = -1 Then
+                    WriteWord2 = WriteWord2 & FoundInfo 'Adding the word type before the word
+                End If
+
+                Try 'Snipping the third <i> (if it exists):
+                    Snip1 = WordGroups(I).IndexOf("</i>") + 3 'I probably could be 4, but using 3 to be safe
+                    WordGroups(I) = Mid(WordGroups(I), Snip1)
+
+                    Snip1 = WordGroups(I).IndexOf("<i>") + 4 '+4 because that is the length of "<i>"
+                    Snip2 = WordGroups(I).IndexOf("</i>")
+                    FoundInfo = Mid(WordGroups(I), Snip1, Snip2 + 1 - Snip1)
+
+                    If FoundInfo.IndexOf("symbol") = -1 Then
+                        WriteWord2 = WriteWord2 & FoundInfo 'Adding the word type before the word
+                    End If
+                Catch
+                End Try
+
+            Catch
+            End Try
+
+            If WordGroups.Length = 1 Or WordGroups(0).Length < 2 Then
+                Console.WriteLine("Trying again.")
+                Threading.Thread.Sleep(1000)
+                Console.Clear()
+                TranslateSentence(Sentence)
+            End If
+
+            WriteWord = WriteWord.Trim
+            WriteWord2 = WriteWord2.Trim
+            If Left(WriteWord2, 2) = ", " Then
+                WriteWord2 = Mid(WriteWord2, 3)
+            End If
+
+            If WriteWord2 <> "" Then
+                Console.WriteLine(WriteWord & " (" & WriteWord2 & "): " & Definition(I - 1))
+            Else
+                Console.WriteLine(WriteWord & ": " & Definition(I - 1))
+            End If
+            'Console.WriteLine()
+            WriteWord2 = ""
+
+
+            Array.Resize(Definition, Definition.Length + 1)
+        Next
+        Array.Resize(Definition, Definition.Length - 1)
+
+        Console.WriteLine()
+        Console.ForegroundColor = ConsoleColor.DarkGray
+        Console.WriteLine("Note: Entering ungrammatical nonsense leads to weird results.")
+        Console.ForegroundColor = ConsoleColor.White
+        Console.ReadLine()
         Main()
     End Sub
     Sub ReadingPractice(ByRef Sentences)
@@ -6476,32 +6388,23 @@ Module Module1
         Console.ReadLine()
         Main()
     End Sub
-    Sub KanjiDisplay(ByVal ActualSearchWord, ByVal WordLink, ByVal SelectedDefinition, ByVal FoundTypes, ByVal DisplayType)
+    Sub KanjiDisplay(ByVal ActualSearchWord, ByVal WordLink, ByVal SelectedDefinition, ByVal FoundTypes, ByVal DisplayType, ByVal Furigana)
         'Display Type: 1 = with LastRequest, 2 = without LastRequest
         Const QUOTE = """"
         Dim WordURL, WordHTML, CurrentKanji As String
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
 
+        Dim FullWord As String = ActualSearchWord
+
         For Checker = 1 To ActualSearchWord.length
             If WanaKana.IsKanji(Mid(ActualSearchWord, Checker, 1)) = False Then
-                If Checker > ActualSearchWord.length Then
-                    Continue For
-                End If
                 Try
                     ActualSearchWord = ActualSearchWord.replace(Mid(ActualSearchWord, Checker, 1), "")
-                Catch
-                    Continue For
+                Catch ex As Exception
                 End Try
-                Checker -= 1
-                If Checker = 0 Then
-                    Checker = 1
-                End If
             End If
         Next
-        If WanaKana.IsKanji(Mid(ActualSearchWord, 1, 1)) = False Then
-            ActualSearchWord = Mid(ActualSearchWord, 2)
-        End If
 
         Try
             'Kanji, meanings and reading extract. First open the "/word" page and then extracts instead of extracting from "/search":
@@ -6821,7 +6724,11 @@ Module Module1
 
         For Printer = 0 To ActualSearchWord.length - 1
             For Replacer = 0 To 5
-                ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "").Replace("&#39;", "")
+                Try
+                    ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "").Replace("&#39;", "")
+                Catch ex As Exception
+                    Continue For
+                End Try
             Next
             Console.BackgroundColor = ConsoleColor.DarkGray
             Console.WriteLine(ActualInfo(Printer, 0))
@@ -6988,13 +6895,18 @@ Module Module1
 
                 AnkiCopy = AnkiCopy.Trim
 
-                AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & ActualSearchWord & vbCrLf & KanjisLine.Replace("[", "(").Replace("]", ")")
+                AnkiCopy = AnkiCopy & vbCrLf & vbCrLf & FullWord & vbCrLf & KanjisLine.Replace("[", "(").Replace("]", ")")
 
                 My.Computer.Clipboard.SetText(AnkiCopy.Replace("[", "(").Replace("]", ")"))
 
                 Console.Clear()
                 Console.WriteLine("Copied " & QUOTE & AnkiCopy.Replace("[", "(").Replace("]", ")") & QUOTE & " to clipboard")
-                Console.ReadLine()
+                LastRequest = Console.ReadLine
+                If LastRequest = "save" Then
+                    SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
+                    Console.WriteLine("Word saved!")
+                    Console.ReadLine()
+                End If
             ElseIf LastRequest.ToLower = "history" Or LastRequest.ToLower = "/history" Then
                 Console.Clear()
                 Console.WriteLine("Search history:")
@@ -7005,7 +6917,12 @@ Module Module1
                 Catch
                     Main()
                 End Try
-                Console.ReadLine()
+                LastRequest = Console.ReadLine
+                If LastRequest = "save" Then
+                    SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
+                    Console.WriteLine("Word saved!")
+                    Console.ReadLine()
+                End If
                 Main()
             ElseIf LastRequest = "audio" Or LastRequest = "/audio" Or LastRequest = "download audio" Or LastRequest = "verb audio" Then
                 VerbAudioGen(ActualSearchWord)
@@ -7017,7 +6934,12 @@ Module Module1
                     Console.WriteLine(HistoryFile)
                 Catch
                     Console.WriteLine("You have no history.")
-                    Console.ReadLine()
+                    LastRequest = Console.ReadLine
+                    If LastRequest = "save" Then
+                        SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
+                        Console.WriteLine("Word saved!")
+                        Console.ReadLine()
+                    End If
                     Main()
                 End Try
                 Console.WriteLine("do '/b' to go to your most recent search")
@@ -7039,7 +6961,12 @@ Module Module1
                         Console.WriteLine("Error: FileWriter.Close")
                         Console.ForegroundColor = ConsoleColor.White
                     End Try
-                    Console.ReadLine()
+                    LastRequest = Console.ReadLine
+                    If LastRequest = "save" Then
+                        SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
+                        Console.WriteLine("Word saved!")
+                        Console.ReadLine()
+                    End If
                     Main()
                 End If
 
@@ -7060,6 +6987,15 @@ Module Module1
                         End Try
                     End Try
                 End Try
+                LastRequest = Console.ReadLine
+                If LastRequest = "save" Then
+                    SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
+                    Console.WriteLine("Word saved!")
+                    Console.ReadLine()
+                End If
+            ElseIf LastRequest = "save" Then
+                SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
+                Console.WriteLine("Word saved!")
                 Console.ReadLine()
             End If
         End If
@@ -8223,7 +8159,109 @@ ChangeS:
             Writer.Close()
         End Using
     End Sub
+    Sub LoadWordJson()
+        Console.WriteLine("Loading for offline use...")
+        Dim JsonReader As String
+        Dim FileEntries(), WordEntries() As String
+        Dim Correct As Boolean = False
+        Dim I As Integer
+        Array.Resize(Words, Words.Length + 1)
+        For JSon = 1 To 29 'Loop for each file
+            JsonReader = My.Computer.FileSystem.ReadAllText("jmdict_english\term_bank_" & JSon & ".json")
+            'Getting rid of starting '[[' and ending ']]':
+            JsonReader = Mid(JsonReader, 3)
+            FileEntries = Split(JsonReader, "],[")
 
+            For Word = 0 To 999
+                WordEntries = FileEntries(Word).Split(",")
+
+                'Adding info to words array:
+                Words(Words.Length - 1) = New Word
+                Words(Words.Length - 1).Word = WordEntries(0).Replace("""", "") 'Adding actual word
+                Words(Words.Length - 1).Furigana = WordEntries(1).Replace("""", "") 'Adding furigana
+                Words(Words.Length - 1).Types = WordEntries(2).Split(" ") 'Adding word types
+                Words(Words.Length - 1).Page = JSon 'Adding which JSON file it is in
+
+                'Adding the meanings (which are often spread across a few array positions start at 5)
+                Correct = False
+                I = 5
+                Do Until Correct = True
+                    Words(Words.Length - 1).Meanings(Words(Words.Length - 1).Meanings.Length - 1) = WordEntries(I) 'Current free slot in 'meanings' array will be filled
+                    If WordEntries(I).Contains("]") Then
+                        Correct = True
+                        Continue Do
+                    End If
+
+                    Array.Resize(Words(Words.Length - 1).Meanings, Words(Words.Length - 1).Meanings.Length + 1) 'Increasing size of 'meanings' by 1
+                    I += 1
+                Loop
+
+                For Replacer = 0 To Words(Words.Length - 1).Types.Length - 1
+                    Words(Words.Length - 1).Types(Replacer) = Words(Words.Length - 1).Types(Replacer).Replace("""", "")
+                Next
+                For Replacer = 0 To Words(Words.Length - 1).Meanings.Length - 1
+                    Words(Words.Length - 1).Meanings(Replacer) = Words(Words.Length - 1).Meanings(Replacer).Replace("""", "").Replace("[", "").Replace("]", "")
+                Next
+
+                Array.Resize(Words, Words.Length + 1)
+            Next
+        Next
+        Array.Resize(Words, Words.Length - 1)
+    End Sub
+    Sub WordJsonSearch(Word)
+        Word = Word.replace("//", "")
+        If Words.Length < 100 Then
+            Array.Resize(Words, 0)
+            LoadWordJson()
+        End If
+        Console.Clear()
+        Console.WriteLine("Searching for '{0}'", Word)
+        Dim Results As New List(Of Word) From {}
+
+        For Each ArrayWord In Words
+            If ArrayWord.Word.Contains(Word) = True Or ArrayWord.Furigana.Contains(Word) = True Or ArrayWord.Meanings(0).Contains(Word) = True Or ArrayWord.Furigana.Contains(WanaKana.ToHiragana(Word)) = True Then
+                Results.Add(ArrayWord)
+            End If
+        Next
+
+        If Results.Count > 20 Then
+            Do Until Results.Count <= 20
+                Results.Remove(Results(Results.Count - 1))
+            Loop
+        End If
+
+        Console.Clear()
+        For Each Result In Results
+            For Type = 0 To Result.Types.Length - 1
+                If Result.Types(Type) = "n" Then
+                    Result.Types(Type) = "noun"
+                End If
+                Result.Types(Type) = Result.Types(Type).Replace("vs", "suru-verb").Replace("adj", "adjective").Replace("uk", "usually as kana").Replace("sl", "slang")
+                Console.WriteLine(Result.Types(Type))
+            Next
+            Console.WriteLine(Result.Word & " (" & Result.Furigana & ")")
+            For Meaning = 0 To Result.Meanings.Length - 1
+                Console.WriteLine(Meaning + 1 & ". " & Result.Meanings(Meaning))
+            Next
+            Console.WriteLine()
+        Next
+        Console.ForegroundColor = ConsoleColor.DarkGray
+        If Results.Count = 0 Then
+            Console.WriteLine("Couldn't find results for " & Word)
+            Console.WriteLine("Offline searching mostly supports nouns and phrases so you may not be able to find this word.")
+
+        End If
+
+        Console.WriteLine()
+        Console.WriteLine("Offline searching should only be used for emergencies:")
+        Console.WriteLine(" - Not very effective")
+        Console.WriteLine(" - Usually only supports weirdly specific words.")
+        Console.WriteLine(" - No features are supported with it")
+        Console.ForegroundColor = ConsoleColor.White
+
+        Console.ReadLine()
+        Main()
+    End Sub
     Sub Help(ByVal Command)
         Const QUOTE = """"
         Command = Command.ToLower
