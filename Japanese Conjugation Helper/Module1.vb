@@ -6727,6 +6727,8 @@ Module Module1
                 Try
                     ActualInfo(Printer, Replacer) = ActualInfo(Printer, Replacer).replace("&quot;", """").Replace("&amp;", "").Replace("&#39;", "")
                 Catch ex As Exception
+                    Replacer = 5
+                    Printer = ActualSearchWord.length - 1
                     Continue For
                 End Try
             Next
@@ -6768,7 +6770,8 @@ Module Module1
         Dim NumberCheckT As String = ""
         Dim Type As Integer = 0
         Dim SB1, SB2 As Integer
-        Dim BArea As String
+        Dim BArea, BArea2 As String
+        Dim DefG1 = 10
 
         If DisplayType = 1 Then
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -6790,13 +6793,14 @@ Module Module1
                     FoundTypes = Left(FoundTypes, FoundTypes.Length - 1)
                 End If
 
-                Dim AnkiString() As String = FoundTypes.Split("|") 'How holds the types
+                Dim SelectedType() As String = FoundTypes.Split("|") 'How holds the types
                 Dim AnkiCopy As String = ""
                 NumberCheckD = ""
                 NumberCheckT = ""
                 Type = 0
                 Definition = 0
                 MatchT = False
+
                 Do Until Definition = SelectedDefinition.Length
                     NumberCheckD = Right(SelectedDefinition(Definition), 2)
                     If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
@@ -6806,90 +6810,139 @@ Module Module1
                         NumberCheckD = Right(SelectedDefinition(Definition), 1)
                     End If
                     If IsNumeric(NumberCheckD) = False Then
-                        Console.ForegroundColor = ConsoleColor.Red
                         Console.WriteLine("Error: Conjugate; Definition no; D")
-                        Console.ForegroundColor = ConsoleColor.White
                     End If
                     NumberCheckD = NumberCheckD.Replace(" ", "")
 
-                    If NumberCheckT = NumberCheckD Then
-                        AnkiCopy = AnkiCopy & vbCrLf
-                    End If
                     MatchT = False
                     Type = 0
-                    Do Until Type = AnkiString.Length Or MatchT = True
+                    Do Until Type = SelectedType.Length Or MatchT = True
                         MatchT = False
-                        If AnkiString(Type) = "!" Then
+                        If SelectedType(Type) = "!" Then
                             Type += 1
                             Continue Do
                         End If
 
-                        NumberCheckT = Right(AnkiString(Type), 2)
+                        NumberCheckT = Right(SelectedType(Type), 2)
                         If IsNumeric(NumberCheckT) = False Then
-                            NumberCheckT = Right(AnkiString(Type), 1)
+                            NumberCheckT = Right(SelectedType(Type), 1)
                         End If
-                        NumberCheckD = NumberCheckD.Replace(" ", "")
-                        NumberCheckD = NumberCheckD.Replace(".", "")
+                        NumberCheckT = NumberCheckT.Replace(" ", "")
 
                         If NumberCheckT = NumberCheckD Then
+                            If Definition < DefG1 + 1 Then
+                                If Definition <> 0 Then
+                                    Console.WriteLine()
+                                    AnkiCopy = AnkiCopy & vbCrLf
+                                End If
+                                Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                                AnkiCopy = AnkiCopy & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
+                            ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
+                                Console.WriteLine()
+                                Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                                Console.WriteLine()
+                                AnkiCopy = AnkiCopy & vbCrLf
+                                AnkiCopy = AnkiCopy & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
+                                AnkiCopy = AnkiCopy & vbCrLf
 
-                            If Definition <> 0 Then
-                                AnkiCopy = vbCrLf & AnkiCopy
-                            End If
-
-                            If Definition < 10 Then
-                                AnkiCopy = AnkiCopy & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length)) & vbCrLf
-                            ElseIf Definition > 9 And AnkiString(Type).IndexOf("aux") <> -1 Or Definition > 9 And AnkiString(Type).IndexOf("irr") Then
-                                AnkiCopy = AnkiCopy & vbCrLf & (Left(AnkiString(Type), AnkiString(Type).Length - NumberCheckT.Length))
-
+                                'Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
                                 If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
-                                    AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                                    Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                                    AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
                                 Else
                                     SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                                     SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
                                     BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
 
                                     If BArea.IndexOf("kana") = -1 Then
-
+                                        Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                        Console.ForegroundColor = ConsoleColor.DarkGray
+                                        Console.WriteLine(BArea)
+                                        Console.ForegroundColor = ConsoleColor.White
+                                        Console.WriteLine()
+                                        AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                        AnkiCopy = AnkiCopy & BArea
                                         AnkiCopy = AnkiCopy & vbCrLf
-
-                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
                                     Else
-                                        AnkiCopy = vbCrLf & AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
-                                    End If
+                                        SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
+                                        SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
+                                        BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
 
+                                        If BArea.IndexOf("kana") = -1 Then
+                                            Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                            Console.ForegroundColor = ConsoleColor.DarkGray
+                                            Console.WriteLine(BArea)
+                                            Console.ForegroundColor = ConsoleColor.White
+                                            AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                            AnkiCopy = AnkiCopy & BArea
+                                        Else
+                                            BArea2 = BArea 'BArea is acting like a temp
+
+                                            If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
+                                                BArea2 = BArea.Replace("Usually written using kana alone", "")
+                                                BArea2 = BArea2.Replace(", ", "")
+                                            End If
+
+                                            If BArea2.Length > 3 Then
+                                                BArea2 = BArea2.Replace("See also", "See also ")
+                                                Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2)
+                                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea2
+                                            Else
+                                                Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                            End If
+                                        End If
+                                    End If
                                 End If
+
                             End If
                             MatchT = True
-                            AnkiString(Type) = "!"
+                            SelectedType(Type) = "!"
                             Continue Do
                         End If
                         Type += 1
                     Loop
 
-                    If Definition < 10 Then
-                        'AnkiCopy = AnkiCopy & (Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)) & vbCrLf
-
+                    If Definition < DefG1 + 1 Then
                         If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
-                            AnkiCopy = AnkiCopy.TrimEnd
-                            AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
+                            Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
+                            AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length)
                         Else
                             SB1 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[")
                             SB2 = Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("]")
                             BArea = Mid(Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length), SB1 + 1, SB2 + 1 - SB1)
 
                             If BArea.IndexOf("kana") = -1 Then
-                                If Definition <> 0 Then
-                                    AnkiCopy = AnkiCopy & vbCrLf
-                                End If
-                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "") & BArea
+                                Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                BArea = BArea.Replace("See also", "See also ")
+                                Console.ForegroundColor = ConsoleColor.DarkGray
+                                Console.WriteLine(BArea)
+                                Console.ForegroundColor = ConsoleColor.White
+                                AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                AnkiCopy = AnkiCopy & BArea
                             Else
-                                AnkiCopy = AnkiCopy & vbCrLf & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                BArea2 = BArea 'BArea is acting like a temp
+
+                                If BArea.IndexOf("Usually written using kana alone") <> -1 Then 'BArea will be set below if it has more than one thing
+                                    BArea2 = BArea.Replace("Usually written using kana alone", "")
+                                    BArea2 = BArea2.Replace(", ", "")
+                                End If
+
+                                If BArea2.Length > 3 Then
+                                    BArea2 = BArea2.Replace("See also", "See also ")
+                                    Console.Write(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                    Console.ForegroundColor = ConsoleColor.DarkGray
+                                    Console.WriteLine(BArea2)
+                                    Console.ForegroundColor = ConsoleColor.White
+                                    AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                    AnkiCopy = AnkiCopy & BArea
+                                Else
+                                    Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, ""))
+                                    AnkiCopy = AnkiCopy & Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).Replace(BArea, "")
+                                End If
                             End If
                         End If
                     End If
-
-
                     Definition += 1
                 Loop
 
@@ -6899,8 +6952,9 @@ Module Module1
 
                 My.Computer.Clipboard.SetText(AnkiCopy.Replace("[", "(").Replace("]", ")"))
 
-                Console.Clear()
-                Console.WriteLine("Copied " & QUOTE & AnkiCopy.Replace("[", "(").Replace("]", ")") & QUOTE & " to clipboard")
+                'Console.Clear()
+                Console.WriteLine("-------")
+                Console.WriteLine("Copied: " & vbCrLf & AnkiCopy.Replace("[", "(").Replace("]", ")"))
                 LastRequest = Console.ReadLine
                 If LastRequest = "save" Then
                     SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
