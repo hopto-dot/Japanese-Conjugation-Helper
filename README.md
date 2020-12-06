@@ -26,7 +26,7 @@ If you like this program and want to show your appreciation then how about buyin
 * **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word
 * **[Kanji Information](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji
 * **[Audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
-* **Download subtitles** - Do '/subtitles [language]' (language is optional) then search for an anime and choose the episodes to download
+* **Download subtitles** - Download anime subtitles in either Japanese or English (specify the language after you've typed '/subtitles')
 * **[Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator)** - Translates English into Japanese, or Japanese into English
 * **[Preferences](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
 * [**Conjugator Practice**](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - conjugation practice (practice conjugating a word of your choice into different forms)
