@@ -37,7 +37,7 @@ If you like this program and want to show your appreciation then how about buyin
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
 * [Reading Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#reading-practice) - Reading practice (obsolete command)
 * /ranki - Reverse Anki: Generate reverse anki cards (obsolete command)
-* HeyLingo Audio Downloader (/heylingo) - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses
+* /heylingo - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses
 * [Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening) - Start a listening test for a verb or adjective
 * [Kanji Test](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test) - Enter Japanese text and get tested on all the kanji
 * Offline Searching - do '//[search]' to search for a word offline
