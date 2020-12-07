@@ -16,7 +16,132 @@ Module Module1
         Public Meanings() As String = {""}
         Public Page As Integer
     End Class
+    Sub ChooseLine(Filename, Message)
+        Console.Clear()
+        If Filename.contains(".txt") = False Then
+            Filename &= ".txt"
+        End If
+        Dim AllFileText As String = ""
+        Dim Lines() As String
+        AllFileText = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\" & Filename)
+        Lines = AllFileText.Split(vbCr)
+        Try
+            Console.WriteLine(Message)
+            Console.WriteLine(AllFileText)
+        Catch ex As Exception
+            Console.ForegroundColor = ConsoleColor.Red
+            If DebugMode = True Then
+                Console.WriteLine(ex.Message)
+            Else
+                Console.WriteLine("There isn't anything to show!")
+                Console.ReadLine()
+                Main()
+            End If
+            Console.ForegroundColor = ConsoleColor.White
+        End Try
+        Array.Resize(Lines, Lines.Length - 1)
+        For Remove = 0 To Lines.Length - 1
+            Lines(Remove) = Lines(Remove).Replace(vbLf, "")
+        Next
+        Dim LinesBackup() As String = Lines
+        Dim Line As Integer = 0
+        Dim Correct As Boolean
+        Do Until Correct = True
+            Console.SetCursorPosition(0, 0)
+            If Line < 0 Then
+                Line = 0
+            ElseIf Line > Lines.Length - 1 Then
+                Line = Lines.Length - 1
+            End If
+            If Lines.Length = 0 Then
+                Console.WriteLine("There isn't anything to show!")
+                Console.ReadLine()
+                Main()
+            End If
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine(Message)
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+            For Printer = 0 To Lines.Length - 1
+                If Printer = Line Then
+                    Console.BackgroundColor = ConsoleColor.Gray
+                    Console.ForegroundColor = ConsoleColor.Black
+                    Console.WriteLine(Lines(Printer))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.ForegroundColor = ConsoleColor.White
+                Else
+                    Console.WriteLine(Lines(Printer))
+                End If
+            Next
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("[Up/Down Arrow keys] Move up and down")
+            Console.WriteLine("[Enter] Save")
+            Console.WriteLine("[U] Undo deletes")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+
+            Dim KeyReader As ConsoleKeyInfo = Console.ReadKey
+            If KeyReader.Key = ConsoleKey.DownArrow Then
+                If Line < Lines.Length - 1 Then
+                    Line += 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.UpArrow Then
+                If Line > 0 Then
+                    Line -= 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.Enter Or KeyReader.Key = ConsoleKey.Escape Then
+                Correct = True
+            ElseIf KeyReader.Key = ConsoleKey.Delete Then
+                Console.WriteLine()
+                Console.WriteLine("Are you sure you want to delete this?")
+                Console.Write("Press ")
+                Console.BackgroundColor = ConsoleColor.White
+                Console.ForegroundColor = ConsoleColor.Black
+                Console.Write("Delete")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.ForegroundColor = ConsoleColor.White
+                Console.WriteLine(" again to confirm")
+
+                KeyReader = Console.ReadKey
+                If KeyReader.Key = ConsoleKey.Delete Then
+                    Lines(Line) = ""
+                    For CurrentLine = 1 To Lines.Length - 1
+                        If Lines(CurrentLine - 1) = "" Then
+                            Lines(CurrentLine - 1) = Lines(CurrentLine)
+                            Lines(CurrentLine) = ""
+                        End If
+                    Next
+                    Array.Resize(Lines, Lines.Length - 1)
+                    Console.Clear()
+                    System.IO.File.WriteAllText("C:\ProgramData\Japanese Conjugation Helper\" & Filename, "")
+                    Using Writer As System.IO.TextWriter = System.IO.File.AppendText("C:\ProgramData\Japanese Conjugation Helper\" & Filename)
+                        For ToWrite = 0 To Lines.Length - 1
+                            Writer.WriteLine(Lines(ToWrite))
+                        Next
+                        Writer.Close()
+                    End Using
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.U Then
+                Console.Clear()
+                If LinesBackup(LinesBackup.Length - 1) = "" Then
+                    Array.Resize(LinesBackup, LinesBackup.Length - 1)
+                End If
+                Lines = LinesBackup
+                Line = 0
+            ElseIf KeyReader.Key = ConsoleKey.Q Then
+                Line = Lines.Length * (2 / 7)
+            ElseIf KeyReader.Key = ConsoleKey.W Then
+                Line = Lines.Length * (3 / 6)
+            ElseIf KeyReader.Key = ConsoleKey.E Then
+                Line = Lines.Length * (5 / 7)
+            End If
+        Loop
+        Main()
+    End Sub
     Sub Main()
+
         Randomize()
         Console.InputEncoding = System.Text.Encoding.Unicode
         Console.OutputEncoding = System.Text.Encoding.Unicode
@@ -51,30 +176,14 @@ Module Module1
 
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
         Dim Word As String = Console.ReadLine.ToLower.Trim 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
-
-        If Word.Contains("/saves") = True And Word.Length < 8 Then
-            Console.Clear()
-
-            Try
-                Console.WriteLine("Here are you saved words:")
-                Console.WriteLine(My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt"))
-            Catch ex As Exception
-                Console.ForegroundColor = ConsoleColor.Red
-                If DebugMode = True Then
-                    Console.WriteLine(ex.Message)
-                Else
-                    Console.WriteLine("You have no saved words")
-                    Console.WriteLine("To save a word, search for a word then type 'save'")
-                End If
-                Console.ForegroundColor = ConsoleColor.White
-            End Try
-
-            Console.ReadLine()
+        If Word = "_debug_" Then
+            DebugMode = True
             Main()
         End If
 
-        If Word = "_debug_" Then
-            DebugMode = True
+        If Word.Contains("/save") = True And Word.Length < 8 Then
+            ChooseLine("WordSaves.txt", "Here are your saved word:")
+            Console.ReadLine()
             Main()
         End If
 
@@ -250,7 +359,7 @@ Module Module1
                 Console.Clear()
                 Console.ForegroundColor = ConsoleColor.Red
                 If DebugMode = True Then
-                    Console.WriteLine(ex.Message)
+                    Console.WriteLine(Ex.Message)
                 Else
                     Console.WriteLine("No program files have been created yet.")
                     Console.WriteLine("Type '/prefs' to get started.")
@@ -7086,8 +7195,12 @@ LastRequest:
                 End Try
                 GoTo LastRequest
             ElseIf LastRequest.Contains("save") = True Then
+                SelectedDefinition(0) = Left(SelectedDefinition(0), SelectedDefinition(0).Length - 1).Replace("  ", " ")
+                If Right(SelectedDefinition(0), 1) = " " Then
+                    SelectedDefinition(0) = Left(SelectedDefinition(0), SelectedDefinition(0).Length - 1).Replace("  ", " ")
+                End If
                 SaveWord(ActualSearchWord, Furigana, SelectedDefinition(0))
-                Console.WriteLine("Word saved!")
+                Console.WriteLine(SelectedDefinition(0))
                 GoTo LastRequest
             End If
         End If
