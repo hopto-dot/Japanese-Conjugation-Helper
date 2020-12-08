@@ -6045,6 +6045,13 @@ Module Module1
         Dim ToCount As String = ","
         Dim Occurrences As Integer = 0
 
+        Dim FileReader As String = ""
+        Dim TextString() As String
+        FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+        TextString = FileReader.Split(vbCrLf)
+        Dim KunReadingsList As New List(Of String)(New String() {""})
+        Dim KunReadings() As String
+
         For KanjiLoop = 0 To ActualSearch.length - 1
             CurrentKanji = Mid(ActualSearch, KanjiLoop + 1, 1)
 
@@ -6098,6 +6105,65 @@ Module Module1
             Else 'If the kanji doesn't have at least one kun reading
                 KanjiInfo(KanjiLoop, 1) = "Kun:"
             End If
+
+            'If simiplified Kun Readings are on:
+            Try
+                If TextString(3).Contains("1") = True Then
+                    KunReadings = KanjiInfo(KanjiLoop, 1).split("、")
+                    KunReadings(0) = KunReadings(0).Replace("Kun: ", "")
+                    For Reading = 0 To KunReadings.Length - 1
+                        KunReadingsList.Add(KunReadings(Reading))
+                    Next
+                    For Reading = 0 To KunReadingsList.Count - 1
+                        Try
+                            If KunReadingsList(Reading) = "" Then 'Remove list items that are nothing
+                                KunReadingsList.RemoveAt(Reading)
+                                Reading -= 1
+                            End If
+                        Catch ex As Exception
+                        End Try
+                    Next
+                    For Reading = 0 To KunReadingsList.Count - 1
+                        'Snip1 is used for getting only before the '.' or '-' (if it exists)
+                        Snip1 = KunReadingsList(Reading).IndexOf(".")
+                        If Snip1 = -1 Then
+                            Snip1 = KunReadingsList(Reading).IndexOf("-")
+                        End If
+                        Try
+                            KunReadingsList(Reading) = Left(KunReadingsList(Reading), Snip1)
+                        Catch ex As Exception
+                        End Try
+                    Next
+
+                    ReDim KunReadings(0)
+                    Dim Match As Boolean = False
+                    For Reading = 0 To KunReadingsList.Count - 1
+                        For Check = 0 To KunReadings.Length - 1
+                            If KunReadings(Check) = KunReadingsList(Reading) Then
+                                Match = True
+                            End If
+                        Next
+                        If Match = False Then
+                            Array.Resize(KunReadings, KunReadings.Length + 1)
+                            KunReadings(KunReadings.Length - 1) = KunReadingsList(Reading)
+                        End If
+                        Match = False
+                    Next
+                    Dim KunString As String = ""
+                    For Kun = 1 To KunReadings.Length - 1
+                        If Not Kun = KunReadings.Length - 1 Then
+                            KunString &= KunReadings(Kun) & "、"
+                        Else
+                            KunString &= KunReadings(Kun)
+                        End If
+                    Next
+                    KanjiInfo(KanjiLoop, 1) = "Kun: " & KunString
+                End If
+            Catch ex As Exception
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                End If
+            End Try
 
             'On scraps
             If ReadingsGroup.IndexOf("On:") <> -1 Then 'If there is an on reading
@@ -6432,8 +6498,7 @@ Module Module1
             Console.WriteLine()
         End If
 
-        Dim FileReader As String = ""
-        Dim TextString() As String
+
         Dim TextWriter As System.IO.StreamWriter
         Try
             FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
@@ -6626,6 +6691,13 @@ Module Module1
         Dim ToCount As String = ","
         Dim Occurrences As Integer = 0
 
+        Dim FileReader As String = ""
+        Dim TextString() As String
+        FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+        TextString = FileReader.Split(vbCrLf)
+        Dim KunReadingsList As New List(Of String)(New String() {""})
+        Dim KunReadings() As String
+
         For KanjiLoop = 0 To ActualSearchWord.length - 1
             CurrentKanji = Mid(ActualSearchWord, KanjiLoop + 1, 1)
 
@@ -6678,6 +6750,68 @@ Module Module1
             Else 'If the kanji doesn't have at least one kun reading
                 ActualInfo(KanjiLoop, 1) = "Kun:"
             End If
+            If Right(ActualInfo(KanjiLoop, 1), 1) = "、" Then
+                ActualInfo(KanjiLoop, 1) = Left(ActualInfo(KanjiLoop, 1), ActualInfo(KanjiLoop, 1).length - 1)
+            End If
+
+            'If simiplified Kun Readings are on:
+            Try
+                If TextString(3).Contains("1") = True Then
+                    KunReadings = ActualInfo(KanjiLoop, 1).split("、")
+                    KunReadings(0) = KunReadings(0).Replace("Kun: ", "")
+                    For Reading = 0 To KunReadings.Length - 1
+                        KunReadingsList.Add(KunReadings(Reading))
+                    Next
+                    For Reading = 0 To KunReadingsList.Count - 1
+                        Try
+                            If KunReadingsList(Reading) = "" Then 'Remove list items that are nothing
+                                KunReadingsList.RemoveAt(Reading)
+                                Reading -= 1
+                            End If
+                        Catch ex As Exception
+                        End Try
+                    Next
+                    For Reading = 0 To KunReadingsList.Count - 1
+                        'Snip1 is used for getting only before the '.' or '-' (if it exists)
+                        Snip1 = KunReadingsList(Reading).IndexOf(".")
+                        If Snip1 = -1 Then
+                            Snip1 = KunReadingsList(Reading).IndexOf("-")
+                        End If
+                        Try
+                            KunReadingsList(Reading) = Left(KunReadingsList(Reading), Snip1)
+                        Catch ex As Exception
+                        End Try
+                    Next
+
+                    ReDim KunReadings(0)
+                    Dim Match As Boolean = False
+                    For Reading = 0 To KunReadingsList.Count - 1
+                        For Check = 0 To KunReadings.Length - 1
+                            If KunReadings(Check) = KunReadingsList(Reading) Then
+                                Match = True
+                            End If
+                        Next
+                        If Match = False Then
+                            Array.Resize(KunReadings, KunReadings.Length + 1)
+                            KunReadings(KunReadings.Length - 1) = KunReadingsList(Reading)
+                        End If
+                        Match = False
+                    Next
+                    Dim KunString As String = ""
+                    For Kun = 1 To KunReadings.Length - 1
+                        If Not Kun = KunReadings.Length - 1 Then
+                            KunString &= KunReadings(Kun) & "、"
+                        Else
+                            KunString &= KunReadings(Kun)
+                        End If
+                    Next
+                    ActualInfo(KanjiLoop, 1) = "Kun: " & KunString
+                End If
+            Catch ex As Exception
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                End If
+            End Try
 
             'On scraps
             If ReadingsGroup.IndexOf("On:") <> -1 Then 'If there is an on reading
@@ -6708,6 +6842,9 @@ Module Module1
                 ActualInfo(KanjiLoop, 2) = "On: " & ActualInfo(KanjiLoop, 2)
             Else 'If the kanji doesn't have at least one kun reading
                 ActualInfo(KanjiLoop, 2) = "On:"
+            End If
+            If Right(ActualInfo(KanjiLoop, 2), 1) = "、" Then
+                ActualInfo(KanjiLoop, 2) = Left(ActualInfo(KanjiLoop, 2), ActualInfo(KanjiLoop, 2).length - 1)
             End If
 
             'Scraping the definition(s) of the kanjis:
@@ -6882,8 +7019,6 @@ Module Module1
             End If
         Next
 
-        Dim FileReader As String = ""
-        Dim TextString() As String
         Dim TextWriter As System.IO.StreamWriter
         Try
             FileReader = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
@@ -8068,6 +8203,7 @@ ChangeS:
                 TextWriter.WriteLine("Default 's=' parameter:4")
                 TextWriter.WriteLine("Maximum definitions shown:6")
                 TextWriter.WriteLine("Reading shown first:kun")
+                TextWriter.WriteLine("Simplify kun readings:0")
                 TextWriter.Close()
             End Try
 
@@ -8163,6 +8299,7 @@ ChangeS:
                 TextWriter.WriteLine("Default 's=' parameter:4")
                 TextWriter.WriteLine("Maximum definitions shown:6")
                 TextWriter.WriteLine("Reading shown first:kun")
+                TextWriter.WriteLine("Simplify kun readings:0")
                 TextWriter.Close()
                 Console.WriteLine("Done")
 
@@ -8264,6 +8401,36 @@ ChangeS:
                 NewSetting = NewSetting.Replace("on", "Onyomi").Replace("kun", "Kunyomi")
 
                 Console.WriteLine("The reading this is shown first is now '" & NewSetting & "'")
+
+                Console.ReadLine()
+                Preferences()
+            ElseIf SettingChange = "5" Then
+                Console.Clear()
+                Console.WriteLine("Would you like simplified Kun readings? For example:")
+                Console.WriteLine()
+                Console.WriteLine("Non-simplified: そと、ほか、はず.す、はず.れる、と-")
+                Console.WriteLine("Simplified: そと、ほか、はず、と")
+                NewSetting = Console.ReadLine.ToLower.Trim
+                If NewSetting.Contains("y") = True Or NewSetting.Contains("true") = True Or NewSetting.Contains("simp") Then
+                    NewSetting = "1"
+                ElseIf NewSetting.Contains("n") = True Or NewSetting.Contains("false") = True Then
+                    NewSetting = "0"
+                End If
+
+                Console.Clear()
+                TextString(3) = TextString(3).Replace("1", NewSetting)
+                TextString(3) = TextString(3).Replace("0", NewSetting)
+
+                Dim TextUpdater As System.IO.StreamWriter
+                TextUpdater = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\Preferences\General.txt")
+                For Writer = 0 To TextString.Length - 1
+                    TextUpdater.WriteLine(TextString(Writer))
+                Next
+                TextUpdater.Close()
+
+                NewSetting = NewSetting.Replace("1", "Simplified").Replace("0", "Non-simplified")
+
+                Console.WriteLine("The Kun reading will now be " & NewSetting & "")
 
                 Console.ReadLine()
                 Preferences()
