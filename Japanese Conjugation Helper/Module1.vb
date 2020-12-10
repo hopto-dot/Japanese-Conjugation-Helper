@@ -9,6 +9,7 @@ Module Module1
 
     Dim Words(0) As Word
     Dim DebugMode As Boolean
+    Dim LinkChoice As String
     Class Word
         Public Word As String = ""
         Public Furigana As String = ""
@@ -77,6 +78,7 @@ Module Module1
             Console.BackgroundColor = ConsoleColor.White
             Console.ForegroundColor = ConsoleColor.Green
             Console.WriteLine("[Up/Down Arrow keys] Move up and down")
+            Console.WriteLine("[Backspace] Delete item")
             Console.WriteLine("[Enter] Save")
             Console.WriteLine("[U] Undo deletes")
             Console.BackgroundColor = ConsoleColor.Black
@@ -182,7 +184,7 @@ Module Module1
         End If
 
         If Word.Contains("/save") = True And Word.Length < 8 Then
-            ChooseLine("WordSaves.txt", "Here are your saved word:")
+            ChooseLine("WordSaves.txt", "Here are your saved words:")
             Console.ReadLine()
             Main()
         End If
@@ -2583,7 +2585,7 @@ Module Module1
             Max = 0 'because we are in the "else" part of the if statement which means that the user inputted no number or 1
             WordChoice = 1
         End If                                                           'end of one word scrapping and all scrapping _______________________________________________________________________________________________________________________
-
+        LinkChoice = FoundWordLinks(WordChoice - 1)
         'WordChoice = WordChoice - 1
 
         Dim IsCommon As Boolean
@@ -7300,7 +7302,14 @@ LastRequest:
                 Console.WriteLine("Copied: " & vbCrLf & AnkiCopy.Replace("[", "(").Replace("]", ")"))
                 GoTo LastRequest
             ElseIf LastRequest.Contains("audi") = True Then
-                VerbAudioGen(ActualSearchWord)
+                If FoundTypes.tolower.contains("verb") = True And FoundTypes.tolower.contains("suru") = False Then
+                    'if it's a verb
+                    VerbAudioGen(ActualSearchWord)
+                Else
+                    'if it isn't a verb
+                    JishoAudio(LinkChoice, ActualSearchWord)
+                End If
+                GoTo LastRequest
             ElseIf LastRequest.Contains("hist") = True Then
                 Console.Clear()
                 Console.WriteLine("Search history:")
@@ -7341,7 +7350,47 @@ LastRequest:
         End If
         Main()
     End Sub
+    Sub JishoAudio(ByVal WordLink, ByVal ActualWord) 'WordLink shouldn't include 'http://'
+        Dim Client As New WebClient
+        Dim HTML As String = ""
+        Client.Encoding = System.Text.Encoding.UTF8
+        HTML = Client.DownloadString(New Uri("http://" & LinkChoice))
 
+        Dim Snip1, Snip2 As Integer
+        Try
+            Snip2 = HTML.IndexOf(".mp3")
+            HTML = Left(HTML, Snip2)
+            Snip1 = HTML.LastIndexOf("""") + 2
+            HTML = Mid(HTML, Snip1)
+            HTML = "https:" & HTML & ".mp3"
+
+            Try
+                My.Computer.FileSystem.CreateDirectory(Environ$("USERPROFILE") & "\Downloads\Conjugation Audio")
+                Client.DownloadFile(HTML, Environ$("USERPROFILE") & "\Downloads\Conjugation Audio\" & ActualWord & ".mp3")
+            Catch ex As Exception
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("Audio for '" & ActualWord & "' couldn't be downloaded")
+                Console.ForegroundColor = ConsoleColor.White
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                    Console.WriteLine("Link: " & HTML)
+                End If
+                Exit Sub
+            End Try
+        Catch ex As Exception
+            If DebugMode = True Then
+                Console.WriteLine(ex.Message)
+                Console.WriteLine("Link: " & HTML)
+            End If
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Audio for '" & ActualWord & "' couldn't be downloaded")
+            Console.ForegroundColor = ConsoleColor.White
+            Exit Sub
+        End Try
+        Console.ForegroundColor = ConsoleColor.Green
+        Console.WriteLine("Audio for '" & ActualWord & "' downloaded to 'Downloads\Conjugation Audio\" & ActualWord & ".mp3'")
+        Console.ForegroundColor = ConsoleColor.White
+    End Sub
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
         'Loading the website's HTML code and storing it in a HTML as a string:
 
@@ -7413,12 +7462,12 @@ LastRequest:
     Function DefinitionScraper(ByVal URL)
         Const QUOTE = """"
         Dim Read As String = URL
-        Dim SnipStart As Integer
-        Dim SnipEnd As Integer
+        Dim SnipStart As Integer = 0
+        Dim SnipEnd As Integer = 0
         Dim Snip As String = "NOTHING"
         Dim HTML As String = "NOTHING"
         Dim FirstFail As Boolean = False
-        Dim ExtraIndex As Integer
+        Dim ExtraIndex As Integer = 0
         Dim FinishedAll As Boolean = False
         Dim FoundMeanings(0) As String
         Dim FoundTypes(0) As String
@@ -7432,7 +7481,13 @@ LastRequest:
         Try
             ExtraIndex = HTML.IndexOf("Details ▸")
             HTML = Left(HTML, ExtraIndex)
-        Catch
+        Catch ex As Exception
+            If DebugMode = True Then
+                Console.WriteLine("DefinitionScraper: " & ex.Message)
+                Console.WriteLine("URL: " & URL)
+                Console.WriteLine("ExtraIndex: " & ExtraIndex)
+                Console.ReadLine()
+            End If
         End Try
         ExtraIndex = HTML.IndexOf("<div class=" & QUOTE & "concept_light-meanings medium-9 columns" & QUOTE & ">")
         Try
@@ -7458,7 +7513,17 @@ LastRequest:
             SnipEnd = Mid(HTML, SnipStart, 300).IndexOf("</span>")
         End If
 
-        Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+        Try
+            Snip = Mid(HTML, SnipStart, SnipEnd - SnipStart)
+        Catch ex As Exception
+            If DebugMode = True Then
+                Console.WriteLine("DefinitionScraper: " & ex.Message)
+                Console.WriteLine("Snip: " & Snip)
+                Console.WriteLine("SnipStart: " & SnipStart)
+                Console.WriteLine("SnipEnd: " & SnipEnd)
+                Console.ReadLine()
+            End If
+        End Try
 
         Return (Snip)
     End Function
@@ -8524,68 +8589,84 @@ ChangeS:
         Main()
     End Sub
     Sub WriteToFile(ByVal ToWrite, ByVal FileName)
-        FileName = "C:\ProgramData\Japanese Conjugation Helper\" & FileName & ".txt"
+        Try
+            FileName = "C:\ProgramData\Japanese Conjugation Helper\" & FileName & ".txt"
 
-        If System.IO.File.Exists(FileName) = False Then
-            Console.WriteLine("An error occurred.")
-            Console.WriteLine("Tried to write '" & ToWrite & "' -> " & "'" & FileName & "'")
-            Console.ReadLine()
-            Main()
-        End If
+            If System.IO.File.Exists(FileName) = False Then
+                Console.WriteLine("An error occurred.")
+                Console.WriteLine("Tried to write '" & ToWrite & "' -> " & "'" & FileName & "'")
+                Console.ReadLine()
+                Main()
+            End If
 
-        Using Writer As System.IO.TextWriter = System.IO.File.AppendText(FileName)
-            Writer.WriteLine(ToWrite)
-            Writer.Close()
-        End Using
+            Using Writer As System.IO.TextWriter = System.IO.File.AppendText(FileName)
+                Writer.WriteLine(ToWrite)
+                Writer.Close()
+            End Using
+        Catch ex As Exception
+            If DebugMode = True Then
+                Console.WriteLine(ex.Message)
+            End If
+        End Try
     End Sub
     Sub LoadWordJson()
-        Console.WriteLine("Loading for offline use...")
         Dim JsonReader As String
         Dim FileEntries(), WordEntries() As String
         Dim Correct As Boolean = False
         Dim I As Integer
-        Array.Resize(Words, Words.Length + 1)
-        For JSon = 1 To 29 'Loop for each file
-            JsonReader = My.Computer.FileSystem.ReadAllText("jmdict_english\term_bank_" & JSon & ".json")
-            'Getting rid of starting '[[' and ending ']]':
-            JsonReader = Mid(JsonReader, 3)
-            FileEntries = Split(JsonReader, "],[")
+        Try
+            Console.WriteLine("Loading for offline use...")
 
-            For Word = 0 To 999
-                WordEntries = FileEntries(Word).Split(",")
+            Array.Resize(Words, Words.Length + 1)
+            For JSon = 1 To 29 'Loop for each file
+                JsonReader = My.Computer.FileSystem.ReadAllText("jmdict_english\term_bank_" & JSon & ".json")
+                'Getting rid of starting '[[' and ending ']]':
+                JsonReader = Mid(JsonReader, 3)
+                FileEntries = Split(JsonReader, "],[")
 
-                'Adding info to words array:
-                Words(Words.Length - 1) = New Word
-                Words(Words.Length - 1).Word = WordEntries(0).Replace("""", "") 'Adding actual word
-                Words(Words.Length - 1).Furigana = WordEntries(1).Replace("""", "") 'Adding furigana
-                Words(Words.Length - 1).Types = WordEntries(2).Split(" ") 'Adding word types
-                Words(Words.Length - 1).Page = JSon 'Adding which JSON file it is in
+                For Word = 0 To 999
+                    WordEntries = FileEntries(Word).Split(",")
 
-                'Adding the meanings (which are often spread across a few array positions start at 5)
-                Correct = False
-                I = 5
-                Do Until Correct = True
-                    Words(Words.Length - 1).Meanings(Words(Words.Length - 1).Meanings.Length - 1) = WordEntries(I) 'Current free slot in 'meanings' array will be filled
-                    If WordEntries(I).Contains("]") Then
-                        Correct = True
-                        Continue Do
-                    End If
+                    'Adding info to words array:
+                    Words(Words.Length - 1) = New Word
+                    Words(Words.Length - 1).Word = WordEntries(0).Replace("""", "") 'Adding actual word
+                    Words(Words.Length - 1).Furigana = WordEntries(1).Replace("""", "") 'Adding furigana
+                    Words(Words.Length - 1).Types = WordEntries(2).Split(" ") 'Adding word types
+                    Words(Words.Length - 1).Page = JSon 'Adding which JSON file it is in
 
-                    Array.Resize(Words(Words.Length - 1).Meanings, Words(Words.Length - 1).Meanings.Length + 1) 'Increasing size of 'meanings' by 1
-                    I += 1
-                Loop
+                    'Adding the meanings (which are often spread across a few array positions start at 5)
+                    Correct = False
+                    I = 5
+                    Do Until Correct = True
+                        Words(Words.Length - 1).Meanings(Words(Words.Length - 1).Meanings.Length - 1) = WordEntries(I) 'Current free slot in 'meanings' array will be filled
+                        If WordEntries(I).Contains("]") Then
+                            Correct = True
+                            Continue Do
+                        End If
 
-                For Replacer = 0 To Words(Words.Length - 1).Types.Length - 1
-                    Words(Words.Length - 1).Types(Replacer) = Words(Words.Length - 1).Types(Replacer).Replace("""", "")
+                        Array.Resize(Words(Words.Length - 1).Meanings, Words(Words.Length - 1).Meanings.Length + 1) 'Increasing size of 'meanings' by 1
+                        I += 1
+                    Loop
+
+                    For Replacer = 0 To Words(Words.Length - 1).Types.Length - 1
+                        Words(Words.Length - 1).Types(Replacer) = Words(Words.Length - 1).Types(Replacer).Replace("""", "")
+                    Next
+                    For Replacer = 0 To Words(Words.Length - 1).Meanings.Length - 1
+                        Words(Words.Length - 1).Meanings(Replacer) = Words(Words.Length - 1).Meanings(Replacer).Replace("""", "").Replace("[", "").Replace("]", "")
+                    Next
+
+                    Array.Resize(Words, Words.Length + 1)
                 Next
-                For Replacer = 0 To Words(Words.Length - 1).Meanings.Length - 1
-                    Words(Words.Length - 1).Meanings(Replacer) = Words(Words.Length - 1).Meanings(Replacer).Replace("""", "").Replace("[", "").Replace("]", "")
-                Next
-
-                Array.Resize(Words, Words.Length + 1)
             Next
-        Next
-        Array.Resize(Words, Words.Length - 1)
+            Array.Resize(Words, Words.Length - 1)
+        Catch ex As Exception
+            Console.WriteLine("Something went wrong; it seems the program files have been messed with")
+            If DebugMode = True Then
+                Console.WriteLine(ex.Message)
+            End If
+            Console.ReadLine()
+            Main()
+        End Try
     End Sub
     Sub WordJsonSearch(Word)
         Word = Word.replace("//", "")
