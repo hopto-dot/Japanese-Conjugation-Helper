@@ -17,131 +17,6 @@ Module Module1
         Public Meanings() As String = {""}
         Public Page As Integer
     End Class
-    Sub ChooseLine(Filename, Message)
-        Console.Clear()
-        If Filename.contains(".txt") = False Then
-            Filename &= ".txt"
-        End If
-        Dim AllFileText As String = ""
-        Dim Lines() As String
-        AllFileText = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\" & Filename)
-        Lines = AllFileText.Split(vbCr)
-        Try
-            Console.WriteLine(Message)
-            Console.WriteLine(AllFileText)
-        Catch ex As Exception
-            Console.ForegroundColor = ConsoleColor.Red
-            If DebugMode = True Then
-                Console.WriteLine(ex.Message)
-            Else
-                Console.WriteLine("There isn't anything to show!")
-                Console.ReadLine()
-                Main()
-            End If
-            Console.ForegroundColor = ConsoleColor.White
-        End Try
-        Array.Resize(Lines, Lines.Length - 1)
-        For Remove = 0 To Lines.Length - 1
-            Lines(Remove) = Lines(Remove).Replace(vbLf, "")
-        Next
-        Dim LinesBackup() As String = Lines
-        Dim Line As Integer = 0
-        Dim Correct As Boolean
-        Do Until Correct = True
-            Console.SetCursorPosition(0, 0)
-            If Line < 0 Then
-                Line = 0
-            ElseIf Line > Lines.Length - 1 Then
-                Line = Lines.Length - 1
-            End If
-            If Lines.Length = 0 Then
-                Console.WriteLine("There isn't anything to show!")
-                Console.ReadLine()
-                Main()
-            End If
-            Console.BackgroundColor = ConsoleColor.White
-            Console.ForegroundColor = ConsoleColor.Green
-            Console.WriteLine(Message)
-            Console.BackgroundColor = ConsoleColor.Black
-            Console.ForegroundColor = ConsoleColor.White
-            For Printer = 0 To Lines.Length - 1
-                If Printer = Line Then
-                    Console.BackgroundColor = ConsoleColor.Gray
-                    Console.ForegroundColor = ConsoleColor.Black
-                    Console.WriteLine(Lines(Printer))
-                    Console.BackgroundColor = ConsoleColor.Black
-                    Console.ForegroundColor = ConsoleColor.White
-                Else
-                    Console.WriteLine(Lines(Printer))
-                End If
-            Next
-            Console.BackgroundColor = ConsoleColor.White
-            Console.ForegroundColor = ConsoleColor.Green
-            Console.WriteLine("[Up/Down Arrow keys] Move up and down")
-            Console.WriteLine("[Backspace] Delete item")
-            Console.WriteLine("[Enter] Save")
-            Console.WriteLine("[U] Undo deletes")
-            Console.BackgroundColor = ConsoleColor.Black
-            Console.ForegroundColor = ConsoleColor.White
-
-            Dim KeyReader As ConsoleKeyInfo = Console.ReadKey
-            If KeyReader.Key = ConsoleKey.DownArrow Then
-                If Line < Lines.Length - 1 Then
-                    Line += 1
-                End If
-            ElseIf KeyReader.Key = ConsoleKey.UpArrow Then
-                If Line > 0 Then
-                    Line -= 1
-                End If
-            ElseIf KeyReader.Key = ConsoleKey.Enter Or KeyReader.Key = ConsoleKey.Escape Then
-                Correct = True
-            ElseIf KeyReader.Key = ConsoleKey.Delete Then
-                Console.WriteLine()
-                Console.WriteLine("Are you sure you want to delete this?")
-                Console.Write("Press ")
-                Console.BackgroundColor = ConsoleColor.White
-                Console.ForegroundColor = ConsoleColor.Black
-                Console.Write("Delete")
-                Console.BackgroundColor = ConsoleColor.Black
-                Console.ForegroundColor = ConsoleColor.White
-                Console.WriteLine(" again to confirm")
-
-                KeyReader = Console.ReadKey
-                If KeyReader.Key = ConsoleKey.Delete Then
-                    Lines(Line) = ""
-                    For CurrentLine = 1 To Lines.Length - 1
-                        If Lines(CurrentLine - 1) = "" Then
-                            Lines(CurrentLine - 1) = Lines(CurrentLine)
-                            Lines(CurrentLine) = ""
-                        End If
-                    Next
-                    Array.Resize(Lines, Lines.Length - 1)
-                    Console.Clear()
-                    System.IO.File.WriteAllText("C:\ProgramData\Japanese Conjugation Helper\" & Filename, "")
-                    Using Writer As System.IO.TextWriter = System.IO.File.AppendText("C:\ProgramData\Japanese Conjugation Helper\" & Filename)
-                        For ToWrite = 0 To Lines.Length - 1
-                            Writer.WriteLine(Lines(ToWrite))
-                        Next
-                        Writer.Close()
-                    End Using
-                End If
-            ElseIf KeyReader.Key = ConsoleKey.U Then
-                Console.Clear()
-                If LinesBackup(LinesBackup.Length - 1) = "" Then
-                    Array.Resize(LinesBackup, LinesBackup.Length - 1)
-                End If
-                Lines = LinesBackup
-                Line = 0
-            ElseIf KeyReader.Key = ConsoleKey.Q Then
-                Line = Lines.Length * (2 / 7)
-            ElseIf KeyReader.Key = ConsoleKey.W Then
-                Line = Lines.Length * (3 / 6)
-            ElseIf KeyReader.Key = ConsoleKey.E Then
-                Line = Lines.Length * (5 / 7)
-            End If
-        Loop
-        Main()
-    End Sub
     Sub Main()
 
         Randomize()
@@ -495,6 +370,132 @@ Module Module1
             WordConjugate(Word, 1)
         End If
 
+        Main()
+    End Sub
+
+    Sub ChooseLine(Filename, Message)
+        Console.Clear()
+        If Filename.contains(".txt") = False Then
+            Filename &= ".txt"
+        End If
+        Dim AllFileText As String = ""
+        Dim Lines() As String
+        AllFileText = My.Computer.FileSystem.ReadAllText("C:\ProgramData\Japanese Conjugation Helper\" & Filename)
+        Lines = AllFileText.Split(vbCr)
+        Try
+            Console.WriteLine(Message)
+            Console.WriteLine(AllFileText)
+        Catch ex As Exception
+            Console.ForegroundColor = ConsoleColor.Red
+            If DebugMode = True Then
+                Console.WriteLine(ex.Message)
+            Else
+                Console.WriteLine("There isn't anything to show!")
+                Console.ReadLine()
+                Main()
+            End If
+            Console.ForegroundColor = ConsoleColor.White
+        End Try
+        Array.Resize(Lines, Lines.Length - 1)
+        For Remove = 0 To Lines.Length - 1
+            Lines(Remove) = Lines(Remove).Replace(vbLf, "")
+        Next
+        Dim LinesBackup() As String = Lines
+        Dim Line As Integer = 0
+        Dim Correct As Boolean
+        Do Until Correct = True
+            Console.SetCursorPosition(0, 0)
+            If Line < 0 Then
+                Line = 0
+            ElseIf Line > Lines.Length - 1 Then
+                Line = Lines.Length - 1
+            End If
+            If Lines.Length = 0 Then
+                Console.WriteLine("There isn't anything to show!")
+                Console.ReadLine()
+                Main()
+            End If
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine(Message)
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+            For Printer = 0 To Lines.Length - 1
+                If Printer = Line Then
+                    Console.BackgroundColor = ConsoleColor.Gray
+                    Console.ForegroundColor = ConsoleColor.Black
+                    Console.WriteLine(Lines(Printer))
+                    Console.BackgroundColor = ConsoleColor.Black
+                    Console.ForegroundColor = ConsoleColor.White
+                Else
+                    Console.WriteLine(Lines(Printer))
+                End If
+            Next
+            Console.BackgroundColor = ConsoleColor.White
+            Console.ForegroundColor = ConsoleColor.Green
+            Console.WriteLine("[Up/Down Arrow keys] Move up and down")
+            Console.WriteLine("[Backspace] Delete item")
+            Console.WriteLine("[Enter] Save")
+            Console.WriteLine("[U] Undo deletes")
+            Console.BackgroundColor = ConsoleColor.Black
+            Console.ForegroundColor = ConsoleColor.White
+
+            Dim KeyReader As ConsoleKeyInfo = Console.ReadKey
+            If KeyReader.Key = ConsoleKey.DownArrow Then
+                If Line < Lines.Length - 1 Then
+                    Line += 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.UpArrow Then
+                If Line > 0 Then
+                    Line -= 1
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.Enter Or KeyReader.Key = ConsoleKey.Escape Then
+                Correct = True
+            ElseIf KeyReader.Key = ConsoleKey.Delete Then
+                Console.WriteLine()
+                Console.WriteLine("Are you sure you want to delete this?")
+                Console.Write("Press ")
+                Console.BackgroundColor = ConsoleColor.White
+                Console.ForegroundColor = ConsoleColor.Black
+                Console.Write("Delete")
+                Console.BackgroundColor = ConsoleColor.Black
+                Console.ForegroundColor = ConsoleColor.White
+                Console.WriteLine(" again to confirm")
+
+                KeyReader = Console.ReadKey
+                If KeyReader.Key = ConsoleKey.Delete Then
+                    Lines(Line) = ""
+                    For CurrentLine = 1 To Lines.Length - 1
+                        If Lines(CurrentLine - 1) = "" Then
+                            Lines(CurrentLine - 1) = Lines(CurrentLine)
+                            Lines(CurrentLine) = ""
+                        End If
+                    Next
+                    Array.Resize(Lines, Lines.Length - 1)
+                    Console.Clear()
+                    System.IO.File.WriteAllText("C:\ProgramData\Japanese Conjugation Helper\" & Filename, "")
+                    Using Writer As System.IO.TextWriter = System.IO.File.AppendText("C:\ProgramData\Japanese Conjugation Helper\" & Filename)
+                        For ToWrite = 0 To Lines.Length - 1
+                            Writer.WriteLine(Lines(ToWrite))
+                        Next
+                        Writer.Close()
+                    End Using
+                End If
+            ElseIf KeyReader.Key = ConsoleKey.U Then
+                Console.Clear()
+                If LinesBackup(LinesBackup.Length - 1) = "" Then
+                    Array.Resize(LinesBackup, LinesBackup.Length - 1)
+                End If
+                Lines = LinesBackup
+                Line = 0
+            ElseIf KeyReader.Key = ConsoleKey.Q Then
+                Line = Lines.Length * (2 / 7)
+            ElseIf KeyReader.Key = ConsoleKey.W Then
+                Line = Lines.Length * (3 / 6)
+            ElseIf KeyReader.Key = ConsoleKey.E Then
+                Line = Lines.Length * (5 / 7)
+            End If
+        Loop
         Main()
     End Sub
     Sub DownloadSubtitles()
@@ -2178,7 +2179,6 @@ Module Module1
         Console.ReadLine()
         Main()
     End Sub
-
     Sub SaveWord(Word, Furigana, Definition)
         If Dir$("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt") = "" Then
             File.Create("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt").Dispose()
@@ -2191,13 +2191,12 @@ Module Module1
         HistoryWriter = New System.IO.StreamWriter("C:\ProgramData\Japanese Conjugation Helper\WordSaves.txt", True)
 
         If Furigana.Length > 0 Then
-                HistoryWriter.WriteLine(Definition & " - " & Word & " (" & Furigana & ")")
-            Else
-                HistoryWriter.WriteLine(Definition & " - " & Word)
-            End If
+            HistoryWriter.WriteLine(Definition & " - " & Word & " (" & Furigana & ")")
+        Else
+            HistoryWriter.WriteLine(Definition & " - " & Word)
+        End If
         HistoryWriter.Close()
     End Sub
-
     Sub WordConjugate(ByRef Word As String, ByVal WordIndex As Integer)
         Const QUOTE = """"
         Dim SEquals As String = ""
@@ -3019,20 +3018,24 @@ Module Module1
         End If
 
         'Example Sentence extraction:
-        HTMLTemp = Client.DownloadString(New Uri(WordURL))
-        SentenceExample = RetrieveClassRange(HTMLTemp, "<li class=" & QUOTE & "clearfix" & QUOTE & "><span class=" & QUOTE & "furigana" & QUOTE & ">", "inline_copyright", "Example Sentence") 'Firstly extracting the whole group
-        If SentenceExample.Length > 10 Then
-            Try
-                Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
-            Catch ex As Exception
-                If DebugMode = True Then
-                    Console.WriteLine(ex.Message)
-                    Console.ReadLine()
+        If AdvancedParam = 0 Or AdvancedParam = 1 Then
+            If PreferencesString(10) <> 0 Then 'only show example sentence if S parameter is 0 or 1 and it is enabled in S parameter settings
+                HTMLTemp = Client.DownloadString(New Uri(WordURL))
+                SentenceExample = RetrieveClassRange(HTMLTemp, "<li class=" & QUOTE & "clearfix" & QUOTE & "><span class=" & QUOTE & "furigana" & QUOTE & ">", "inline_copyright", "Example Sentence") 'Firstly extracting the whole group
+                If SentenceExample.Length > 10 Then
+                    Try
+                        Example = ExampleSentence(SentenceExample) 'This group then needs all the "fillers" taken out, that's what the ExampleSentence function does
+                    Catch ex As Exception
+                        If DebugMode = True Then
+                            Console.WriteLine(ex.Message)
+                            Console.ReadLine()
+                        End If
+                    End Try
                 End If
-            End Try
-        End If
-        If Example.Length < 200 And Example.Length > 4 Then
-            Console.WriteLine(Example.Trim)
+                If Example.Length < 200 And Example.Length > 4 Then
+                    Console.WriteLine(Example.Trim)
+                End If
+            End If
         End If
 
         Dim KanjiBool As Boolean = False
@@ -7126,7 +7129,7 @@ LastRequest:
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
             Dim LastRequest As String = ""
             Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Do you have a Last Request? (for example 'anki', 'kanji', 'audio' or 'jisho')")
+            Console.WriteLine("Do you have a Last Request? (for example: 'anki', 'kanji', 'audio' or 'jisho')")
             Console.ForegroundColor = ConsoleColor.White
             LastRequest = Console.ReadLine().ToLower().Trim
             LastRequest = LastRequest.Replace("/", "").Replace("!", "")
@@ -7401,6 +7404,7 @@ LastRequest:
         Console.WriteLine("Audio for '" & ActualWord & "' downloaded to 'Downloads\Conjugation Audio\" & ActualWord & ".mp3'")
         Console.ForegroundColor = ConsoleColor.White
     End Sub
+
     Function RetrieveClassRange(ByVal HTML, ByRef Start, ByRef SnipEnd, ByVal ErrorMessage)
         'Loading the website's HTML code and storing it in a HTML as a string:
 
