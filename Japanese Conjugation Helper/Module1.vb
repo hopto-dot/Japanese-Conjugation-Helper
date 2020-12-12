@@ -6434,17 +6434,25 @@ Module Module1
             Dim Row() As String
             Dim R As Integer = 0
             Dim RadicalsUsed As String = ""
-            Do Until Correct = True
-                Row = Rows(R).Split(vbTab)
-                Row(0) = Row(0).Trim
-                If Row(0) = CurrentKanji Then
-                    RadicalsUsed = Row(2)
-                    Correct = True
-                    Continue Do
-                End If
+            Try
+                Do Until Correct = True
+                    Row = Rows(R).Split(vbTab)
+                    Row(0) = Row(0).Trim
+                    If Row(0) = CurrentKanji Then
+                        RadicalsUsed = Row(2)
+                        Correct = True
+                        Continue Do
+                    End If
 
-                R += 1
-            Loop
+                    R += 1
+                Loop
+            Catch ex As Exception
+                If DebugMode = True Then
+                    Console.WriteLine(ex.Message)
+                    Console.WriteLine("R: " & R)
+                End If
+            End Try
+
             Correct = False
 
             Dim Radicals() As String
@@ -6536,7 +6544,7 @@ Module Module1
             End If
 
             Console.WriteLine(KanjiInfo(Printer, 3))
-            If RadicalGroups(Printer).IndexOf("()") = -1 Then
+            If RadicalGroups(Printer).IndexOf("()") = -1 And RadicalGroups(Printer) <> "" Then
                 RadicalGroups(Printer) = RadicalGroups(Printer).Replace("https://www.wanikani.com/radicals/", "")
                 Console.WriteLine("Radicals used: " & RadicalGroups(Printer))
             End If
