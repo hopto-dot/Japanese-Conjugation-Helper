@@ -5983,7 +5983,7 @@ Module Module1
         Main()
         Main()
     End Sub
-    Sub KanjiInfo(ByVal ActualSearch, ByVal Mode)
+    Sub KanjiInfo(ByVal ActualSearch, ByVal Mode) 'when you type '/i'
         'Mode:
         '1 = Just KanjiInfo
         '2 = Display
@@ -6109,6 +6109,7 @@ Module Module1
             End If
 
             'If simiplified Kun Readings are on:
+            KunReadingsList.Clear()
             Try
                 If TextString(3).Contains("1") = True Then
                     KunReadings = KanjiInfo(KanjiLoop, 1).split("、")
@@ -6633,8 +6634,8 @@ Module Module1
             Next
 
             Console.WriteLine()
-            Next
-            If Mode = 2 Then
+        Next
+        If Mode = 2 Then
             Exit Sub
         End If
 
@@ -6757,6 +6758,7 @@ Module Module1
             End If
 
             'If simiplified Kun Readings are on:
+            KunReadingsList.Clear()
             Try
                 If TextString(3).Contains("1") = True Then
                     KunReadings = ActualInfo(KanjiLoop, 1).split("、")
