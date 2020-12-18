@@ -1381,15 +1381,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Japanese Conjugation Helper"
-        "ProductCode" = "8:{3EF628C1-39A0-44B3-B663-BD184F122398}"
-        "PackageCode" = "8:{F728058C-F399-4010-8202-BE276125A874}"
+        "ProductCode" = "8:{DC91728F-CCA7-46A2-BF02-7CB3BBFF4F9C}"
+        "PackageCode" = "8:{6348E7D7-A0D6-441B-B4B5-074A96FA2B8B}"
         "UpgradeCode" = "8:{A30CD437-623F-4166-A3E5-F1CC89C4909D}"
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.6.5"
+        "ProductVersion" = "8:2.7.0"
         "Manufacturer" = "8:hopto-dot"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:https://forms.gle/WNV1s41cWKrjSMhH6"
@@ -1931,7 +1931,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_03122FE42AD7432F8EA550349030A00E"
             {
-            "SourcePath" = "8:..\\Japanese Conjugation Helper\\obj\\Debug\\Japanese Conjugation Helper.exe"
+            "SourcePath" = "8:..\\Japanese Conjugation Helper\\obj\\Release\\Japanese Conjugation Helper.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_02F8D9E1BC594C83BFF4230FE43D5DFD"

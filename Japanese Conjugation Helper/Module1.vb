@@ -18,7 +18,6 @@ Module Module1
         Public Page As Integer
     End Class
     Sub Main()
-
         Randomize()
         Console.InputEncoding = System.Text.Encoding.Unicode
         Console.OutputEncoding = System.Text.Encoding.Unicode
@@ -53,6 +52,7 @@ Module Module1
 
         'This is getting the word that is being searched ready for more accurate search with ActualSearchWord, ActualSearch Word (should) always be in japanese while Word won't be if the user inputs english or romaji:
         Dim Word As String = Console.ReadLine.ToLower.Trim 'This is the word that will be searched, this needs to be kept the same because it is the original search value that may be needed later
+        Dim Parameters() As String = Word.Split(" ")
         If Word = "_debug_" Then
             DebugMode = True
             Main()
@@ -64,6 +64,27 @@ Module Module1
             Main()
         End If
 
+        If Left(Word, 8) = "/counter" Then
+            If Word.Length < 10 Then
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("Invalid syntax")
+                Console.WriteLine("do '/counter [counter] [number]")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End If
+            If Parameters.Length = 3 Then
+                CounterConvert(Parameters(1), Parameters(2))
+            ElseIf Parameters.Length = 2 And IsNumeric(Parameters(1)) = True Then
+                CounterConvert("", Parameters(1))
+            End If
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Invalid syntax: You must include at least a number")
+            Console.WriteLine("do '/counter [counter] [number]")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End If
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
             Main()
         End If
@@ -125,7 +146,7 @@ Module Module1
             KanjiInfo(Word, 1)
         End If
 
-        If Word = "/donate" Then
+        If Word.Contains("/donat") = True Then
             Process.Start("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "www.buymeacoffee.com/hoptodot")
             Main()
         End If
@@ -1725,6 +1746,733 @@ Module Module1
         End If
         Main()
     End Sub
+    Sub CounterConvert(ByVal Counter, ByVal ToNumber)
+        Console.Clear()
+        Console.WriteLine("Searching for counter...")
+        Const QUOTE = """"
+        Dim WordURL As String = "https://jisho.org/search/" & Counter & " #counter"
+        Dim Client As New WebClient
+        Client.Encoding = System.Text.Encoding.UTF8
+        If Counter <> "" Then
+
+        End If
+        Dim HTML As String = ""
+        Try
+            HTML = Client.DownloadString(New Uri(WordURL))
+        Catch
+        End Try
+
+        Dim HTMLTemp As String = HTML
+        Dim ActualSearch1stAppearance, ActualSearch2ndAppearance As Integer
+        Dim WordLink As String
+        Dim FoundWordLinks(0), FoundDefinitions(0), CommonWord(0), FoundTypes, ActualSearchWord As String
+        FoundTypes = ""
+        If Counter <> "" Then
+            Try
+                'Getting word link:
+                ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
+                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+
+                'Checking if word is "common":
+                If Left(HTMLTemp, 350).LastIndexOf("Common word") <> -1 Then
+                    CommonWord(0) = "True"
+                End If
+
+                'Continue getting word link:
+                ActualSearch1stAppearance = HTMLTemp.IndexOf("meanings-wrapper") 'used to be "concept_light clearfix"
+                HTMLTemp = Mid(HTMLTemp, ActualSearch1stAppearance + 1)
+                ActualSearch1stAppearance = HTMLTemp.IndexOf("jisho.org/word/")
+                ActualSearch2ndAppearance = Mid(HTMLTemp, HTMLTemp.IndexOf("jisho.org/word/")).IndexOf(QUOTE & ">")
+                WordLink = Mid(HTMLTemp, ActualSearch1stAppearance + 1, ActualSearch2ndAppearance - 1)
+                FoundWordLinks(0) = WordLink
+            Catch
+            End Try
+
+            Try
+                FoundDefinitions(0) = WordLinkScraper(WordLink).replace("&#39;", "").replace("&quot;", QUOTE)
+                FoundTypes = TypeScraper(WordLink).replace("&#39;", "").replace("&quot;", QUOTE)
+
+                ActualSearchWord = RetrieveClassRange(HTML, "<span class=" & QUOTE & "text" & QUOTE & ">", "</div>", "Actual word search")
+            Catch ex As Exception
+
+            End Try
+
+            Try
+                ActualSearchWord = Mid(ActualSearchWord, 30)
+                ActualSearchWord = ActualSearchWord.Replace("<span>", "")
+                ActualSearchWord = ActualSearchWord.Replace("</span>", "")
+
+                ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
+            Catch ex As Exception
+            End Try
+        End If
+
+        Dim Furigana As String = ""
+        If FoundTypes.ToLower.Contains("counter") = False And Counter <> "" Then
+            Console.ForegroundColor = ConsoleColor.DarkYellow
+            Console.WriteLine("Assuming '{0}' is a counter", Counter)
+            Console.ForegroundColor = ConsoleColor.White
+        End If
+
+        Dim WordHTML0, WordHTML As String
+        Try
+            WordHTML0 = Client.DownloadString(New Uri("https://" & FoundWordLinks(0))) 'This is used for the furigana
+            WordHTML = WordHTML0 'This is a copy, used for the kanji readings at the end
+        Catch ex As Exception
+        End Try
+
+
+        Dim FuriganaStart As Integer
+        If Counter = "歳" Or Counter = "さい" Or Counter = "sai" Then
+            Furigana = "さい"
+        ElseIf Counter = "ほん" Then
+            Furigana = "ほん"
+        ElseIf Counter = "" Then
+        Else
+            Try
+                Furigana = RetrieveClassRange(WordHTML0, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
+                If Furigana.Length <> 0 Then
+                    FuriganaStart = Furigana.IndexOf("search for")
+                    Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                    FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                    If FuriganaStart <> -1 Then 'if </a></li><li> Is found Then it will be removed as well as everything after it
+                        Furigana = Left(Furigana, FuriganaStart)
+                    End If
+                Else
+                    Furigana = ""
+                End If
+
+                If Furigana = ActualSearchWord Or Furigana = "" Then 'This will repeat the last attempt to get the furigana, because the last furigana failed and got 'Sentences for [word using kanji]' instead of 'Sentences for [word using kana]'
+                    Furigana = RetrieveClassRange(WordHTML0, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
+                    If Furigana.Length > 30 And Furigana.Length <> 0 Then
+                        FuriganaStart = Furigana.IndexOf("search for")
+                        Furigana = Mid(Furigana, FuriganaStart + 5)
+
+                        FuriganaStart = Furigana.IndexOf("search for")
+                        Furigana = Right(Furigana, Furigana.Length - FuriganaStart - 11)
+                        FuriganaStart = Furigana.IndexOf("</a></li><li>") 'Now FuriganaStart is being used to find the start of more </a></li><li>, the next few lines is only needed for some searches which have extra things that need cutting out
+                        Furigana = Left(Furigana, FuriganaStart)
+                    Else
+                        If FuriganaStart <> -1 Or Furigana.Length > 20 Then
+                            Furigana = ""
+                        End If
+                    End If
+                End If
+
+                If Furigana = ActualSearchWord Or Furigana = "" Or Furigana.Length > 20 Then 'Another try
+                    Furigana = RetrieveClassRange(WordHTML0, "kanji-3-up kanji", "</span><span></span>", "Furigana")
+                    If Furigana.Length < 30 And Furigana.Length <> 0 Then
+                        Furigana = Mid(Furigana, Furigana.LastIndexOf(">") + 2)
+                    Else
+                        Furigana = ""
+                    End If
+
+                End If
+
+                If Furigana.Length < 1 Or IsNothing(Furigana) Then
+                    Furigana = RetrieveClassRange(HTML, "audio id=" & QUOTE & "audio_" & ActualSearchWord, "<source src=", "Furigana2")
+                    Furigana = Furigana.Replace("<", "")
+                    Furigana = Furigana.Replace("audio id=" & QUOTE & "audio_" & ActualSearchWord & ":", "")
+                    Furigana = Furigana.Replace(QUOTE & ">", "")
+                End If
+            Catch
+            End Try
+        End If
+        Furigana = WanaKana.ToHiragana(Furigana)
+        If WanaKana.IsHiragana(Furigana) = True Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Error: This is not furigana")
+            Console.ForegroundColor = ConsoleColor.White
+            Console.ReadLine()
+            Main()
+        End If
+
+        Console.Clear()
+        If Furigana <> "" Then
+            Console.WriteLine(ToNumber.ToString & Furigana & ":")
+        Else
+            Console.WriteLine(ToNumber.ToString & ":")
+        End If
+
+        Console.WriteLine()
+
+        Dim CounterFirst As String = Left(Furigana, 1)
+        Dim LeftZeros As Integer = 0
+        Dim Done As Boolean = False
+
+        Dim Columns(ToNumber.length - 1) As String
+        For Column = 0 To ToNumber.length - 1
+            Columns(Column) = Mid(ToNumber, Column + 1, 1)
+        Next
+
+        Dim Charac As Integer = ToNumber.length - 1
+        Dim NumberLast As String '= Columns(Columns.Length - 1)
+        Dim ColType As String
+        Dim ColNo As Integer 'From right, 0-~
+        Dim ToAdd As String = ""
+        Dim LastAdd As String = ""
+        Dim NumberReading As String = ""
+        Dim ColFromLeft As Integer = Columns.Length - ColType 'from left ~-0
+        ColNo = -1
+
+        Do Until Done = True
+            ColFromLeft -= 1
+            ColNo += 1
+            If ColNo > Columns.Length - 1 Then
+                Done = True
+                Continue Do
+            End If
+            Select Case ColFromLeft
+                Case 0
+                    ColType = "1"
+                Case 1
+                    ColType = "10"
+                Case 2
+                    ColType = "100"
+                Case 3
+                    ColType = "1000"
+                Case 4
+                    ColType = "10,000"
+                Case 5
+                    ColType = "100,000"
+                Case 6
+                    ColType = "1,000,000"
+            End Select
+
+            ToAdd = ""
+            If ColType = "1" Then
+                Select Case Columns(ColNo)
+                    Case 1
+                        ToAdd = "いち"
+                        LastAdd = "いち"
+                    Case 2
+                        ToAdd = "に"
+                        LastAdd = "に"
+                    Case 3
+                        ToAdd = "さん"
+                        LastAdd = "さん"
+                    Case 4
+                        ToAdd = "よん"
+                        LastAdd = "よん"
+                    Case 5
+                        ToAdd = "ご"
+                        LastAdd = "ご"
+                    Case 6
+                        ToAdd = "ろく"
+                        LastAdd = "ろく"
+                    Case 7
+                        ToAdd = "なな"
+                        LastAdd = "なな"
+                    Case 8
+                        ToAdd = "はち"
+                        LastAdd = "はち"
+                    Case 9
+                        ToAdd = "きゅう"
+                        LastAdd = "きょう"
+                End Select
+            ElseIf ColType = "10" Then
+                Select Case Columns(ColNo)
+                    Case 1
+                        ToAdd = "じゅう"
+                        LastAdd = "じゅう"
+                    Case 2
+                        ToAdd = "にじゅう"
+                        LastAdd = "じゅう"
+                    Case 3
+                        ToAdd = "さんじゅう"
+                        LastAdd = "じゅう"
+                    Case 4
+                        ToAdd = "よんじゅう"
+                        LastAdd = "じゅう"
+                    Case 5
+                        ToAdd = "ごじゅう"
+                        LastAdd = "じゅう"
+                    Case 6
+                        ToAdd = "ろくじゅう"
+                        LastAdd = "じゅう"
+                    Case 7
+                        ToAdd = "ななじゅう"
+                        LastAdd = "じゅう"
+                    Case 8
+                        ToAdd = "はちじゅう"
+                        LastAdd = "じゅう"
+                    Case 9
+                        ToAdd = "きゅうじゅう"
+                        LastAdd = "じゅう"
+                End Select
+            ElseIf ColType = "100" Then
+                Select Case Columns(ColNo)
+                    Case 1
+                        ToAdd = "ひゃく"
+                        LastAdd = "ひゃく"
+                    Case 2
+                        ToAdd = "にひゃく"
+                        LastAdd = "ひゃく"
+                    Case 3
+                        ToAdd = "さんびゃく"
+                        LastAdd = "びゃく"
+                    Case 4
+                        ToAdd = "よんひゃく"
+                        LastAdd = "ひゃく"
+                    Case 5
+                        ToAdd = "ごひゃく"
+                        LastAdd = "ひゃく"
+                    Case 6
+                        ToAdd = "ろっぴゃく"
+                        LastAdd = "ぴゃく"
+                    Case 7
+                        ToAdd = "ななひゃく"
+                        LastAdd = "ひゃく"
+                    Case 8
+                        ToAdd = "はっぴゃく"
+                        LastAdd = "ぴゃく"
+                    Case 9
+                        ToAdd = "きゅうひゃく"
+                        LastAdd = "ひゃく"
+                End Select
+            ElseIf ColType = "1000" Then
+                Select Case Columns(ColNo)
+                    Case 1
+                        If NumberReading.Contains("まん") Then
+                            ToAdd = "いっせん"
+                            LastAdd = "いっせん"
+                        Else
+                            ToAdd = "せん"
+                            LastAdd = "せん"
+                        End If
+                    Case 2
+                        ToAdd = "にせん"
+                        LastAdd = "せん"
+                    Case 3
+                        ToAdd = "さんせん"
+                        LastAdd = "せん"
+                    Case 4
+                        ToAdd = "よんせん"
+                        LastAdd = "せん"
+                    Case 5
+                        ToAdd = "ごせん"
+                        LastAdd = "せん"
+                    Case 6
+                        ToAdd = "ろくせん"
+                        LastAdd = "せん"
+                    Case 7
+                        ToAdd = "ななせん"
+                        LastAdd = "せん"
+                    Case 8
+                        ToAdd = "はっせん"
+                        LastAdd = "はっせん"
+                    Case 9
+                        ToAdd = "きゅうせん"
+                        LastAdd = "せん"
+                End Select
+            ElseIf ColType = "10,000" Then
+                Select Case Columns(ColNo) 'needs revision
+                    Case 1
+                        If NumberReading.Contains("じゅう") Then
+                            NumberReading = NumberReading.Replace("まん", "")
+                            ToAdd = "いちまん"
+                        Else
+                            ToAdd = "いちまん"
+                        End If
+                    Case 2
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "にまん"
+                    Case 3
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "さんまん"
+                    Case 4
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "よんまん"
+                    Case 5
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "ごまん"
+                    Case 6
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "ろくまん"
+                    Case 7
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "ななまん"
+                    Case 8
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "はちまん"
+                    Case 9
+                        NumberReading = NumberReading.Replace("まん", "")
+                        ToAdd = "きゅうまん"
+                End Select
+            ElseIf ColType = "100,000" Then
+                Select Case Columns(ColNo)
+                    Case 1
+                        ToAdd = "じゅうまん"
+                        LastAdd = "まん"
+                    Case 2
+                        ToAdd = "にじゅうまん"
+                        LastAdd = "まん"
+                    Case 3
+                        ToAdd = "さんじゅうまん"
+                        LastAdd = "まん"
+                    Case 4
+                        ToAdd = "よんじゅうまん"
+                        LastAdd = "まん"
+                    Case 5
+                        ToAdd = "ごじゅうまん"
+                        LastAdd = "まん"
+                    Case 6
+                        ToAdd = "ろくじゅうまん"
+                        LastAdd = "まん"
+                    Case 7
+                        ToAdd = "ななじゅうまん"
+                        LastAdd = "まん"
+                    Case 8
+                        ToAdd = "はちじゅうまん"
+                        LastAdd = "まん"
+                    Case 9
+                        ToAdd = "きゅうじゅうまん"
+                        LastAdd = "まん"
+                End Select
+            ElseIf ColType = "1,000,000" Then
+                Select Case Columns(ColNo) 'needs revision
+                    Case 1
+                        ToAdd = "ひゃく"
+                        LastAdd = "ひゃく"
+                    Case 2
+                        ToAdd = "にひゃく"
+                        LastAdd = "ひゃく"
+                    Case 3
+                        ToAdd = "さんびゃく"
+                        LastAdd = "びゃく"
+                    Case 4
+                        ToAdd = "よんひゃく"
+                        LastAdd = "ひゃく"
+                    Case 5
+                        ToAdd = "ごひゃく"
+                        LastAdd = "ひゃく"
+                    Case 6
+                        ToAdd = "ろっぴゃく"
+                        LastAdd = "ぴゃく"
+                    Case 7
+                        ToAdd = "ななひゃく"
+                        LastAdd = "ひゃく"
+                    Case 8
+                        ToAdd = "はっぴゃく"
+                        LastAdd = "ぴゃく"
+                    Case 9
+                        ToAdd = "きゅうひゃく"
+                        LastAdd = "ひゃく"
+                End Select
+            End If
+            NumberReading = NumberReading & ToAdd
+        Loop
+
+        'Getting the right LastNumber
+        NumberLast = 0
+        Select Case LastAdd
+            Case "いち"
+                NumberLast = 1
+            Case "に"
+                NumberLast = 2
+            Case "さん"
+                NumberLast = 3
+            Case "よん"
+                NumberLast = 4
+            Case "ご"
+                NumberLast = 5
+            Case "ろく"
+                NumberLast = 6
+            Case "なな", "しち"
+                NumberLast = 7
+            Case "はち"
+                NumberLast = 8
+            Case "きゅう", "く"
+                NumberLast = 9
+            Case "じゅう"
+                NumberLast = 10
+            Case "ひゃく", "びゃく", "ぴゃく"
+                NumberLast = 100
+            Case "せん"
+                NumberLast = 1000
+            Case "まん"
+                NumberLast = 10000
+        End Select
+
+        If Furigana <> "" Then
+            NumberReading = Left(NumberReading, NumberReading.Length - LastAdd.Length) 'Getting rid of last furigana digit from whole reading
+
+            Select Case CounterFirst
+                Case "か", "き", "く", "け", "こ", "き"
+                    Select Case NumberLast
+                        Case 1
+                            NumberReading &= "いっ" & Furigana
+                        Case 2
+                            NumberReading &= "に" & Furigana
+                        Case 3
+                            NumberReading &= "さん" & Furigana
+                        Case 4
+                            NumberReading &= "よん" & Furigana
+                        Case 5
+                            NumberReading &= "ご" & Furigana
+                        Case 6
+                            NumberReading &= "ろっ" & Furigana
+                        Case 7
+                            NumberReading &= "しち" & Furigana & " or " & NumberReading & "なな" & Furigana
+                        Case 8
+                            NumberReading &= "はっ" & Furigana & " or " & NumberReading & "はち" & Furigana
+                        Case 9
+                            NumberReading &= "きゅう" & Furigana & " or " & NumberReading & "く" & Furigana
+                        Case 10
+                            NumberReading &= "じゅっ" & Furigana & " or " & NumberReading & "じっ" & Furigana
+                        Case 100
+                            If LastAdd.Contains("ゃく") = True Then
+                                If LastAdd.Contains("ひ") = True Then
+                                    NumberReading &= "ひゃっ" & Furigana
+                                ElseIf LastAdd.Contains("び") = True Then
+                                    NumberReading &= "びゃっ" & Furigana
+                                Else
+                                    NumberReading &= "ぴゃっ" & Furigana
+                                End If
+                            End If
+                        Case 1000
+                            NumberReading &= "せん" & Furigana
+                        Case 10000
+                            NumberReading &= "まん" & Furigana
+                    End Select
+                Case "さ", "し", "す", "せ", "そ"
+                    Select Case NumberLast
+                        Case 1
+                            NumberReading &= "いっ" & Furigana
+                        Case 2
+                            NumberReading &= "に" & Furigana
+                        Case 3
+                            NumberReading &= "さん" & Furigana
+                        Case 4
+                            NumberReading &= "よん" & Furigana
+                        Case 5
+                            NumberReading &= "ご" & Furigana
+                        Case 6
+                            NumberReading &= "ろく" & Furigana
+                        Case 7
+                            NumberReading &= "なな" & Furigana
+                        Case 8
+                            NumberReading &= "はち" & Furigana & " or " & NumberReading & "はっ" & Furigana
+                        Case 9
+                            NumberReading &= "きゅう" & Furigana
+                        Case 10
+                            NumberReading &= "じゅっ" & Furigana
+                        Case 100
+                            If LastAdd.Contains("ゃく") = True Then
+                                If LastAdd.Contains("ひ") = True Then
+                                    NumberReading &= "ひゃっ" & Furigana
+                                ElseIf LastAdd.Contains("び") = True Then
+                                    NumberReading &= "びゃっ" & Furigana
+                                Else
+                                    NumberReading &= "ぴゃっ" & Furigana
+                                End If
+                            End If
+                        'NumberReading &= "ひゃく" & Furigana
+                        Case 1000
+                            NumberReading &= "せん" & Furigana
+                        Case 10000
+                            NumberReading &= "まん" & Furigana
+                    End Select
+                Case "た", "ち", "つ", "て", "と"
+                    Select Case NumberLast
+                        Case 1
+                            NumberReading &= "いっ" & Furigana
+                        Case 2
+                            NumberReading &= "に" & Furigana
+                        Case 3
+                            NumberReading &= "さん" & Furigana
+                        Case 4
+                            NumberReading &= "よん" & Furigana
+                        Case 5
+                            NumberReading &= "ご" & Furigana
+                        Case 6
+                            NumberReading &= "ろく" & Furigana
+                        Case 7
+                            NumberReading &= "なな" & Furigana
+                        Case 8
+                            NumberReading &= "はっ" & Furigana & " or " & NumberReading & "はち" & Furigana
+                        Case 9
+                            NumberReading &= "く" & Furigana
+                        Case 10
+                            NumberReading &= "じゅっ" & Furigana & " or " & NumberReading & "じっ" & Furigana
+                        Case 100
+                            If LastAdd.Contains("ゃく") = True Then
+                                If LastAdd.Contains("ひ") = True Then
+                                    NumberReading &= "ひゃっ" & Furigana
+                                ElseIf LastAdd.Contains("び") = True Then
+                                    NumberReading &= "びゃっ" & Furigana
+                                Else
+                                    NumberReading &= "ぴゃっ" & Furigana
+                                End If
+                            End If
+                        'NumberReading &= "ひゃく" & Furigana
+                        Case 1000
+                            NumberReading &= "せん" & Furigana
+                        Case 10000
+                            NumberReading &= "まん" & Furigana
+                    End Select
+                Case "は", "ひ", "へ", "ほ"
+                    Select Case NumberLast
+                        Case 1
+                            NumberReading &= "いっ" & Furigana
+                        Case 2
+                            NumberReading &= "に" & Furigana
+                        Case 3
+                            NumberReading &= "に" & Furigana.Replace("は", "ば").Replace("ひ", "び").Replace("へ", "べ").Replace("ほ", "ぼ")
+                        Case 4
+                            NumberReading &= "よん" & Furigana & " or " & NumberReading & "よん" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 5
+                            NumberReading &= "ご" & Furigana
+                        Case 6
+                            NumberReading &= "に" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 7
+                            NumberReading &= "なな" & Furigana
+                        Case 8
+                            NumberReading &= "はっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ") & " or " & NumberReading & "はち" & Furigana
+                        Case 9
+                            NumberReading &= "きゅう" & Furigana
+                        Case 10
+                            NumberReading &= "じゅっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ") & " or " & NumberReading & "じっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 100
+                            If LastAdd.Contains("ゃく") = True Then
+                                If LastAdd.Contains("ひ") = True Then
+                                    NumberReading &= "ひゃっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                                ElseIf LastAdd.Contains("び") = True Then
+                                    NumberReading &= "びゃっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                                Else
+                                    NumberReading &= "ぴゃっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                                End If
+                            End If
+                        'NumberReading &= "ひゃっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 1000
+                            NumberReading &= "せん" & Furigana.Replace("は", "ば").Replace("ひ", "び").Replace("へ", "べ").Replace("ほ", "ぼ")
+                        Case 10000
+                            NumberReading &= "まん" & Furigana.Replace("は", "ば").Replace("ひ", "び").Replace("へ", "べ").Replace("ほ", "ぼ")
+                    End Select
+                Case "ふ"
+                    Select Case NumberLast
+                        Case 1
+                            NumberReading &= "いっ" & Furigana
+                        Case 2
+                            NumberReading &= "に" & Furigana
+                        Case 3
+                            NumberReading &= "さん" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 4
+                            NumberReading &= "よん" & Furigana & " or " & NumberReading & "よん" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 5
+                            NumberReading &= "ご" & Furigana
+                        Case 6
+                            NumberReading &= "ろっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 7
+                            NumberReading &= "なな" & Furigana
+                        Case 8
+                            NumberReading &= "はっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ") & " or " & NumberReading & "はち" & Furigana
+                        Case 9
+                            NumberReading &= "きゅう" & Furigana
+                        Case 10
+                            NumberReading &= "じゅっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 100
+                            If LastAdd.Contains("ゃく") = True Then
+                                If LastAdd.Contains("ひ") = True Then
+                                    NumberReading &= "ひゃっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                                ElseIf LastAdd.Contains("び") = True Then
+                                    NumberReading &= "びゃっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                                Else
+                                    NumberReading &= "ぴゃっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                                End If
+                            End If
+                        Case 1000
+                            NumberReading &= "せん" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                        Case 10000
+                            NumberReading &= "まん" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
+                    End Select
+                Case "ぱ", "ぴ", "ぷ", "ぺ"
+                    Select Case NumberLast
+                        Case 1
+                            NumberReading &= "いっ" & Furigana
+                        Case 2
+                            NumberReading &= "に" & Furigana
+                        Case 3
+                            NumberReading &= "さん" & Furigana
+                        Case 4
+                            NumberReading &= "よん" & Furigana
+                        Case 5
+                            NumberReading &= "ご" & Furigana
+                        Case 6
+                            NumberReading &= "ろっ" & Furigana
+                        Case 7
+                            NumberReading &= "なな" & Furigana
+                        Case 8
+                            NumberReading &= "はっ" & Furigana
+                        Case 9
+                            NumberReading &= "きょう" & Furigana
+                        Case 10
+                            NumberReading &= "じゅっ" & Furigana
+                        Case 100
+                            If LastAdd.Contains("ゃく") = True Then
+                                If LastAdd.Contains("ひ") = True Then
+                                    NumberReading &= "ひゃっ" & Furigana
+                                ElseIf LastAdd.Contains("び") = True Then
+                                    NumberReading &= "びゃっ" & Furigana
+                                Else
+                                    NumberReading &= "ぴゃっ" & Furigana
+
+                                End If
+                            End If
+                        Case 1000
+                    End Select
+                Case "わ"
+                    Select Case NumberLast
+                        Case 1
+                            NumberReading &= "いち" & Furigana
+                        Case 2
+                            NumberReading &= "に" & Furigana
+                        Case 3
+                            NumberReading &= "さん" & Furigana & " or " & NumberReading & "さん" & Furigana.Replace("わ", "ば")
+                        Case 4
+                            NumberReading &= "よん" & Furigana & " or " & NumberReading & "よ" & Furigana & " or " & NumberReading & "よん" & Furigana.Replace("わ", "ば")
+                        Case 5
+                            NumberReading &= "ご" & Furigana
+                        Case 6
+                            NumberReading &= "ろっ" & Furigana.Replace("わ", "ぱ") & " or " & NumberReading & "ろく" & Furigana
+                        Case 7
+                            NumberReading &= "なな" & Furigana
+                        Case 8
+                            NumberReading &= "はっ" & Furigana.Replace("わ", "ぱ") & " or " & NumberReading & "はち" & Furigana
+                        Case 9
+                            NumberReading &= "きゅう" & Furigana
+                        Case 10
+                            NumberReading &= "じゅっ" & Furigana.Replace("わ", "ぱ") & " or " & NumberReading & "じゅう" & Furigana
+                        Case 100
+                            If LastAdd.Contains("ゃく") = True Then
+                                If LastAdd.Contains("ひ") = True Then
+                                    NumberReading &= "ひゃっ" & Furigana.Replace("わ", "ぱ") & " or " & NumberReading & "ひゃく" & Furigana
+                                ElseIf LastAdd.Contains("び") = True Then
+                                    NumberReading &= "びゃっ" & Furigana.Replace("わ", "ぱ") & " or " & NumberReading & "びゃく" & Furigana
+                                Else
+                                    NumberReading &= "ぴゃっ" & Furigana.Replace("わ", "ぱ") & " or " & NumberReading & "ぴゃく" & Furigana
+                                End If
+                            End If
+                        Case 1000
+                            NumberReading &= "せん" & Furigana.Replace("わ", "ば") & " or " & NumberReading & "せん" & Furigana
+                        Case 10000
+                            NumberReading &= "まん" & Furigana.Replace("わ", "ば") & " or " & NumberReading & "まん" & Furigana
+                    End Select
+                Case Else
+                    NumberReading &= LastAdd & Furigana
+            End Select
+
+            Dim PossibleReadings() As String = NumberReading.Split(" or ")
+            For Each Reading In PossibleReadings
+                Console.WriteLine(Reading)
+            Next
+        Else
+            Console.WriteLine(NumberReading)
+        End If
+
+        Console.ReadLine()
+        Main()
+    End Sub
     Sub DisplayDefinitions(ByVal SelectedDefinition, ByVal SelectedType, ByVal DefG1, ByVal DisplayType)
         'Displaying word definitions WITH corresponding the word types: -------------------------
         Dim NumberCheckD As String = ""
@@ -1734,6 +2482,7 @@ Module Module1
         Dim Definition As Integer = 0
         Dim SB1, SB2 As Integer
         Dim BArea, BArea2 As String
+        Dim PreviousType As String = ""
         Do Until Definition = SelectedDefinition.Length
             NumberCheckD = Right(SelectedDefinition(Definition), 2)
             If NumberCheckD.IndexOf(".") <> -1 Then 'This is checking for a "." because this will mess up the 'is numberic function if it does exist
@@ -1767,18 +2516,25 @@ Module Module1
                 If NumberCheckT = NumberCheckD Then
                     If Definition < DefG1 + 1 Then
                         If Definition <> 0 Then
-                            Console.WriteLine()
+                            If Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length) <> PreviousType Then 'ONLY DISPLAY TYPE IF NOT DUPLICATE
+                                Console.WriteLine()
+                            End If
+
                             WriteToFile("", "LastSearch")
                         End If
-                        Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                        If Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length) <> PreviousType Then 'ONLY DISPLAY TYPE IF NOT DUPLICATE
+                            Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                        End If
+
+                        PreviousType = Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
                         WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
                     ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
                         Console.WriteLine()
                         Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                        Console.WriteLine()
+                        'Console.WriteLine() (tested to remove with する)
                         WriteToFile("", "LastSearch")
                         WriteToFile(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length), "LastSearch")
-                        WriteToFile("", "LastSearch")
+                        'WriteToFile("", "LastSearch") (tested to remove with する)
 
                         'Console.WriteLine(Definition + 1 & ". " & Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length))
                         If Left(SelectedDefinition(Definition), SelectedDefinition(Definition).Length - NumberCheckD.Length).IndexOf("[") = -1 Then
@@ -2770,48 +3526,49 @@ Module Module1
 
         Scrap = Left(Scrap, 1).ToLower & Right(Scrap, Scrap.Length - 1)
 
-
         If ActualSearchWord = "為る" Then
-            Console.WriteLine("Formal:")
-            Console.WriteLine("I play: します")
-            Console.WriteLine("I do not play: しません")
-            Console.WriteLine("I played: しました")
-            Console.WriteLine("I did not play: しませんでした")
-            Console.WriteLine()
+            If AdvancedParam = 0 Or AdvancedParam = 3 Or AdvancedParam = 2 Then
+                Console.WriteLine("Formal:")
+                Console.WriteLine("I play: します")
+                Console.WriteLine("I do not play: しません")
+                Console.WriteLine("I played: しました")
+                Console.WriteLine("I did not play: しませんでした")
+                Console.WriteLine()
 
-            Console.WriteLine("Informal")
-            Console.WriteLine("Do: する")
-            Console.WriteLine("Don't do: しない")
-            Console.WriteLine("Did do: した")
-            Console.WriteLine("Didn't do: しなかった")
-            Console.WriteLine()
-            Console.WriteLine("Te-forms:")
-            Console.WriteLine("Te-stem: して")
-            Console.WriteLine("Negative: しなくて")
-            Console.WriteLine("Negative te-form: しないで")
-            Console.WriteLine("Is doing: しています")
-            Console.WriteLine("Am doing: している")
-            Console.WriteLine()
-            Console.WriteLine("Want to do: したい")
-            Console.WriteLine()
-            Console.WriteLine("Potential:")
-            Console.WriteLine("Able to do: できる")
-            Console.WriteLine("Not able to do: できない")
-            Console.WriteLine()
-            Console.WriteLine("Causitive:")
-            Console.WriteLine("Let/make (someone) do: させる")
-            Console.WriteLine("Don't let/make (someone) do: させない")
-            Console.WriteLine("Passive:")
-            Console.WriteLine("Was done: される")
-            Console.WriteLine("Wasn't done: されない")
-            Console.WriteLine()
-            Console.WriteLine("Conditional:")
-            Console.WriteLine("If do: すれば")
-            Console.WriteLine("If don't do: しなければ")
-            Console.WriteLine("しなくちゃ (informal)")
-            Console.WriteLine("しなきゃ (informal)")
-            Console.WriteLine()
-            Console.WriteLine("Volitional: しよう")
+                Console.WriteLine("Informal")
+                Console.WriteLine("Do: する")
+                Console.WriteLine("Don't do: しない")
+                Console.WriteLine("Did do: した")
+                Console.WriteLine("Didn't do: しなかった")
+                Console.WriteLine()
+                Console.WriteLine("Te-forms:")
+                Console.WriteLine("Te-stem: して")
+                Console.WriteLine("Negative: しなくて")
+                Console.WriteLine("Negative te-form: しないで")
+                Console.WriteLine("Is doing: しています")
+                Console.WriteLine("Am doing: している")
+                Console.WriteLine()
+                Console.WriteLine("Want to do: したい")
+                Console.WriteLine()
+                Console.WriteLine("Potential:")
+                Console.WriteLine("Able to do: できる")
+                Console.WriteLine("Not able to do: できない")
+                Console.WriteLine()
+                Console.WriteLine("Causitive:")
+                Console.WriteLine("Let/make (someone) do: させる")
+                Console.WriteLine("Don't let/make (someone) do: させない")
+                Console.WriteLine("Passive:")
+                Console.WriteLine("Was done: される")
+                Console.WriteLine("Wasn't done: されない")
+                Console.WriteLine()
+                Console.WriteLine("Conditional:")
+                Console.WriteLine("If do: すれば")
+                Console.WriteLine("If don't do: しなければ")
+                Console.WriteLine("しなくちゃ (informal)")
+                Console.WriteLine("しなきゃ (informal)")
+                Console.WriteLine()
+                Console.WriteLine("Volitional: しよう")
+            End If
         End If
 
         'Preparing some variables for the word being searched
@@ -6170,6 +6927,9 @@ Module Module1
                     Console.WriteLine(ex.Message)
                 End If
             End Try
+            If KanjiInfo(KanjiLoop, 1).contains("Kun: Kun:") = True Then
+                KanjiInfo(KanjiLoop, 1) = KanjiInfo(KanjiLoop, 1).replace("Kun: Kun:", "Kun:")
+            End If
 
             'On scraps
             If ReadingsGroup.IndexOf("On:") <> -1 Then 'If there is an on reading
@@ -6313,19 +7073,6 @@ Module Module1
                             StringTemp3 = StringTemp3.Replace("  【", "【")
                             StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
                             StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
-                            If StringTemp.IndexOf("<li>") <> -1 Then 'if there is another On reading compound
-                                StringTemp3 &= "|"
-                                Snip1 = StringTemp.IndexOf("<li>")
-                                StringTemp = Mid(StringTemp, Snip1 + 8)
-
-                                'Getting the Compound into the right format (Word Compound, 【furigana】- meaning)
-                                Snip2 = StringTemp.IndexOf("</li>")
-                                StringTemp3 &= Left(StringTemp, Snip2 - 1)
-                                StringTemp3 = StringTemp3.Replace(vbLf, "")
-                                StringTemp3 = StringTemp3.Replace("  【", "【")
-                                StringTemp3 = StringTemp3.Replace("】  ", "】 - ")
-                                StringTemp3 = StringTemp3.Replace("&#39;", "'").Replace("&amp;", "")
-                            End If
                         End If
                     End If
                 End If
@@ -6827,6 +7574,9 @@ Module Module1
                     Console.WriteLine(ex.Message)
                 End If
             End Try
+            If ActualInfo(KanjiLoop, 1).contains("Kun: Kun:") = True Then
+                ActualInfo(KanjiLoop, 1) = ActualInfo(KanjiLoop, 1).replace("Kun: Kun:", "Kun:")
+            End If
 
             'On scraps
             If ReadingsGroup.IndexOf("On:") <> -1 Then 'If there is an on reading
@@ -7123,7 +7873,7 @@ Module Module1
         Dim BArea As String = ""
         Dim BArea2 As String = ""
         Dim DefG1 = 10
-
+        Dim PreviousType As String = ""
 LastRequest:
         If DisplayType = 1 Then
             'last requests ------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -7184,11 +7934,19 @@ LastRequest:
                         If NumberCheckT = NumberCheckD Then
                             If Definition < DefG1 + 1 Then
                                 If Definition <> 0 Then
-                                    Console.WriteLine()
-                                    AnkiCopy = AnkiCopy & vbCrLf
+                                    If Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length) <> PreviousType Then 'ONLY DISPLAY TYPE IF NOT DUPLICATE
+                                        Console.WriteLine()
+                                        AnkiCopy = AnkiCopy & vbCrLf
+                                    End If
+
+
                                 End If
-                                Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
-                                AnkiCopy = AnkiCopy & vbCrLf & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
+                                If Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length) <> PreviousType Then 'ONLY DISPLAY TYPE IF NOT DUPLICATE
+                                    Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
+                                    AnkiCopy = AnkiCopy & vbCrLf & Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length)
+                                End If
+
+
                             ElseIf Definition > DefG1 And SelectedType(Type).IndexOf("aux") <> -1 Or Definition > DefG1 And SelectedType(Type).IndexOf("fix") <> -1 Then
                                 Console.WriteLine()
                                 Console.WriteLine(Left(SelectedType(Type), SelectedType(Type).Length - NumberCheckT.Length))
@@ -7699,7 +8457,11 @@ LastRequest:
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
         Dim HTML As String = ""
-        HTML = Client.DownloadString(New Uri("https://" & URL))
+        Try
+            HTML = Client.DownloadString(New Uri("https://" & URL))
+        Catch ex As Exception
+        End Try
+
 
         Dim Temp As String
         Dim TempIndex As Integer
@@ -7711,6 +8473,7 @@ LastRequest:
         Dim ExtraIndex As Integer
         Dim FinishedAll As Boolean = False
         Dim FoundMeanings(0) As String
+
         Try
             ExtraIndex = HTML.IndexOf("Details ▸")
             HTML = Left(HTML, ExtraIndex)
