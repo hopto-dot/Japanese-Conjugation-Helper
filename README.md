@@ -31,7 +31,7 @@ If you like this program and want to show your appreciation then how about buyin
 * **Download subtitles** - Download anime subtitles in either Japanese or English (specify the language after you've typed '/subtitles')
 * [Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator) - Translates English into Japanese, or Japanese into English (type '!' in front of a sentence)
 * [Conjugator Practice](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#conjugation-practice) - Conjugation practice (practice conjugating a word of your choice into different forms)
-* /history - See you last 40 searches
+* /history - See your last 40 searches
 * /b (back) - Instantly go back to your last search (no internet connection needed)
 * /saves - Shows all the words you've saved (to save a word, first search for one then type 'save')
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command
