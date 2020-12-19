@@ -27,6 +27,8 @@ Module Module1
         'For the input of Japanese Chaaracters
         Console.Title() = "Japanese Conjugation Helper"
         Dim Snip1 As Integer
+        Dim Done As Boolean = False
+        Dim I As Integer
         Try
             Dim info = TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time")
             Dim localServerTime As DateTimeOffset = DateTimeOffset.Now
@@ -67,16 +69,45 @@ Module Module1
         If Left(Word, 6) = "/count" Or Left(Word, 7) = "/number" Then
             If Word = "/count" Or Word = "/count " Or Word = "/number" Or Word = "/number" Or Word.Contains(" ") = False Then
                 Console.ForegroundColor = ConsoleColor.Red
-                Console.WriteLine("Invalid syntax")
+                Console.WriteLine("Error: Invalid syntax")
                 Console.ForegroundColor = ConsoleColor.DarkYellow
-                Console.WriteLine("Do '/count [number](counter)")
-                Console.WriteLine("(counter isn't needed)")
+                Console.WriteLine(" - Number is needed")
+                Console.WriteLine(" - Counter isn't needed")
                 Console.ForegroundColor = ConsoleColor.White
                 Console.ReadLine()
                 Main()
             End If
-            Snip1 = Word.IndexOf(" ") + 1
-            Word = Mid(Word, Snip1)
+            Snip1 = Word.IndexOf(" ") + 2
+            Word = Mid(Word, Snip1).Replace("０", "0").Replace("１", "1").Replace("２", "2").Replace("３", "3").Replace("４", "4").Replace("５", "5").Replace("６", "6").Replace("７", "7").Replace("８", "8").Replace("９", "9").Replace(" ", "")
+            If IsNumeric(Left(Word, 1)) = False Then
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("Error: Must include a number")
+                Console.ForegroundColor = ConsoleColor.DarkYellow
+                Console.WriteLine("Do '/count [number](counter)")
+                Console.WriteLine(" - Number is needed")
+                Console.WriteLine(" - Counter isn't needed")
+                Console.ForegroundColor = ConsoleColor.White
+                Console.ReadLine()
+                Main()
+            End If
+
+            I = 1
+            Done = False
+            Do Until Done = True
+                If IsNumeric(Mid(Word, I, 1)) = False Then
+                    Done = True
+                    Continue Do
+                End If
+                I += 1
+            Loop
+            Try
+                Word = Word.Replace(Mid(Word, I), " " & Mid(Word, I))
+            Catch ex As Exception 'word must be just numbers:
+                CounterConvert("", Word)
+            End Try
+
+            Parameters = Word.Split(" ")
+            CounterConvert(Parameters(1), Parameters(0))
         End If
 
         If Word = "" Or Word.IndexOf(vbCrLf) <> -1 Then
@@ -1746,6 +1777,7 @@ Module Module1
         Console.WriteLine("Searching for counter...")
         Const QUOTE = """"
         Dim WordURL As String
+
         WordURL = "https://jisho.org/search/" & Counter & " #counter"
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
@@ -1810,13 +1842,6 @@ Module Module1
             End Try
         End If
 
-
-        If FoundTypes.ToLower.Contains("counter") = False And Counter <> "" Then
-            Console.ForegroundColor = ConsoleColor.DarkYellow
-            Console.WriteLine("Assuming '{0}' is a counter", Counter)
-            Console.ForegroundColor = ConsoleColor.White
-        End If
-
         Dim WordHTML0, WordHTML As String
         Try
             WordHTML0 = Client.DownloadString(New Uri("https://" & FoundWordLinks(0))) 'This is used for the furigana
@@ -1828,8 +1853,12 @@ Module Module1
 
         Dim FuriganaStart As Integer
         If Counter = "歳" Or Counter = "さい" Or Counter = "sai" Then
-            Furigana = "さい"
-            ActualSearchWord = "歳"
+        ElseIf Counter = "ho" Or Counter = "ほ" Then
+            Furigana = "ほ"
+            ActualSearchWord = "歩"
+        ElseIf Counter = "tsu" Or Counter = "つ" Then
+            Furigana = "つ"
+            ActualSearchWord = "つ"
         ElseIf Counter = "hi" Or Counter = "nichi" Or Counter = "日" Then
             Furigana = "にち"
             ActualSearchWord = "日"
@@ -1848,6 +1877,12 @@ Module Module1
         ElseIf Counter = "ko" Then
             Furigana = "こ"
             ActualSearchWord = "個"
+        ElseIf Counter = "kai" Then
+            Furigana = "かい"
+            ActualSearchWord = "回"
+        ElseIf Counter = "nin" Or Counter = "hito" Or Counter = "にん" Or Counter = "ひと" Or Counter = "人" Then
+            Furigana = "にん"
+            ActualSearchWord = "人"
         ElseIf Counter = "" Then
         Else 'furigana is needed:
             Try
@@ -1915,10 +1950,68 @@ Module Module1
             End If
         End If
 
-
+        Dim CounterInfo As String = ""
+        Select Case ActualSearchWord
+            Case "個"
+                CounterInfo = "article counter"
+            Case "本"
+                CounterInfo = "long cylindrical thing counter"
+            Case "つ"
+                CounterInfo = "general counter"
+            Case "枚"
+                CounterInfo = "flat things counter"
+            Case "匹"
+                CounterInfo = "small-medium animal counter"
+            Case "羽"
+                CounterInfo = "bird counter"
+            Case "冊"
+                CounterInfo = "book counter"
+            Case "冊"
+                CounterInfo = "machine counter"
+            Case "分"
+                CounterInfo = "minute counter"
+            Case "日"
+                CounterInfo = "day counter"
+            Case "時", "時間"
+                CounterInfo = "hour counter"
+            Case "度"
+                CounterInfo = "degree counter"
+            Case "年"
+                CounterInfo = "year counter"
+            Case "杯"
+                CounterInfo = "container-full counter"
+            Case "点"
+                CounterInfo = "point counter"
+            Case "番"
+                CounterInfo = "ordinal number counter"
+            Case "秒"
+                CounterInfo = "second counter"
+            Case "箱"
+                CounterInfo = "box counter"
+            Case "歩"
+                CounterInfo = "steps counter"
+            Case "話"
+                CounterInfo = "story counter"
+            Case "問"
+                CounterInfo = "question counter"
+            Case "園"
+                CounterInfo = "institution counter"
+            Case "音"
+                CounterInfo = "sound counter"
+            Case "課"
+                CounterInfo = "lesson counter"
+            Case "方"
+                CounterInfo = "polite person counter counter"
+            Case "人"
+                CounterInfo = "person counter"
+            Case ""
+                CounterInfo = "counter"
+        End Select
 
         Console.Clear()
-        If ActualSearchWord <> "" Then
+        If CounterInfo <> "" Then
+            Console.WriteLine(ToNumber.ToString & ActualSearchWord & " (" & CounterInfo & "):")
+        ElseIf ActualSearchWord <> "" Then 'if there is kanji/furigana
             Console.WriteLine(ToNumber.ToString & ActualSearchWord & ":")
         ElseIf Furigana <> "" Then
             Console.WriteLine(ToNumber.ToString & Furigana & ":")
@@ -2256,50 +2349,7 @@ Module Module1
                 NumberLast = 10000
         End Select
 
-
-
-
-        Select Case ActualSearchWord
-            Case "歳", "年", "時間", "時"
-                If ToNumber <= 24 Then
-                    UsedOfficial = True
-                End If
-        End Select
-
-        Select Case ToNumber & ActualSearchWord
-            Case "1日"
-                NumberReading = "ついたち"
-                UsedOfficial = True
-            Case "2日"
-                NumberReading = "ふつか"
-                UsedOfficial = True
-            Case "3日"
-                NumberReading = "みっか"
-                UsedOfficial = True
-            Case "4日"
-                NumberReading = "よっか"
-                UsedOfficial = True
-            Case "5日"
-                NumberReading = "いつか"
-                UsedOfficial = True
-            Case "6日"
-                NumberReading = "むいか"
-                UsedOfficial = True
-            Case "7日"
-                NumberReading = "なのか"
-                UsedOfficial = True
-            Case "8日"
-                NumberReading = "ようか"
-                UsedOfficial = True
-            Case "10日"
-                NumberReading = "とおか"
-                UsedOfficial = True
-            Case "20日"
-                NumberReading = "はつか"
-                UsedOfficial = True
-        End Select
-
-        'Needed:
+        'translating using counter ending rules (if there IS furigana, and therefore a counter specified):
         If Furigana <> "" Then
             NumberReading = Left(NumberReading, NumberReading.Length - LastAdd.Length) 'Getting rid of last furigana digit from whole reading
             Select Case CounterFirst
@@ -2563,20 +2613,146 @@ Module Module1
                             NumberReading &= "まん" & Furigana.Replace("わ", "ば") & " or " & NumberReading & "まん" & Furigana
                     End Select
                 Case Else
-                    NumberReading &= LastAdd & Furigana
+                    If ToNumber <> 0 Then
+                        NumberReading &= LastAdd & Furigana
+                    End If
             End Select
-
-            Dim PossibleReadings() As String = NumberReading.Split(" or ")
-            For Each Reading In PossibleReadings
-                Console.WriteLine(Reading)
-            Next
         Else
-            Console.WriteLine(NumberReading)
+        End If
+
+        'translating exact VERIFIED combinations:
+        Select Case ToNumber & ActualSearchWord
+            Case "1日"
+                NumberReading = "ついたち or いちにち"
+                UsedOfficial = True
+            Case "2日"
+                NumberReading = "ふつか"
+                UsedOfficial = True
+            Case "3日"
+                NumberReading = "みっか"
+                UsedOfficial = True
+            Case "4日"
+                NumberReading = "よっか"
+                UsedOfficial = True
+            Case "5日"
+                NumberReading = "いつか"
+                UsedOfficial = True
+            Case "6日"
+                NumberReading = "むいか"
+                UsedOfficial = True
+            Case "7日"
+                NumberReading = "なのか"
+                UsedOfficial = True
+            Case "8日"
+                NumberReading = "ようか"
+                UsedOfficial = True
+            Case "9日"
+                NumberReading = "ここのか"
+                UsedOfficial = True
+            Case "10日"
+                NumberReading = "とおか"
+                UsedOfficial = True
+            Case "20日"
+                NumberReading = "はつか"
+                UsedOfficial = True
+            Case "0つ"
+                NumberReading = "ゼロつ"
+                UsedOfficial = True
+            Case "1つ"
+                NumberReading = "ひとつ"
+                UsedOfficial = True
+            Case "2つ"
+                NumberReading = "ふたつ"
+                UsedOfficial = True
+            Case "3つ"
+                NumberReading = "みっつ"
+                UsedOfficial = True
+            Case "4つ"
+                NumberReading = "よっつ"
+                UsedOfficial = True
+            Case "5つ"
+                NumberReading = "いつつ"
+                UsedOfficial = True
+            Case "6つ"
+                NumberReading = "むっつ"
+                UsedOfficial = True
+            Case "7つ"
+                NumberReading = "ななつ"
+                UsedOfficial = True
+            Case "8つ"
+                NumberReading = "やっつ"
+                UsedOfficial = True
+            Case "9つ"
+                NumberReading = "ここのつ"
+                UsedOfficial = True
+            Case "0人"
+                NumberReading = "ゼロにん or れいにん"
+                UsedOfficial = True
+            Case "1人"
+                NumberReading = "ひとり"
+                UsedOfficial = True
+            Case "2人"
+                NumberReading = "ふたり"
+                UsedOfficial = True
+            Case "3人"
+                NumberReading = "さんにん"
+                UsedOfficial = True
+            Case "4人"
+                NumberReading = "よにん"
+                UsedOfficial = True
+            Case "5人"
+                NumberReading = "ごにん"
+                UsedOfficial = True
+            Case "6人"
+                NumberReading = "ろくにん"
+                UsedOfficial = True
+            Case "7人"
+                NumberReading = "しちにん"
+                UsedOfficial = True
+            Case "8人"
+                NumberReading = "はちにん"
+                UsedOfficial = True
+            Case "9人"
+                NumberReading = "きゅうにん"
+                UsedOfficial = True
+            Case "10人"
+                NumberReading = "じゅうにん"
+                UsedOfficial = True
+        End Select
+
+        If ToNumber = 0 And NumberReading = "" Then
+            UsedOfficial = False
+            NumberReading = "ゼロ" & Furigana & " or " & "れい" & Furigana
+        End If
+
+        Dim PossibleReadings() As String = NumberReading.Split(" or ")
+        For Each Reading In PossibleReadings
+            Console.WriteLine(Reading)
+        Next
+
+        If Counter = "" And ToNumber <= 100 Then
+            UsedOfficial = True
+        End If
+
+        If FoundTypes.ToLower.Contains("counter") = False Then
+            UsedOfficial = False
+            Console.WriteLine()
+            Console.ForegroundColor = ConsoleColor.DarkYellow
+            Console.WriteLine("Assumed that the counter you entered is a real counter")
+            Console.WriteLine("It didn't seem like it was")
+            Console.ForegroundColor = ConsoleColor.White
         End If
 
         If UsedOfficial = True Then
+            Console.WriteLine()
             Console.ForegroundColor = ConsoleColor.Green
-            Console.WriteLine("This reading has been confirmed to be 100% correct")
+            Console.WriteLine("Verified reading")
+            Console.ForegroundColor = ConsoleColor.White
+        End If
+
+        If NumberReading = "" Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Couldn't work out reading")
             Console.ForegroundColor = ConsoleColor.White
         End If
 
