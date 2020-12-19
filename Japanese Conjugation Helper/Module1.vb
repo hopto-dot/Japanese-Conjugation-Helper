@@ -1778,6 +1778,11 @@ Module Module1
         Const QUOTE = """"
         Dim WordURL As String
 
+        Dim Checked As Boolean = False
+        If Counter = "" Then
+            Checked = True
+        End If
+
         WordURL = "https://jisho.org/search/" & Counter & " #counter"
         Dim Client As New WebClient
         Client.Encoding = System.Text.Encoding.UTF8
@@ -1801,9 +1806,44 @@ Module Module1
         Dim ActualSearch1stAppearance, ActualSearch2ndAppearance As Integer
         Dim WordLink As String
         Dim FoundWordLinks(0), FoundDefinitions(0), CommonWord(0), FoundTypes, ActualSearchWord As String
+        Dim WordHTML0, WordHTML As String
+
+
         Dim Furigana As String = ""
         FoundTypes = ""
-        If Counter <> "" Then
+        If Counter = "yearsold" Or Counter = "yearold" Then
+            Checked = True
+            Furigana = "さい"
+            ActualSearchWord = "歳"
+        ElseIf Counter = "person" Or Counter = "people" Or Counter = "persons" Then
+            Checked = True
+            Furigana = "にん"
+            ActualSearchWord = "人"
+        ElseIf Counter = "second" Or Counter = "seconds" Then
+            Checked = True
+            Furigana = "びょう"
+            ActualSearchWord = "秒"
+        ElseIf Counter = "minute" Or Counter = "minutes" Then
+            Checked = True
+            Furigana = "ふん"
+            ActualSearchWord = "分"
+        ElseIf Counter = "hour" Or Counter = "hours" Then
+            Checked = True
+            Furigana = "じかん"
+            ActualSearchWord = "時間"
+        ElseIf Counter = "oclock" Or Counter = "o'clock" Then
+            Checked = True
+            Furigana = "じ"
+            ActualSearchWord = "時"
+        ElseIf Counter = "boxes" Then
+            Checked = True
+            Furigana = "はこ"
+            ActualSearchWord = "箱"
+        ElseIf Counter = "thing" Or Counter = "things" Then
+            Checked = True
+            Furigana = "つ"
+            ActualSearchWord = "つ"
+        ElseIf Counter <> "" Then
             Try
                 'Getting word link:
                 ActualSearch1stAppearance = HTMLTemp.IndexOf("<span class=" & QUOTE & "text" & QUOTE & ">")
@@ -1840,32 +1880,34 @@ Module Module1
                 ActualSearchWord = Left(ActualSearchWord, ActualSearchWord.Length - 8)
             Catch ex As Exception
             End Try
-        End If
 
-        Dim WordHTML0, WordHTML As String
-        Try
-            WordHTML0 = Client.DownloadString(New Uri("https://" & FoundWordLinks(0))) 'This is used for the furigana
-            WordHTML = WordHTML0 'This is a copy, used for the kanji readings at the end
-        Catch ex As Exception
-        End Try
+
+            Try
+                WordHTML0 = Client.DownloadString(New Uri("https://" & FoundWordLinks(0))) 'This is used for the furigana
+                WordHTML = WordHTML0 'This is a copy, used for the kanji readings at the end
+            Catch ex As Exception
+            End Try
+        End If
 
         Dim UsedOfficial As Boolean = False
 
         Dim FuriganaStart As Integer
         If Counter = "歳" Or Counter = "さい" Or Counter = "sai" Then
+            Furigana = "さい"
+            ActualSearchWord = "歳"
         ElseIf Counter = "ho" Or Counter = "ほ" Then
             Furigana = "ほ"
             ActualSearchWord = "歩"
         ElseIf Counter = "tsu" Or Counter = "つ" Then
             Furigana = "つ"
             ActualSearchWord = "つ"
-        ElseIf Counter = "hi" Or Counter = "nichi" Or Counter = "日" Then
+        ElseIf Counter = "hi" Or Counter = "nichi" Or Counter = "にち" Or Counter = "ひ" Or Counter = "日" Then
             Furigana = "にち"
             ActualSearchWord = "日"
-        ElseIf Counter = "hon" Then
+        ElseIf Counter = "hon" Or Counter = "ほん" Then
             Furigana = "ほん"
             ActualSearchWord = "本"
-        ElseIf Counter = "ji" Then
+        ElseIf Counter = "ji" Or Counter = "じ" Then
             Furigana = "じ"
             ActualSearchWord = "時"
         ElseIf Counter = "時" And Furigana <> "じ" Then
@@ -1874,17 +1916,20 @@ Module Module1
         ElseIf Counter = "nen" Or Counter = "年" Then
             Furigana = "ねん"
             ActualSearchWord = "年"
-        ElseIf Counter = "ko" Then
+        ElseIf Counter = "ko" Or Counter = "こ" Then
             Furigana = "こ"
             ActualSearchWord = "個"
-        ElseIf Counter = "kai" Then
+        ElseIf Counter = "kai" Or Counter = "かい" Then
             Furigana = "かい"
             ActualSearchWord = "回"
+        ElseIf Counter = "ashi" Or Counter = "soku" Or Counter = "あし" Or Counter = "そく" Or Counter = "足" Then
+            Furigana = "そく"
+            ActualSearchWord = "足"
         ElseIf Counter = "nin" Or Counter = "hito" Or Counter = "にん" Or Counter = "ひと" Or Counter = "人" Then
             Furigana = "にん"
             ActualSearchWord = "人"
         ElseIf Counter = "" Then
-        Else 'furigana is needed:
+        ElseIf Furigana = "" Then 'furigana is needed:
             Try
                 Furigana = RetrieveClassRange(WordHTML0, "</a></li><li><a", "</a></li><li><a href=" & QUOTE & "//jisho.org", "Furigana")
                 If Furigana.Length <> 0 Then
@@ -1951,6 +1996,7 @@ Module Module1
         End If
 
         Dim CounterInfo As String = ""
+        'Getting counter definitions
         Select Case ActualSearchWord
             Case "個"
                 CounterInfo = "article counter"
@@ -2004,8 +2050,8 @@ Module Module1
                 CounterInfo = "polite person counter counter"
             Case "人"
                 CounterInfo = "person counter"
-            Case ""
-                CounterInfo = "counter"
+            Case "足"
+                CounterInfo = "shoe/socks counter"
         End Select
 
         Console.Clear()
@@ -2469,7 +2515,7 @@ Module Module1
                 Case "は", "ひ", "へ", "ほ"
                     Select Case NumberLast
                         Case 1
-                            NumberReading &= "いっ" & Furigana
+                            NumberReading &= "いっ" & Furigana.Replace("は", "ぱ").Replace("ひ", "ぴ").Replace("へ", "ぺ").Replace("ほ", "ぽ")
                         Case 2
                             NumberReading &= "に" & Furigana
                         Case 3
@@ -2734,12 +2780,12 @@ Module Module1
             UsedOfficial = True
         End If
 
-        If FoundTypes.ToLower.Contains("counter") = False Then
+        If FoundTypes.ToLower.Contains("counter") = False And Checked = False Then
             UsedOfficial = False
             Console.WriteLine()
             Console.ForegroundColor = ConsoleColor.DarkYellow
             Console.WriteLine("Assumed that the counter you entered is a real counter")
-            Console.WriteLine("It didn't seem like it was")
+            Console.WriteLine(Furigana & " doesn't seem like a counter, maybe it's a different reading")
             Console.ForegroundColor = ConsoleColor.White
         End If
 
