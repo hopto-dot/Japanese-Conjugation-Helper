@@ -26,6 +26,7 @@ If you like this program and want to show your appreciation then how about buyin
 * **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word
 * **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** - A parameter that determines how much information about a word is displayed
 * **[Kanji Information](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-information)** - Enter Japanese text and detailed information on all the kanji
+* **/count** - Accurately translate numbers (with or without counters) into its furigana reading
 * **[Preferences](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command)** - Lets you change program settings, these are saved for the next time you use the program.
 * **[Audio](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#audio)** - Downloads audio of various conjugations of a verb or adjective
 * **Download subtitles** - Download anime subtitles in either Japanese or English (specify the language after you've typed '/subtitles')
