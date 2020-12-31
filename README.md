@@ -4,10 +4,11 @@
 [![How to use](https://img.shields.io/badge/Wiki-How%20to%20use-green)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use)
 [![Donate](https://img.shields.io/badge/Donate-Buy%20Me%20A%20Coffee-important.svg)](https://www.buymeacoffee.com/hoptodot)
 
-**A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & sentence breakdown and more!** [Here](https://imgur.com/DlKXeyl) you can see the program performing its main function (very old version).
+**A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & sentence breakdown and more!**
 
-**Download the program [here](https://github.com/hopto-dot/Japanese-Conjugation-Helper/releases).** The interval that I release a new version will be bigger now because I am back to being a student with lots of other work I need to be focused on, not to fear though, the project isn't dead.
+### [Here](https://imgur.com/a/DUNexpG) you can see the program performing its main functions.
 
+**Download the program [here](https://github.com/hopto-dot/Japanese-Conjugation-Helper/releases).**
 **For the main functionality of bringing up conjugations of a word, simple type the word on it's own (in Japanese, Romaji or the English word). Find out more about how this and other commands work in [the Wiki](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use).**
 
 ## [Frequently Asked Questions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/FAQ)
