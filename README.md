@@ -16,7 +16,7 @@
 ## If you want to give feedback, request features or report bugs, you may do so [here](https://forms.gle/WNV1s41cWKrjSMhH6).
 
 ## **Main [Functions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
-## *Useful things are in bold*
+#### *Useful things are in bold*
 * **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence
 * **[Last Requests](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#last-requests)** - Things you can do after searching a word
 * **[S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter)** - A parameter that determines how much information about a word is displayed
