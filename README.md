@@ -4,6 +4,8 @@
 [![How to use](https://img.shields.io/badge/Wiki-How%20to%20use-green)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use)
 [![Donate](https://img.shields.io/badge/Donate-Buy%20Me%20A%20Coffee-important.svg)](https://www.buymeacoffee.com/hoptodot)
 
+## Japanese Conjugation Helper is being rebuilt from ground up, it will have a graphical user interface, also its name will likely change
+
 **A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & sentence breakdown and more!**
 
 ### [Here](https://imgur.com/a/DUNexpG) you can see the program performing its main functions.
