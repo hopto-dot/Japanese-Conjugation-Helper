@@ -4,7 +4,7 @@
 [![How to use](https://img.shields.io/badge/Wiki-How%20to%20use-green)](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use)
 [![Donate](https://img.shields.io/badge/Donate-Buy%20Me%20A%20Coffee-important.svg)](https://www.buymeacoffee.com/hoptodot)
 
-## Japanese Conjugation Helper is being rebuilt from ground up, it will have a graphical user interface, also its name will likely change
+## Japanese Conjugation Helper is being rebuilt from the ground up, it will have a graphical user interface, also its name will likely change
 
 **A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & sentence breakdown and more!**
 
@@ -43,12 +43,7 @@
 ***
 
 ## To do:
-- [X] Make an offline searching possible
-- [ ] Making searching for words more optimised and quicker
-- [X] Download audio from various sites
-- [ ] Make a proper example sentence feature
-- [ ] Improve KanjiTest (/k)
-- [ ] Making a fully up-to-date and easy to follow [wiki](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#index)
+I am currently rebuilding the program to have a user interface from the group up. The first usable release will likely come out at around June 2021.
 
 ***
 ## **If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
