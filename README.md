@@ -29,7 +29,7 @@
 * [Translator](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#translator) - Translates English into Japanese, or Japanese into English (type '!' in front of a sentence)
 * [Listening](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#listening) - Start a listening test for a verb or adjective
 * [Kanji Test](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#kanji-test) - Enter Japanese text and get tested on all the kanji
-* HeyLingo Audio Downloader (/heylingo) - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses
+* HeyLingo Audio Downloader (/heylingo) - Downloads audio from [Hey! Lingo](https://www.heylingo.com/) courses. This command is broken.
 
 ## Extra Commands
 * /dsp - change the default [S parameter](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#s-parameter) that is used when you search for a word (same functionality as going into [Preferences](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#prefs-command) and changing it)
