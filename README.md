@@ -9,8 +9,6 @@
 **Download the program [here](https://github.com/hopto-dot/Japanese-Conjugation-Helper/releases).**
 **For the main functionality of bringing up conjugations of a word, simple type the word on it's own (in Japanese, Romaji or the English word). Find out more about how this and other commands work in [the Wiki](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use).**
 
-## [Frequently Asked Questions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/FAQ)
-
 ## **Main [Functions](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#list-of-commands):**
 #### *Useful things are in bold*
 * **[Word Lookup](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#word-lookup)** - Looks up any word, phrase or sentence
@@ -34,10 +32,6 @@
 * /saves - Shows all the words you've saved (to save a word, first search for one then type 'save')
 * [/h or /help](https://github.com/hopto-dot/Japanese-Conjugation-Helper/wiki/How-to-use#help-command) - Brings up more information about a command, no longer updated
 * Offline Searching - do '//[search]' to search for a word offline (not very effective)
-***
-
-## To do:
-I am currently rebuilding the program to have a user interface from the group up. The first usable release will likely come out at around June 2021.
 
 ***
 ## **If you see "⍰" being displayed where Japanese characters are meant to be then follow the steps shown below:**
