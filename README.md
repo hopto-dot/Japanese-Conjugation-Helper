@@ -1,6 +1,6 @@
-## Japanese Conjugation Helper
+# Japanese Conjugation Helper
 
-## This project has been been retired
+## ⚠ This project has been been retired ⚠
 
 **A console application that will conjugate Japanese verbs, adjectives and nouns. Get kanji infomation, download audio of pronunciations, various tests and practice, a translator & sentence breakdown and more!**
 
